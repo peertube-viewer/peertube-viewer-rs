@@ -16,7 +16,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut inst = Instance::new("https://video.ploud.fr".to_string());
     let search_results = inst.search_videos(&query).await.unwrap();
     for (id, video) in search_results.iter().enumerate() {
-        println!("{}:{}-{}", id + 1, video.name(), video.duration());
+        println!(
+            "{}:{}-{}-{}",
+            id + 1,
+            video.name(),
+            video.duration(),
+            video
+                .published()
+                .map(|t| t.format("%a:%b:%Y").to_string())
+                .unwrap_or_default()
+        );
     }
     let choice = match rl.readline(">> ") {
         Ok(line) => line.parse::<usize>().unwrap(),

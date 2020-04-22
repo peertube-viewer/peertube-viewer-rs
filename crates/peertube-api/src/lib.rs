@@ -1,3 +1,4 @@
+extern crate chrono;
 extern crate peertube_ser;
 extern crate reqwest;
 extern crate serde_json;

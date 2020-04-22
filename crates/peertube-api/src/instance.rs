@@ -50,6 +50,7 @@ impl Instance {
                     name,
                     uuid,
                     duration as u64,
+                    video.publishedAt.unwrap_or_default(),
                     video.description,
                 ));
             }
@@ -70,5 +71,9 @@ impl Instance {
         let desc: Description =
             serde_json::from_str(&self.client.get(&url).send().await?.text().await?)?;
         Ok(desc.description)
+    }
+
+    pub fn host(&self) -> &String {
+        &self.host
     }
 }
