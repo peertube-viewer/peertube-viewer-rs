@@ -4,6 +4,7 @@ use reqwest::{Client, Error, Method};
 use serde_json;
 
 use peertube_ser::search::Search;
+use peertube_ser::video::Description;
 
 use crate::video::Video;
 
@@ -22,7 +23,7 @@ impl Instance {
 
     pub async fn search_videos<'s>(
         &'s self,
-        query: &str,
+        query: &String,
     ) -> Result<Vec<Video<'s>>, Box<dyn error::Error>> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/search/videos");
@@ -38,11 +39,36 @@ impl Instance {
         )?;
         let mut res = Vec::new();
         for video in search_res.data.drain(..) {
-            if let (Some(name), Some(uuid)) = (video.name, video.uuid) {
-                res.push(Video::new(&self, name, uuid));
+            if let (Some(name), Some(uuid), Some(mut duration)) =
+                (video.name, video.uuid, video.duration)
+            {
+                if duration < 0 {
+                    continue;
+                };
+                res.push(Video::new(
+                    &self,
+                    name,
+                    uuid,
+                    duration as u64,
+                    video.description,
+                ));
             }
         }
 
         Ok(res)
+    }
+
+    pub async fn video_description<'s>(
+        &'s self,
+        uuid: &String,
+    ) -> Result<Option<String>, Box<dyn error::Error>> {
+        let mut url = self.host.clone();
+        url.push_str("/api/v1/videos/");
+        url.push_str(uuid);
+        url.push_str("/description");
+
+        let desc: Description =
+            serde_json::from_str(&self.client.get(&url).send().await?.text().await?)?;
+        Ok(desc.description)
     }
 }
