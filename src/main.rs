@@ -3,7 +3,6 @@ extern crate rustyline;
 
 use peertube_api::Instance;
 
-use std::process::Stdio;
 use tokio::process::Command;
 
 #[tokio::main]
@@ -13,7 +12,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(line) => line,
         Err(_) => panic!("No input"),
     };
-    let mut inst = Instance::new("https://video.ploud.fr".to_string());
+    let inst = Instance::new("https://video.ploud.fr".to_string());
     let search_results = inst.search_videos(&query).await.unwrap();
     for (id, video) in search_results.iter().enumerate() {
         println!(

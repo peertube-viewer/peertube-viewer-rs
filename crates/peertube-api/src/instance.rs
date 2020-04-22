@@ -1,6 +1,6 @@
 use std::error;
 
-use reqwest::{Client, Error, Method};
+use reqwest::Client;
 use serde_json;
 
 use peertube_ser::search::Search;
@@ -21,10 +21,10 @@ impl Instance {
         }
     }
 
-    pub async fn search_videos<'s>(
-        &'s self,
-        query: &String,
-    ) -> Result<Vec<Video<'s>>, Box<dyn error::Error>> {
+    pub async fn search_videos(
+        &self,
+        query: &str,
+    ) -> Result<Vec<Video<'_>>, Box<dyn error::Error>> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/search/videos");
         let mut search_res: Search = serde_json::from_str(
@@ -43,7 +43,7 @@ impl Instance {
                 (video.name, video.uuid, video.duration)
             {
                 if duration < 0 {
-                    continue;
+                    duration = 0;
                 };
                 res.push(Video::new(
                     &self,
@@ -59,9 +59,9 @@ impl Instance {
         Ok(res)
     }
 
-    pub async fn video_description<'s>(
-        &'s self,
-        uuid: &String,
+    pub async fn video_description(
+        &self,
+        uuid: &str,
     ) -> Result<Option<String>, Box<dyn error::Error>> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/videos/");
