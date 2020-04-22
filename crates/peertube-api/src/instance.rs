@@ -1,4 +1,5 @@
 use std::error;
+use std::rc::Rc;
 
 use reqwest::Client;
 use serde_json;
@@ -14,21 +15,21 @@ pub struct Instance {
 }
 
 impl Instance {
-    pub fn new(host: String) -> Instance {
-        Instance {
+    pub fn new(host: String) -> Rc<Instance> {
+        Rc::new(Instance {
             client: Client::new(),
             host,
-        }
+        })
     }
 
     pub async fn search_videos(
-        &self,
+        self: &Rc<Instance>,
         query: &str,
-    ) -> Result<Vec<Video<'_>>, Box<dyn error::Error>> {
+    ) -> Result<Vec<Video>, Box<dyn error::Error>> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/search/videos");
         let mut search_res: Search = serde_json::from_str(
-            &self
+            &*self
                 .client
                 .get(&url)
                 .query(&[("search", query)])
@@ -46,7 +47,7 @@ impl Instance {
                     duration = 0;
                 };
                 res.push(Video::new(
-                    &self,
+                    self.clone(),
                     name,
                     uuid,
                     duration as u64,
@@ -60,7 +61,7 @@ impl Instance {
     }
 
     pub async fn video_description(
-        &self,
+        self: &Rc<Instance>,
         uuid: &str,
     ) -> Result<Option<String>, Box<dyn error::Error>> {
         let mut url = self.host.clone();
@@ -69,7 +70,7 @@ impl Instance {
         url.push_str("/description");
 
         let desc: Description =
-            serde_json::from_str(&self.client.get(&url).send().await?.text().await?)?;
+            serde_json::from_str(&*self.client.get(&url).send().await?.text().await?)?;
         Ok(desc.description)
     }
 

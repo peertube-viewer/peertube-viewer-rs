@@ -2,11 +2,12 @@ use chrono::{DateTime, FixedOffset};
 use tokio::sync::Mutex;
 
 use std::error;
+use std::rc::Rc;
 
 use crate::instance::Instance;
 
-pub struct Video<'i> {
-    instance: &'i Instance,
+pub struct Video {
+    instance: Rc<Instance>,
     name: String,
     uuid: String,
     duration: u64,
@@ -15,15 +16,15 @@ pub struct Video<'i> {
     description: Mutex<Option<Option<String>>>,
 }
 
-impl<'s> Video<'s> {
+impl Video {
     pub fn new(
-        instance: &'s Instance,
+        instance: Rc<Instance>,
         name: String,
         uuid: String,
         duration: u64,
         published: String,
         short_desc: Option<String>,
-    ) -> Video<'s> {
+    ) -> Video {
         Video {
             instance,
             name,
