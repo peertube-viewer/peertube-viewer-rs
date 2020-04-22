@@ -1,5 +1,8 @@
 use std::error;
-use std::rc::Rc;
+#[cfg(not(feature = "send"))]
+use std::rc::Rc as FeaturedRc;
+#[cfg(feature = "send")]
+use std::sync::Arc as FeaturedRc;
 
 use reqwest::Client;
 use serde_json;
@@ -15,15 +18,15 @@ pub struct Instance {
 }
 
 impl Instance {
-    pub fn new(host: String) -> Rc<Instance> {
-        Rc::new(Instance {
+    pub fn new(host: String) -> FeaturedRc<Instance> {
+        FeaturedRc::new(Instance {
             client: Client::new(),
             host,
         })
     }
 
     pub async fn search_videos(
-        self: &Rc<Instance>,
+        self: &FeaturedRc<Instance>,
         query: &str,
     ) -> Result<Vec<Video>, Box<dyn error::Error>> {
         let mut url = self.host.clone();
@@ -61,7 +64,7 @@ impl Instance {
     }
 
     pub async fn video_description(
-        self: &Rc<Instance>,
+        self: &FeaturedRc<Instance>,
         uuid: &str,
     ) -> Result<Option<String>, Box<dyn error::Error>> {
         let mut url = self.host.clone();

@@ -2,12 +2,15 @@ use chrono::{DateTime, FixedOffset};
 use tokio::sync::Mutex;
 
 use std::error;
-use std::rc::Rc;
+#[cfg(not(feature = "send"))]
+use std::rc::Rc as FeaturedRc;
+#[cfg(feature = "send")]
+use std::sync::Arc as FeaturedRc;
 
 use crate::instance::Instance;
 
 pub struct Video {
-    instance: Rc<Instance>,
+    instance: FeaturedRc<Instance>,
     name: String,
     uuid: String,
     duration: u64,
@@ -18,7 +21,7 @@ pub struct Video {
 
 impl Video {
     pub fn new(
-        instance: Rc<Instance>,
+        instance: FeaturedRc<Instance>,
         name: String,
         uuid: String,
         duration: u64,
