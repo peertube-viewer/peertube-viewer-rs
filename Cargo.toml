@@ -1,0 +1,14 @@
+[package]
+name = "peertube-viewer"
+version = "0.1.0"
+authors = ["Sosthène Guédon <sosthene.gued@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+peertube-api = {version = "*", path = "crates/peertube-api"}
+tokio = { version = "0.2.0", features = ["full"] }
+rustyline = "6.1.1"
+
+
+[workspace]
+members = ["crates/peertube-api/", "crates/peertube-ser/"]
