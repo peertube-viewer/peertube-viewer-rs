@@ -94,12 +94,19 @@ fn pretty_date(d: &Option<DateTime<FixedOffset>>) -> String {
 }
 
 fn pretty_duration(d: u64) -> String {
-    if d < 60 {
-        format!("{}", d)
-    } else if d < 3600 {
-        format!("{}:{}", d / 60, d % 60)
-    } else {
-        format!("{}:{}:{}", d / 3600, (d % 3600) / 60, d % 60)
+    match d {
+        d if d < 10 => format!("00:0{}", d),
+        d if d < 60 => format!("00:{}", d),
+        d if d < 600 && d % 60 < 10 => format!("0{}:0{}", d / 60, d % 60),
+        d if d < 600 => format!("0{}:{}", d / 60, d % 60),
+        d if d < 3600 && d % 60 < 10 => format!("{}:0{}", d / 60, d % 60),
+        d if d < 3600 => format!("{}:{}", d / 60, d % 60),
+        d if d % 3600 < 600 && d % 60 < 10 => {
+            format!("{}:0{}:0{}", d / 3600, (d % 3600) / 60, d % 60)
+        }
+        d if d % 3600 < 600 => format!("{}:0{}:{}", d / 3600, (d % 3600) / 60, d % 60),
+        d if d % 60 < 10 => format!("{}:{}:0{}", d / 3600, (d % 3600) / 60, d % 60),
+        d => format!("{}:{}:{}", d / 3600, (d % 3600) / 60, d % 60),
     }
 }
 
