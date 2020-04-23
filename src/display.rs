@@ -89,7 +89,7 @@ impl Display {
 }
 
 fn pretty_date(d: &Option<DateTime<FixedOffset>>) -> String {
-    d.map(|t| t.format("%a:%b:%Y").to_string())
+    d.map(|t| t.format("%a %b %Y").to_string())
         .unwrap_or_default()
 }
 
