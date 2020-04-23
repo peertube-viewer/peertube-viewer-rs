@@ -9,6 +9,7 @@ use std::rc::Rc as FeaturedRc;
 use std::sync::Arc as FeaturedRc;
 
 use crate::instance::Instance;
+use std::time::Duration;
 
 pub struct Video {
     instance: FeaturedRc<Instance>,
@@ -21,25 +22,6 @@ pub struct Video {
 }
 
 impl Video {
-    pub fn new(
-        instance: FeaturedRc<Instance>,
-        name: String,
-        uuid: String,
-        duration: u64,
-        published: String,
-        short_desc: Option<String>,
-    ) -> Video {
-        Video {
-            instance,
-            name,
-            uuid,
-            duration,
-            published: DateTime::parse_from_rfc3339(&published).ok(),
-            short_desc,
-            description: Mutex::new(None),
-        }
-    }
-
     pub fn maybe_from(i: &FeaturedRc<Instance>, v: peertube_ser::search::Video) -> Option<Video> {
         if let (Some(name), Some(uuid), Some(mut duration)) = (v.name, v.uuid, v.duration) {
             if duration < 0 {

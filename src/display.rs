@@ -27,7 +27,7 @@ impl Display {
                 "{}: {}  [{}] {}",
                 id + 1,
                 v.name(),
-                v.duration(),
+                pretty_duration(v.duration()),
                 pretty_date(v.published())
             )
         }
@@ -45,7 +45,7 @@ impl Display {
         }
         self.print_centered("INFORMATIONS");
         self.line('=');
-        println!("duration : {}", video.duration());
+        println!("duration : {}", pretty_duration(video.duration()));
         //println!("views    : {}",video.get_views());
         //println!("likes    : {}",video.get_likes());
         //println!("dislikes : {}",video.get_dislikes());
@@ -75,4 +75,14 @@ impl Display {
 fn pretty_date(d: &Option<DateTime<FixedOffset>>) -> String {
     d.map(|t| t.format("%a:%b:%Y").to_string())
         .unwrap_or_default()
+}
+
+fn pretty_duration(d: u64) -> String {
+    if d < 60 {
+        format!("{}", d)
+    } else if d < 3600 {
+        format!("{}:{}", d / 60, d % 60)
+    } else {
+        format!("{}:{}:{}", d / 3600, (d % 3600) / 60, d % 60)
+    }
 }
