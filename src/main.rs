@@ -25,7 +25,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut rl = input::Editor::new();
     let display = display::Display::new();
 
-    let query = rl.readline(">> ").await?.unwrap();
+    let query = rl.readline_static(">> ").await?.unwrap();
 
     let inst = Instance::new("https://video.ploud.fr".to_string());
     let mut search_results = inst.search_videos(&query).await.unwrap();
@@ -40,7 +40,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     }
     display.search_results(&results_rc);
 
-    let choice = rl.readline(">> ").await?.unwrap();
+    let choice = rl.readline_static(">> ").await?.unwrap();
 
     let choice = choice.parse::<usize>().unwrap();
     let video = &results_rc[choice - 1];
