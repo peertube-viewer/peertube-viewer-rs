@@ -7,14 +7,21 @@ use std::thread;
 
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
+use tokio::runtime;
 use tokio::stream::StreamExt;
 use tokio::sync::mpsc as async_mpsc;
 use tokio::task::{spawn_local, LocalSet};
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let local = LocalSet::new();
-    local.run_until(async { run().await }).await
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut basic_rt = runtime::Builder::new()
+        .enable_all()
+        .basic_scheduler()
+        .build()?;
+    basic_rt.block_on(async {
+        let local = LocalSet::new();
+        local.run_until(async { run().await }).await
+    });
+    Ok(())
 }
 
 async fn run() -> Result<(), Box<dyn std::error::Error>> {
