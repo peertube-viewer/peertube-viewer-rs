@@ -4,7 +4,6 @@ use rustyline::Editor;
 
 use std::rc::Rc;
 use std::sync::{mpsc as sync_mpsc, Arc, Mutex};
-use std::thread;
 
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
@@ -14,6 +13,7 @@ use tokio::sync::mpsc as async_mpsc;
 use tokio::task::{spawn_blocking, spawn_local, LocalSet};
 
 mod display;
+mod input;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut basic_rt = runtime::Builder::new()
@@ -28,16 +28,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn run() -> Result<(), Box<dyn std::error::Error>> {
-    let mut rl = Arc::new(Mutex::new(Editor::<()>::new()));
+    let mut rl = input::Editor::new();
     let display = display::Display::new();
 
-    let rl_cloned = rl.clone();
-    let query = spawn_blocking(move || {
-        let mut ed = rl_cloned.lock().unwrap();
-        ed.readline(">> ")
-    })
-    .await?
-    .unwrap();
+    let query = rl.readline(">> ").await?.unwrap();
 
     let inst = Instance::new("https://video.ploud.fr".to_string());
     let mut search_results = inst.search_videos(&query).await.unwrap();
@@ -52,13 +46,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     }
     display.search_results(&results_rc);
 
-    let rl_cloned = rl.clone();
-    let choice = spawn_blocking(move || {
-        let mut ed = rl_cloned.lock().unwrap();
-        ed.readline(">> ")
-    })
-    .await?
-    .unwrap();
+    let choice = rl.readline(">> ").await?.unwrap();
 
     let choice = choice.parse::<usize>().unwrap();
     let video = &results_rc[choice - 1];
