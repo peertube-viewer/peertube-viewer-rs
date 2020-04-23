@@ -45,7 +45,7 @@ impl Display {
         }
         self.print_centered("INFORMATIONS");
         self.line('=');
-        println!("duration : {}", pretty_duration(video.duration()));
+        println!("duration  : {}", pretty_duration(video.duration()));
         //println!("views    : {}",video.get_views());
         //println!("likes    : {}",video.get_likes());
         //println!("dislikes : {}",video.get_dislikes());
