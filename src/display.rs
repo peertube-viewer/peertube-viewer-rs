@@ -1,5 +1,6 @@
 use peertube_api::Video;
 
+use chrono::{DateTime, FixedOffset};
 use termion::{color, style};
 
 use std::rc::Rc;
@@ -27,9 +28,7 @@ impl Display {
                 id + 1,
                 v.name(),
                 v.duration(),
-                v.published()
-                    .map(|t| t.format("%a:%b:%Y").to_string())
-                    .unwrap_or_default()
+                pretty_date(v.published())
             )
         }
     }
@@ -50,7 +49,7 @@ impl Display {
         //println!("views    : {}",video.get_views());
         //println!("likes    : {}",video.get_likes());
         //println!("dislikes : {}",video.get_dislikes());
-        //println!("release  : {}",clean_date(video.get_date()));
+        println!("released  : {}", pretty_date(video.published()));
         //println!("channel  : {}",video.get_channel_name());
         //println!("author   : {}",video.get_author_name());
         self.line('=');
@@ -71,4 +70,9 @@ impl Display {
         let mut before = vec![' '; (self.cols - len) / 2].iter().collect::<String>();
         println!("{}{}", before, s);
     }
+}
+
+fn pretty_date(d: &Option<DateTime<FixedOffset>>) -> String {
+    d.map(|t| t.format("%a:%b:%Y").to_string())
+        .unwrap_or_default()
 }

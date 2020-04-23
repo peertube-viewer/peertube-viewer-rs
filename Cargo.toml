@@ -9,6 +9,7 @@ peertube-api = {version = "*", path = "crates/peertube-api"}
 cli-ui= {version = "*", path = "crates/cli-ui"}
 tokio = { version = "0.2", features = ["full"] }
 termion = "1.5"
+chrono = "0.4"
 
 
 [workspace]

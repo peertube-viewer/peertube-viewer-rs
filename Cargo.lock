@@ -639,6 +639,7 @@ dependencies = [
 name = "peertube-viewer"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "cli-ui",
  "peertube-api",
  "termion",
