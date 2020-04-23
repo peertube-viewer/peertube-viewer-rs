@@ -22,11 +22,27 @@ impl Display {
     }
 
     pub fn search_results(&self, videos: &[Rc<Video>]) {
+        let mut lengths = Vec::new();
+        let mut max_len = 0;
+        for v in videos.iter() {
+            let len = v.name().chars().count();
+            if len > max_len {
+                max_len = len;
+            }
+            lengths.push(len);
+        }
+
         for (id, v) in videos.iter().enumerate() {
+            let spacing = " ".to_string().repeat(max_len - lengths[id]);
+            let colon_spacing = " "
+                .to_string()
+                .repeat(display_length(videos.len() - 1) - display_length(id + 1));
             println!(
-                "{}: {}  [{}] {}",
+                "{}{}: {} {}[{}] {}",
                 id + 1,
+                colon_spacing,
                 v.name(),
+                spacing,
                 pretty_duration(v.duration()),
                 pretty_date(v.published())
             )
@@ -85,4 +101,14 @@ fn pretty_duration(d: u64) -> String {
     } else {
         format!("{}:{}:{}", d / 3600, (d % 3600) / 60, d % 60)
     }
+}
+
+fn display_length(mut i: usize) -> usize {
+    let mut len = 0;
+    while i >= 10 {
+        len += 1;
+        i /= 10;
+    }
+
+    len
 }
