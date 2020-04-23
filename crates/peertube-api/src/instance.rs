@@ -43,20 +43,8 @@ impl Instance {
         )?;
         let mut res = Vec::new();
         for video in search_res.data.drain(..) {
-            if let (Some(name), Some(uuid), Some(mut duration)) =
-                (video.name, video.uuid, video.duration)
-            {
-                if duration < 0 {
-                    duration = 0;
-                };
-                res.push(Video::new(
-                    self.clone(),
-                    name,
-                    uuid,
-                    duration as u64,
-                    video.publishedAt.unwrap_or_default(),
-                    video.description,
-                ));
+            if let Some(v) = Video::maybe_from(self, video) {
+                res.push(v);
             }
         }
 

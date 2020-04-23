@@ -2,6 +2,7 @@ use chrono::{DateTime, FixedOffset};
 use tokio::sync::Mutex;
 
 use std::error;
+
 #[cfg(not(feature = "send"))]
 use std::rc::Rc as FeaturedRc;
 #[cfg(feature = "send")]
@@ -36,6 +37,28 @@ impl Video {
             published: DateTime::parse_from_rfc3339(&published).ok(),
             short_desc,
             description: Mutex::new(None),
+        }
+    }
+
+    pub fn maybe_from(i: &FeaturedRc<Instance>, v: peertube_ser::search::Video) -> Option<Video> {
+        if let (Some(name), Some(uuid), Some(mut duration)) = (v.name, v.uuid, v.duration) {
+            if duration < 0 {
+                duration = 0;
+            };
+            Some(Video {
+                instance: i.clone(),
+                name,
+                uuid,
+                duration: duration as u64,
+                published: v
+                    .publishedAt
+                    .map(|d| DateTime::parse_from_rfc3339(&d).ok())
+                    .flatten(),
+                short_desc: v.description,
+                description: Mutex::new(None),
+            })
+        } else {
+            None
         }
     }
 
