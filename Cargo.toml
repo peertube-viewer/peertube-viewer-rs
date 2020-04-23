@@ -6,11 +6,11 @@ edition = "2018"
 
 [dependencies]
 peertube-api = {version = "*", path = "crates/peertube-api"}
-cli-ui= {version = "*", path = "crates/cli-ui"}
 tokio = { version = "0.2", features = ["full"] }
 termion = "1.5"
 chrono = "0.4"
+rustyline = "6.1.1"
 
 
 [workspace]
-members = ["crates/peertube-api/", "crates/peertube-ser/", "crates/cli-ui/"]
+members = ["crates/peertube-api/", "crates/peertube-ser/"]

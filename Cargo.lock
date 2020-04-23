@@ -83,14 +83,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cli-ui"
-version = "0.1.0"
-dependencies = [
- "rustyline",
- "tokio",
-]
-
-[[package]]
 name = "constant_time_eq"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -640,8 +632,8 @@ name = "peertube-viewer"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "cli-ui",
  "peertube-api",
+ "rustyline",
  "termion",
  "tokio",
 ]
