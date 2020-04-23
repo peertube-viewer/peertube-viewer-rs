@@ -14,7 +14,7 @@ impl Editor {
     }
 
     pub async fn readline(
-        &mut self,
+        &self,
         promt: &str,
     ) -> Result<rustyline::Result<String>, Box<dyn std::error::Error>> {
         let rl_cloned = self.rl.clone();

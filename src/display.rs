@@ -21,7 +21,7 @@ impl Display {
         Display { cols, rows }
     }
 
-    pub fn search_results(&self, videos: &Vec<Rc<Video>>) {
+    pub fn search_results(&self, videos: &[Rc<Video>]) {
         for (id, v) in videos.iter().enumerate() {
             println!(
                 "{}: {}  [{}] {}",
