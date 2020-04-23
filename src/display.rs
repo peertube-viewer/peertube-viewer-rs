@@ -43,7 +43,7 @@ impl Display {
                 colon_spacing,
                 v.name(),
                 spacing,
-                pretty_duration(v.duration()),
+                pretty_duration(*v.duration()),
                 pretty_date(v.published())
             )
         }
@@ -54,18 +54,20 @@ impl Display {
         self.print_centered(video.name());
         self.line('=');
         if let Ok(Some(d)) = video.description().await {
-            self.print_centered("DESCRIPTION");
-            self.line('=');
-            println!("{}", d);
-            self.line('=');
+            if !d.is_empty() {
+                self.print_centered("DESCRIPTION");
+                self.line('=');
+                println!("{}", d);
+                self.line('=');
+            }
         }
         self.print_centered("INFORMATIONS");
         self.line('=');
-        println!("duration  : {}", pretty_duration(video.duration()));
-        //println!("views    : {}",video.get_views());
-        //println!("likes    : {}",video.get_likes());
-        //println!("dislikes : {}",video.get_dislikes());
-        println!("released  : {}", pretty_date(video.published()));
+        println!("duration : {}", pretty_duration(*video.duration()));
+        println!("views    : {}", video.views());
+        println!("likes    : {}", video.likes());
+        println!("dislikes : {}", video.dislikes());
+        println!("released : {}", pretty_date(video.published()));
         //println!("channel  : {}",video.get_channel_name());
         //println!("author   : {}",video.get_author_name());
         self.line('=');

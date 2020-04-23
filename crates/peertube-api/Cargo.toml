@@ -12,6 +12,7 @@ send = []
 peertube-ser = {version = "*", path = "../peertube-ser"}
 
 
+derive-getters = "0.1.0"
 tokio = { version = "0.2.0", features = ["full"] }
 reqwest = "0.10.4"
 serde =  "1.0"
