@@ -12,6 +12,8 @@ use tokio::stream::StreamExt;
 use tokio::sync::mpsc as async_mpsc;
 use tokio::task::{spawn_local, LocalSet};
 
+mod display;
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut basic_rt = runtime::Builder::new()
         .enable_all()
@@ -26,6 +28,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut rl = Editor::new();
+    let display = display::Display::new();
 
     let query = rl.prompt(">> ".to_string()).await.unwrap();
 
@@ -33,16 +36,6 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut search_results = inst.search_videos(&query).await.unwrap();
     let mut results_rc = Vec::new();
     for (id, video) in search_results.drain(..).enumerate() {
-        println!(
-            "{}:{}-{}-{}",
-            id + 1,
-            video.name(),
-            video.duration(),
-            video
-                .published()
-                .map(|t| t.format("%a:%b:%Y").to_string())
-                .unwrap_or_default()
-        );
         let video_stored = Rc::new(video);
         let video_sent = video_stored.clone();
         results_rc.push(video_stored);
@@ -50,19 +43,14 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
             video_sent.description().await;
         });
     }
+    display.search_results(&results_rc);
+
     let choice = rl.prompt(">> ".to_string()).await.unwrap();
 
     let choice = choice.parse::<usize>().unwrap();
     let video = &results_rc[choice - 1];
-    println!("Playing: {}", video.name());
-    println!(
-        "{}",
-        video
-            .description()
-            .await?
-            .as_ref()
-            .get_or_insert(&"".to_string())
-    );
+    display.info(video).await;
+
     let mut video_url = "https://video.ploud.fr".to_string();
     video_url.push_str("/videos/watch/");
     video_url.push_str(video.uuid());
