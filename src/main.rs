@@ -34,6 +34,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         let video_stored = Rc::new(video);
         let video_sent = video_stored.clone();
         results_rc.push(video_stored);
+        #[allow(unused_must_use)]
         spawn_local(async move {
             video_sent.description().await;
         });
