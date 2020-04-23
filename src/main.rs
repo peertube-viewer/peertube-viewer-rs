@@ -1,13 +1,14 @@
-extern crate peertube_api;
-extern crate rustyline;
-
+use cli_ui::Editor;
 use peertube_api::Instance;
 
 use std::rc::Rc;
+use std::sync::mpsc as sync_mpsc;
+use std::thread;
 
 use tokio::io::{self, AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 use tokio::stream::StreamExt;
+use tokio::sync::mpsc as async_mpsc;
 use tokio::task::{spawn_local, LocalSet};
 
 #[tokio::main]
@@ -17,13 +18,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn run() -> Result<(), Box<dyn std::error::Error>> {
-    let mut stdin = BufReader::new(io::stdin());
-    let mut stdout = io::stdout();
-    let mut std_lines = stdin.lines();
+    let mut rl = Editor::new();
 
-    stdout.write_all(b">> ").await;
-    stdout.flush().await;
-    let query = std_lines.next().await.unwrap()?;
+    let query = rl.prompt(">> ".to_string()).await.unwrap();
+
     let inst = Instance::new("https://video.ploud.fr".to_string());
     let mut search_results = inst.search_videos(&query).await.unwrap();
     let mut results_rc = Vec::new();
@@ -45,9 +43,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
             video_sent.description().await;
         });
     }
-    stdout.write_all(b">> ").await;
-    stdout.flush().await;
-    let choice = std_lines.next().await.unwrap()?;
+    let choice = rl.prompt(">> ".to_string()).await.unwrap();
 
     let choice = choice.parse::<usize>().unwrap();
     let video = &results_rc[choice - 1];
