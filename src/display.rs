@@ -56,7 +56,7 @@ impl Display {
     }
 
     fn line(&self, c: char) {
-        let line_str = vec![c; self.cols].iter().collect::<String>();
+        let line_str = c.to_string().repeat(self.cols);
         println!("{}", line_str);
     }
 
@@ -67,7 +67,7 @@ impl Display {
             return;
         }
 
-        let mut before = vec![' '; (self.cols - len) / 2].iter().collect::<String>();
+        let before = ' '.to_string().repeat((self.cols - len) / 2);
         println!("{}{}", before, s);
     }
 }
