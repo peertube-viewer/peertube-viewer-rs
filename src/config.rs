@@ -13,6 +13,7 @@ struct TorrentConf {
 struct PlayerConf {
     pub client: String,
     pub args: String,
+    pub use_raw_urls: bool,
 }
 
 pub struct Config {
@@ -22,7 +23,6 @@ pub struct Config {
     listed_instances: HashSet<String>,
 
     select_quality: bool,
-    use_raw_url: bool,
 
     max_hist_lines: usize,
 }
@@ -65,18 +65,26 @@ impl Config {
             panic!("Config file is not a table");
         };
 
-        let (config_player_cmd, config_player_args) =
+        let (config_player_cmd, config_player_args, use_raw_urls) =
             if let Some(Value::Table(t)) = config.get("player") {
                 (
                     t.get("command")
-                        .map(|cmd| cmd.to_string())
+                        .map(|cmd| cmd.as_str())
+                        .flatten()
+                        .map(|s| s.to_string())
                         .unwrap_or("mpv".to_string()),
                     t.get("args")
-                        .map(|cmd| cmd.to_string())
+                        .map(|cmd| cmd.as_str())
+                        .flatten()
+                        .map(|s| s.to_string())
                         .unwrap_or("".to_string()),
+                    t.get("use-raw-urls")
+                        .map(|b| b.as_bool())
+                        .flatten()
+                        .unwrap_or(false),
                 )
             } else {
-                ("mpv".to_string(), "".to_string())
+                ("mpv".to_string(), "".to_string(), false)
             };
         let client = cli_args
             .value_of("player")
@@ -86,10 +94,20 @@ impl Config {
             .value_of("player args")
             .map(|c| c.to_string())
             .unwrap_or(config_player_args);
-        let player = PlayerConf { client, args };
+        let use_raw_urls = cli_args.is_present("USERAWURL") & use_raw_urls;
+        let player = PlayerConf {
+            client,
+            args,
+            use_raw_urls,
+        };
 
         let torrent_config = if let Some(Value::Table(t)) = config.get("torrent") {
-            if let Some(s) = t.get("command").map(|cmd| cmd.to_string()) {
+            if let Some(s) = t
+                .get("command")
+                .map(|cmd| cmd.as_str())
+                .flatten()
+                .map(|s| s.to_string())
+            {
                 Some(TorrentConf {
                     client: s,
                     args: t
@@ -143,12 +161,12 @@ impl Default for Config {
             player: PlayerConf {
                 client: "mpv".to_string(),
                 args: String::new(),
+                use_raw_urls: false,
             },
             instance: "video.ploud.fr".to_string(),
             torrent: None,
             listed_instances: HashSet::new(),
             select_quality: false,
-            use_raw_url: false,
             max_hist_lines: 2000,
         }
     }
