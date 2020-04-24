@@ -29,10 +29,10 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let config = config::Config::new();
     let mut rl = input::Editor::new();
     let display = display::Display::new();
+    let inst = Instance::new(config.instance().to_string());
 
     let query = rl.readline_static(">> ").await?.unwrap();
 
-    let inst = Instance::new("https://video.ploud.fr".to_string());
     let mut search_results = inst.search_videos(&query).await.unwrap();
     let mut results_rc = Vec::new();
     for video in search_results.drain(..) {

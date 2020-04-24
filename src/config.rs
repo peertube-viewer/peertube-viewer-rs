@@ -143,14 +143,51 @@ impl Config {
             Some(TorrentConf { client, args })
         };
 
+        let instance = if let Some(i) = cli_args.value_of("instance") {
+            i
+        } else {
+            match config.get("instance") {
+                Some(Value::Table(t)) => {
+                    if let Some(Value::String(s)) = t.get("main") {
+                        s
+                    } else {
+                        "video.ploud.fr"
+                    }
+                }
+                _ => "video.ploud.fr",
+            }
+        };
+
         let mut temp = Config::default();
         temp.player = player;
+        temp.instance = Config::correct_instance(instance);
         temp.torrent = torrent.map(|t| (t, cli_args.is_present("TORRENT")));
         temp
     }
 
     pub fn player(&self) -> &str {
         &self.player.client
+    }
+
+    pub fn instance(&self) -> &str {
+        &self.instance
+    }
+
+    fn correct_instance(s: &str) -> String {
+        let mut s = if s.starts_with("https://") {
+            s.to_string()
+        } else if s.starts_with("http://") {
+            format!("https://{}", &s[7..])
+        } else {
+            format!("https://{}", s)
+        };
+        if let Some(c) = s.pop() {
+            if c != '/' {
+                s.push(c);
+            }
+        }
+
+        s
     }
 }
 
