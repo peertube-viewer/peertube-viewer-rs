@@ -30,6 +30,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut rl = input::Editor::new();
     let display = display::Display::new();
     let inst = Instance::new(config.instance().to_string());
+    display.welcome(config.instance());
 
     let query = rl.readline_static(">> ").await?.unwrap();
 

@@ -49,6 +49,12 @@ impl Display {
         }
     }
 
+    pub fn welcome(&self, instance: &str) {
+        self.line('=');
+        self.print_centered(&format!("Connecting to: {}", instance));
+        self.line('=');
+    }
+
     pub async fn info(&self, video: &Video) {
         self.line('=');
         self.print_centered(video.name());
