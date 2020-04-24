@@ -7,7 +7,7 @@ use std::sync::Arc as FeaturedRc;
 use reqwest::Client;
 
 use peertube_ser::search::Search;
-use peertube_ser::video::Description;
+use peertube_ser::video::{Description, File, Video as FullVideo};
 
 use crate::video::Video;
 
@@ -62,6 +62,19 @@ impl Instance {
         let desc: Description =
             serde_json::from_str(&*self.client.get(&url).send().await?.text().await?)?;
         Ok(desc.description)
+    }
+
+    pub async fn video_complete(
+        self: &FeaturedRc<Instance>,
+        uuid: &str,
+    ) -> Result<Vec<File>, Box<dyn error::Error>> {
+        let mut url = self.host.clone();
+        url.push_str("/api/v1/videos/");
+        url.push_str(uuid);
+
+        let video: FullVideo =
+            serde_json::from_str(&*self.client.get(&url).send().await?.text().await?)?;
+        Ok(video.files)
     }
 
     pub fn host(&self) -> &String {

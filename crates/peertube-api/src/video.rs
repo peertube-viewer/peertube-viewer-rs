@@ -10,7 +10,34 @@ use std::rc::Rc as FeaturedRc;
 use std::sync::Arc as FeaturedRc;
 
 use crate::instance::Instance;
-use peertube_ser::search;
+use peertube_ser::{search, video};
+
+#[derive(Clone, Debug)]
+pub struct File {
+    magnetUri: String,
+    resoltion_id: i64,
+    resolution: String,
+    size: i64,
+    torrentUrl: String,
+    torrentDownloadUrl: String,
+    fileUrl: String,
+    fileDownloadUrl: String,
+}
+
+impl From<video::File> for File {
+    fn from(v: video::File) -> File {
+        File {
+            magnetUri: v.magnetUri,
+            resoltion_id: v.resolution.id,
+            resolution: v.resolution.label,
+            size: v.size,
+            torrentUrl: v.torrentUrl,
+            torrentDownloadUrl: v.torrentDownloadUrl,
+            fileUrl: v.fileUrl,
+            fileDownloadUrl: v.fileDownloadUrl,
+        }
+    }
+}
 
 #[derive(Getters)]
 pub struct Video {
@@ -26,6 +53,8 @@ pub struct Video {
     short_desc: Option<String>,
     #[getter(skip)]
     description: Mutex<Option<Option<String>>>,
+    #[getter(skip)]
+    files: Mutex<Option<Vec<File>>>,
     #[getter(skip)]
     channel: search::Channel,
     #[getter(skip)]
@@ -49,6 +78,7 @@ impl Video {
                     .flatten(),
                 short_desc: v.description,
                 description: Mutex::new(None),
+                files: Mutex::new(None),
                 channel: v.channel,
                 account: v.account,
             })
@@ -62,6 +92,21 @@ impl Video {
         if guard.is_none() {
             *guard = Some(self.instance.video_description(&self.uuid).await?);
         }
+        Ok(guard.as_ref().unwrap().clone())
+    }
+    pub async fn files(&self) -> Result<Vec<File>, Box<dyn error::Error>> {
+        let mut guard = self.files.lock().await;
+        if guard.is_none() {
+            *guard = Some(
+                self.instance
+                    .video_complete(&self.uuid)
+                    .await?
+                    .drain(..)
+                    .map(|v| v.into())
+                    .collect(),
+            );
+        }
+        //TODO Implement returning an iterator to avoid unnecessary clone
         Ok(guard.as_ref().unwrap().clone())
     }
 
