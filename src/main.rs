@@ -7,6 +7,10 @@ use tokio::process::Command;
 use tokio::runtime;
 use tokio::task::{spawn_local, LocalSet};
 
+#[macro_use]
+extern crate clap;
+
+mod config;
 mod display;
 mod input;
 
@@ -22,6 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn run() -> Result<(), Box<dyn std::error::Error>> {
+    let config = config::Config::new();
     let mut rl = input::Editor::new();
     let display = display::Display::new();
 

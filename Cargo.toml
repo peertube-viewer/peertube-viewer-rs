@@ -10,6 +10,8 @@ tokio = { version = "0.2", features = ["full"] }
 termion = "1.5"
 chrono = "0.4"
 rustyline = "6.1.1"
+clap = "2.33.0" 
+toml = "0.5"
 
 
 [workspace]
