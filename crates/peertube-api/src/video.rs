@@ -1,4 +1,5 @@
 use chrono::{DateTime, FixedOffset};
+use derive_getters::Getters;
 use tokio::sync::Mutex;
 
 use std::error;
@@ -9,7 +10,7 @@ use std::rc::Rc as FeaturedRc;
 use std::sync::Arc as FeaturedRc;
 
 use crate::instance::Instance;
-use derive_getters::Getters;
+use peertube_ser::search;
 
 #[derive(Getters)]
 pub struct Video {
@@ -25,10 +26,14 @@ pub struct Video {
     short_desc: Option<String>,
     #[getter(skip)]
     description: Mutex<Option<Option<String>>>,
+    #[getter(skip)]
+    channel: search::Channel,
+    #[getter(skip)]
+    account: search::Channel,
 }
 
 impl Video {
-    pub fn maybe_from(i: &FeaturedRc<Instance>, v: peertube_ser::search::Video) -> Option<Video> {
+    pub fn maybe_from(i: &FeaturedRc<Instance>, v: search::Video) -> Option<Video> {
         if let (Some(name), Some(uuid)) = (v.name, v.uuid) {
             Some(Video {
                 instance: i.clone(),
@@ -44,6 +49,8 @@ impl Video {
                     .flatten(),
                 short_desc: v.description,
                 description: Mutex::new(None),
+                channel: v.channel,
+                account: v.account,
             })
         } else {
             None
@@ -56,6 +63,18 @@ impl Video {
             *guard = Some(self.instance.video_description(&self.uuid).await?);
         }
         Ok(guard.as_ref().unwrap().clone())
+    }
+
+    pub fn channel_display_name(&self) -> &str {
+        &self.channel.displayName
+    }
+
+    pub fn account_display_name(&self) -> &str {
+        &self.account.displayName
+    }
+
+    pub fn host(&self) -> &str {
+        &self.account.host
     }
 }
 

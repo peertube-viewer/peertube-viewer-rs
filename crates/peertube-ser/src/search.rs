@@ -3,11 +3,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Channel {
-    pub id: Option<i64>,
-    pub name: Option<String>,
-    pub displayName: Option<String>,
-    pub url: Option<String>,
-    pub host: Option<String>,
+    pub id: i64,
+    pub name: String,
+    pub displayName: String,
+    pub url: String,
+    pub host: String,
     pub Avatar: Option<Avatar>,
 }
 
