@@ -169,6 +169,10 @@ impl Config {
         &self.player.client
     }
 
+    pub fn player_args(&self) -> &str {
+        &self.player.args
+    }
+
     pub fn instance(&self) -> &str {
         &self.instance
     }
