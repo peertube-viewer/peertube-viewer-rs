@@ -58,7 +58,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     video_url.push_str(video.uuid());
     Command::new(config.player())
         .arg(video_url)
-        .arg(config.player_args())
+        .args(config.player_args())
         .spawn()
         .unwrap()
         .await?;

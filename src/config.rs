@@ -11,7 +11,7 @@ struct TorrentConf {
 
 struct PlayerConf {
     pub client: String,
-    pub args: String,
+    pub args: Vec<String>,
     pub use_raw_urls: bool,
 }
 
@@ -36,7 +36,7 @@ impl Config {
             (@arg PRINTDEFAULTCONFIG: --("print-default-config")  "print the default confing to stdout")
             (@arg SELECTQUALITY: --("select-quality") -s  "When playing a video with this option, the user will be prompted to chose the video quality")
             (@arg TORRENT:--("use-torrent")  "will download the video via the torrent downloader instead of playing it")
-            (@arg ("player args"):--("player-args")  +takes_value  "arguments to be passed to the player")
+            (@arg ("player args"):--("player-args") +takes_value ... "arguments to be passed to the player")
             (@arg player:-p --player +takes_value "player to play the videos with")
             (@arg ("torrent downloader"):--("torrent-downloader")  +takes_value   "choose the torrent software to download the videos with")
             (@arg ("torrent downloader arguments"):--("torrent-downloader-args")  +takes_value  "arguments to be passed to the torrent downloader")
@@ -73,25 +73,25 @@ impl Config {
                         .map(|s| s.to_string())
                         .unwrap_or("mpv".to_string()),
                     t.get("args")
-                        .map(|cmd| cmd.as_str())
+                        .map(|cmd| cmd.as_array())
                         .flatten()
-                        .map(|s| s.to_string())
-                        .unwrap_or("".to_string()),
+                        .map(|v| v.iter().map(|s| s.to_string()).collect())
+                        .unwrap_or_default(),
                     t.get("use-raw-urls")
                         .map(|b| b.as_bool())
                         .flatten()
                         .unwrap_or(false),
                 )
             } else {
-                ("mpv".to_string(), "".to_string(), false)
+                ("mpv".to_string(), Vec::new(), false)
             };
         let client = cli_args
             .value_of("player")
             .map(|c| c.to_string())
             .unwrap_or(config_player_cmd);
         let args = cli_args
-            .value_of("player args")
-            .map(|c| c.to_string())
+            .values_of("player args")
+            .map(|v| v.map(|s| s.to_string()).collect())
             .unwrap_or(config_player_args);
         let use_raw_urls = cli_args.is_present("USERAWURL") & use_raw_urls;
         let player = PlayerConf {
@@ -169,7 +169,7 @@ impl Config {
         &self.player.client
     }
 
-    pub fn player_args(&self) -> &str {
+    pub fn player_args(&self) -> &Vec<String> {
         &self.player.args
     }
 
@@ -200,7 +200,7 @@ impl Default for Config {
         Config {
             player: PlayerConf {
                 client: "mpv".to_string(),
-                args: String::new(),
+                args: Vec::new(),
                 use_raw_urls: false,
             },
             instance: "video.ploud.fr".to_string(),
