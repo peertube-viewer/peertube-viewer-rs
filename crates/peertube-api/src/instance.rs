@@ -5,7 +5,6 @@ use std::rc::Rc as FeaturedRc;
 use std::sync::Arc as FeaturedRc;
 
 use reqwest::Client;
-use serde_json;
 
 use peertube_ser::search::Search;
 use peertube_ser::video::Description;

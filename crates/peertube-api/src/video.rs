@@ -10,7 +10,6 @@ use std::sync::Arc as FeaturedRc;
 
 use crate::instance::Instance;
 use derive_getters::Getters;
-use std::time::Duration;
 
 #[derive(Getters)]
 pub struct Video {

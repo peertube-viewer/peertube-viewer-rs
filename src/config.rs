@@ -1,4 +1,3 @@
-use clap::{App, Arg};
 use toml::value::Value;
 
 use std::collections::HashSet;
@@ -48,7 +47,7 @@ impl Config {
         .get_matches();
 
         let home = env::split_paths(&env::var("HOME").unwrap())
-            .nth(0)
+            .next()
             .unwrap()
             .to_str()
             .unwrap()
