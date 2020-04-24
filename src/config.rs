@@ -36,7 +36,7 @@ impl Config {
             (@arg USERAWURL:--("use-raw-url")  "the raw url will be passed to the player. It may be neccessary for players without native support for peertube such as vlc. Some players (ex : mpv) may be able to show the video title in their interface if this option isn't used")
             (@arg PRINTDEFAULTCONFIG: --("print-default-config")  "print the default confing to stdout")
             (@arg SELECTQUALITY: --("select-quality") -s  "When playing a video with this option, the user will be prompted to chose the video quality")
-            (@arg ("torrent"):--("use-torrent")  "will download the video via the torrent downloader instead of playing it")
+            (@arg TORRENT:--("use-torrent")  "will download the video via the torrent downloader instead of playing it")
             (@arg ("player args"):--("player-args")  +takes_value  "arguments to be passed to the player")
             (@arg player:-p --player +takes_value "player to play the videos with")
             (@arg ("torrent downloader"):--("torrent-downloader")  +takes_value   "choose the torrent software to download the videos with")
@@ -88,34 +88,47 @@ impl Config {
             .unwrap_or(config_player_args);
         let player = PlayerConf { client, args };
 
-        let (config_torrent_cmd, config_torrent_args) =
-            if let Some(Value::Table(t)) = config.get("torrent") {
-                (
-                    t.get("command")
+        let torrent_config = if let Some(Value::Table(t)) = config.get("torrent") {
+            if let Some(s) = t.get("command").map(|cmd| cmd.to_string()) {
+                Some(TorrentConf {
+                    client: s,
+                    args: t
+                        .get("args")
                         .map(|cmd| cmd.to_string())
                         .unwrap_or("".to_string()),
-                    t.get("args")
-                        .map(|cmd| cmd.to_string())
-                        .unwrap_or("".to_string()),
-                )
+                })
             } else {
-                ("".to_string(), "".to_string())
-            };
-        let client = cli_args
-            .value_of("torrent")
-            .map(|c| c.to_string())
-            .unwrap_or(config_torrent_cmd);
-        let args = cli_args
-            .value_of("torrent args")
-            .map(|c| c.to_string())
-            .unwrap_or(config_torrent_args);
-        let torrent = TorrentConf { client, args };
+                None
+            }
+        } else {
+            None
+        };
+
+        let torrent = if let Some(conf) = torrent_config {
+            let client = cli_args
+                .value_of("torrent")
+                .map(|c| c.to_string())
+                .unwrap_or(conf.client);
+            let args = cli_args
+                .value_of("torrent args")
+                .map(|c| c.to_string())
+                .unwrap_or(conf.args);
+            Some(TorrentConf { client, args })
+        } else {
+            let client = cli_args
+                .value_of("torrent")
+                .map(|c| c.to_string())
+                .unwrap_or_default();
+            let args = cli_args
+                .value_of("torrent args")
+                .map(|c| c.to_string())
+                .unwrap_or_default();
+            Some(TorrentConf { client, args })
+        };
 
         let mut temp = Config::default();
         temp.player = player;
-        if torrent.client != "" {
-            temp.torrent = Some((torrent, false));
-        };
+        temp.torrent = torrent.map(|t| (t, cli_args.is_present("TORRENT")));
         temp
     }
 
