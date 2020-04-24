@@ -74,6 +74,9 @@ impl Display {
         println!("likes    : {}", video.likes());
         println!("dislikes : {}", video.dislikes());
         println!("released : {}", pretty_date(video.published()));
+        println!("account  : {}", video.account_display());
+        println!("channel  : {}", video.channel_display());
+        println!("host     : {}", video.host());
         //println!("channel  : {}",video.get_channel_name());
         //println!("author   : {}",video.get_author_name());
         self.line('=');

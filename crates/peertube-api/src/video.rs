@@ -65,11 +65,11 @@ impl Video {
         Ok(guard.as_ref().unwrap().clone())
     }
 
-    pub fn channel_display_name(&self) -> &str {
+    pub fn channel_display(&self) -> &str {
         &self.channel.displayName
     }
 
-    pub fn account_display_name(&self) -> &str {
+    pub fn account_display(&self) -> &str {
         &self.account.displayName
     }
 
