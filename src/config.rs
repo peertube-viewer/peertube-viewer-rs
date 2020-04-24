@@ -4,17 +4,20 @@ use std::collections::HashSet;
 use std::default::Default;
 use std::env;
 
+#[derive(Debug)]
 struct TorrentConf {
     pub client: String,
-    pub args: String,
+    pub args: Vec<String>,
 }
 
+#[derive(Debug)]
 struct PlayerConf {
     pub client: String,
     pub args: Vec<String>,
     pub use_raw_urls: bool,
 }
 
+#[derive(Debug)]
 pub struct Config {
     player: PlayerConf,
     instance: String,
@@ -39,7 +42,7 @@ impl Config {
             (@arg ("player args"):--("player-args") +takes_value ... "arguments to be passed to the player")
             (@arg player:-p --player +takes_value "player to play the videos with")
             (@arg ("torrent downloader"):--("torrent-downloader")  +takes_value   "choose the torrent software to download the videos with")
-            (@arg ("torrent downloader arguments"):--("torrent-downloader-args")  +takes_value  "arguments to be passed to the torrent downloader")
+            (@arg ("torrent downloader arguments"):--("torrent-downloader-args")  +takes_value ... "arguments to be passed to the torrent downloader")
             (@arg instance: -i --instance +takes_value "instance to be browsed")
             (@arg ("config file"): -c --config +takes_value "Sets a custom config file")
             (@arg ("initial query"): -q --query +takes_value ... "initial query to be searched.\nIf it is a url, it will try to play it as a video")
@@ -111,8 +114,10 @@ impl Config {
                     client: s,
                     args: t
                         .get("args")
-                        .map(|cmd| cmd.to_string())
-                        .unwrap_or("".to_string()),
+                        .map(|cmd| cmd.as_array())
+                        .flatten()
+                        .map(|v| v.iter().map(|s| s.to_string()).collect())
+                        .unwrap_or_default(),
                 })
             } else {
                 None
@@ -127,8 +132,8 @@ impl Config {
                 .map(|c| c.to_string())
                 .unwrap_or(conf.client);
             let args = cli_args
-                .value_of("torrent args")
-                .map(|c| c.to_string())
+                .values_of("torrent args")
+                .map(|v| v.map(|s| s.to_string()).collect())
                 .unwrap_or(conf.args);
             Some(TorrentConf { client, args })
         } else {
@@ -137,8 +142,8 @@ impl Config {
                 .map(|c| c.to_string())
                 .unwrap_or_default();
             let args = cli_args
-                .value_of("torrent args")
-                .map(|c| c.to_string())
+                .values_of("torrent args")
+                .map(|v| v.map(|s| s.to_string()).collect())
                 .unwrap_or_default();
             Some(TorrentConf { client, args })
         };
