@@ -55,6 +55,10 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut video_url = "https://video.ploud.fr".to_string();
     video_url.push_str("/videos/watch/");
     video_url.push_str(video.uuid());
-    Command::new("mpv").arg(video_url).spawn().unwrap().await?;
+    Command::new(config.player())
+        .arg(video_url)
+        .spawn()
+        .unwrap()
+        .await?;
     Ok(())
 }

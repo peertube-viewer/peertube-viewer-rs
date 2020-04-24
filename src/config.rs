@@ -118,6 +118,10 @@ impl Config {
         };
         temp
     }
+
+    pub fn player(&self) -> &str {
+        &self.player.client
+    }
 }
 
 impl Default for Config {
