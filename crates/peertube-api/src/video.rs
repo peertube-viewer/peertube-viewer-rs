@@ -14,14 +14,23 @@ use peertube_ser::{search, video};
 
 #[derive(Clone, Debug, Getters)]
 struct File {
-    magnetUri: String,
+    magnet_uri: String,
     resoltion_id: i64,
     resolution: String,
     size: u64,
-    torrentUrl: String,
-    torrentDownloadUrl: String,
-    fileUrl: String,
-    fileDownloadUrl: String,
+    torrent_url: String,
+    torrent_download_url: String,
+    webseed_url: String,
+    download_url: String,
+}
+
+#[derive(Clone, Debug, Getters)]
+struct Channel {
+    pub id: i64,
+    pub name: String,
+    pub display_name: String,
+    pub url: String,
+    pub host: String,
 }
 
 #[derive(Clone, Debug, Getters)]
@@ -44,14 +53,26 @@ impl Resolution {
 impl From<video::File> for File {
     fn from(v: video::File) -> File {
         File {
-            magnetUri: v.magnetUri,
+            magnet_uri: v.magnetUri,
             resoltion_id: v.resolution.id,
             resolution: v.resolution.label,
             size: if v.size > 0 { v.size as u64 } else { 0 },
-            torrentUrl: v.torrentUrl,
-            torrentDownloadUrl: v.torrentDownloadUrl,
-            fileUrl: v.fileUrl,
-            fileDownloadUrl: v.fileDownloadUrl,
+            torrent_url: v.torrentUrl,
+            torrent_download_url: v.torrentDownloadUrl,
+            webseed_url: v.fileUrl,
+            download_url: v.fileDownloadUrl,
+        }
+    }
+}
+
+impl From<search::Channel> for Channel {
+    fn from(c: search::Channel) -> Channel {
+        Channel {
+            id: c.id,
+            name: c.name,
+            display_name: c.displayName,
+            url: c.url,
+            host: c.host,
         }
     }
 }
@@ -73,9 +94,9 @@ pub struct Video {
     #[getter(skip)]
     files: Mutex<Option<Vec<File>>>,
     #[getter(skip)]
-    channel: search::Channel,
+    channel: Channel,
     #[getter(skip)]
-    account: search::Channel,
+    account: Channel,
 }
 
 impl Video {
@@ -96,8 +117,8 @@ impl Video {
                 short_desc: v.description,
                 description: Mutex::new(None),
                 files: Mutex::new(None),
-                channel: v.channel,
-                account: v.account,
+                channel: v.channel.into(),
+                account: v.account.into(),
             })
         } else {
             None
@@ -142,11 +163,11 @@ impl Video {
     }
 
     pub fn channel_display(&self) -> &str {
-        &self.channel.displayName
+        &self.channel.display_name
     }
 
     pub fn account_display(&self) -> &str {
-        &self.account.displayName
+        &self.account.display_name
     }
 
     pub async fn resolution_url(&self, mut id: usize) -> Result<String, Box<dyn error::Error>> {
@@ -162,7 +183,7 @@ impl Video {
             );
         }
 
-        Ok(guard.as_ref().unwrap()[id].fileDownloadUrl.clone())
+        Ok(guard.as_ref().unwrap()[id].download_url.clone())
     }
 
     pub fn host(&self) -> &str {
