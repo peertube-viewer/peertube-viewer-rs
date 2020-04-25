@@ -126,7 +126,8 @@ impl Video {
     }
 
     pub fn watch_url(&self) -> String {
-        let mut video_url = self.instance.host().to_string();
+        let mut video_url = "https://".to_string();
+        video_url.push_str(&self.account.host);
         video_url.push_str("/videos/watch/");
         video_url.push_str(&self.uuid);
         video_url
