@@ -160,7 +160,7 @@ impl Video {
         Ok(())
     }
 
-    pub async fn fetch_files(&self) -> Result<Vec<File>, Box<dyn error::Error>> {
+    async fn fetch_files(&self) -> Result<Vec<File>, Box<dyn error::Error>> {
         Ok(self
             .instance
             .video_complete(&self.uuid)
@@ -194,8 +194,8 @@ impl Video {
         &self.account.display_name
     }
 
-    pub async fn resolution_url(&self, mut id: usize) -> String {
-        let mut guard = self.files.lock().await;
+    pub async fn resolution_url(&self, id: usize) -> String {
+        let guard = self.files.lock().await;
         if let Some(res) = guard.as_ref() {
             res[id].download_url.clone()
         } else {
