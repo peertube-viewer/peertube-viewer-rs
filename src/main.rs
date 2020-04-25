@@ -26,13 +26,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn run() -> Result<(), Box<dyn std::error::Error>> {
-    let config = config::Config::new();
+    let (config, initial_query) = config::Config::new();
     let mut rl = input::Editor::new();
     let display = display::Display::new();
     let inst = Instance::new(config.instance().to_string());
     display.welcome(config.instance());
 
-    let query = rl.readline_static(">> ").await?.unwrap();
+    let query = match initial_query {
+        Some(q) => q,
+        None => rl.readline_static(">> ").await?.unwrap(),
+    };
+    println!("{}", query);
 
     let mut search_results = inst.search_videos(&query).await.unwrap();
     let mut results_rc = Vec::new();

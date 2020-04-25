@@ -1,3 +1,4 @@
+use clap::{Arg, Values};
 use toml::value::Value;
 
 use std::collections::HashSet;
@@ -30,8 +31,8 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Config {
-        let cli_args = clap_app!(("peertube-viewer-rs") =>
+    pub fn new() -> (Config, Option<String>) {
+        let app = clap_app!(("peertube-viewer-rs") =>
             (version: "1.0")
             (author: "Sosthène Guédon <sosthene.gued@gmail.com>")
             (about: "Peertube cli client")
@@ -45,9 +46,10 @@ impl Config {
             (@arg ("torrent downloader arguments"):--("torrent-downloader-args")  +takes_value ... "arguments to be passed to the torrent downloader")
             (@arg instance: -i --instance +takes_value "instance to be browsed")
             (@arg ("config file"): -c --config +takes_value "Sets a custom config file")
-            (@arg ("initial query"): -q --query +takes_value ... "initial query to be searched.\nIf it is a url, it will try to play it as a video")
-        )
-        .get_matches();
+        ).arg(
+            Arg::with_name("initial query" ).multiple(true).index(1).short("q").long("query").long_help("initial query to be searched.\nIf it is a url, it will try to play it as a video")
+        );
+        let cli_args = app.get_matches();
 
         let home = env::split_paths(&env::var("HOME").unwrap())
             .next()
@@ -168,7 +170,10 @@ impl Config {
         temp.instance = Config::correct_instance(instance);
         temp.torrent = torrent.map(|t| (t, cli_args.is_present("TORRENT")));
         temp.select_quality = cli_args.is_present("SELECTQUALITY");
-        temp
+
+        let initial_query = cli_args.values_of("initial query").map(concat);
+
+        (temp, initial_query)
     }
 
     pub fn player(&self) -> &str {
@@ -203,6 +208,15 @@ impl Config {
 
         s
     }
+}
+
+fn concat(v: Values) -> String {
+    let mut concatenated = String::new();
+    for s in v {
+        concatenated.push(' ');
+        concatenated.push_str(s);
+    }
+    concatenated
 }
 
 impl Default for Config {
