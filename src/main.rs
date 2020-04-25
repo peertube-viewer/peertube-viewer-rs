@@ -60,9 +60,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let video = &results_rc[choice - 1];
     display.info(video).await;
 
-    let mut video_url = "https://video.ploud.fr".to_string();
-    video_url.push_str("/videos/watch/");
-    video_url.push_str(video.uuid());
+    let mut video_url = video.watch_url();
     Command::new(config.player())
         .arg(video_url)
         .args(config.player_args())

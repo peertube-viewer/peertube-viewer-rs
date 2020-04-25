@@ -87,6 +87,12 @@ impl Video {
         }
     }
 
+    pub fn watch_url(&self) -> String {
+        let mut video_url = self.instance.host().to_string();
+        video_url.push_str("/videos/watch/");
+        video_url.push_str(&self.uuid);
+        video_url
+    }
     pub async fn description(&self) -> Result<Option<String>, Box<dyn error::Error>> {
         let mut guard = self.description.lock().await;
         if guard.is_none() {
