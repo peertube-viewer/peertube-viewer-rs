@@ -106,7 +106,7 @@ impl Video {
                     .collect(),
             );
         }
-        //TODO Implement returning an iterator to avoid unnecessary clone
+        //TODO Find a way to remove the unnecessary clone
         Ok(guard.as_ref().unwrap().clone())
     }
 

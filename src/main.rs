@@ -38,12 +38,19 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let mut results_rc = Vec::new();
     for video in search_results.drain(..) {
         let video_stored = Rc::new(video);
-        let video_sent = video_stored.clone();
-        results_rc.push(video_stored);
+        let cl1 = video_stored.clone();
         #[allow(unused_must_use)]
         spawn_local(async move {
-            video_sent.description().await;
+            cl1.description().await;
         });
+        if config.select_quality() {
+            let cl2 = video_stored.clone();
+            #[allow(unused_must_use)]
+            spawn_local(async move {
+                cl2.files().await;
+            });
+        }
+        results_rc.push(video_stored);
     }
     display.search_results(&results_rc);
 

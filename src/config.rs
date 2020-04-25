@@ -167,6 +167,7 @@ impl Config {
         temp.player = player;
         temp.instance = Config::correct_instance(instance);
         temp.torrent = torrent.map(|t| (t, cli_args.is_present("TORRENT")));
+        temp.select_quality = cli_args.is_present("SELECTQUALITY");
         temp
     }
 
@@ -180,6 +181,10 @@ impl Config {
 
     pub fn instance(&self) -> &str {
         &self.instance
+    }
+
+    pub fn select_quality(&self) -> bool {
+        self.select_quality
     }
 
     fn correct_instance(s: &str) -> String {
