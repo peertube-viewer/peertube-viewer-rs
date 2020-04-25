@@ -57,7 +57,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let choice = rl.readline_static(">> ").await?.unwrap();
     let choice = choice.parse::<usize>().unwrap();
     let video = &results_rc[choice - 1];
-    let mut video_url = if config.select_quality() {
+    let video_url = if config.select_quality() {
         display.resolutions(video.resolutions().await?);
         let choice = rl.readline_static(">> ").await?.unwrap();
         let choice = choice.parse::<usize>().unwrap();

@@ -74,7 +74,7 @@ impl Config {
                         .map(|cmd| cmd.as_str())
                         .flatten()
                         .map(|s| s.to_string())
-                        .unwrap_or("mpv".to_string()),
+                        .unwrap_or_else(|| "mpv".to_string()),
                     t.get("args")
                         .map(|cmd| cmd.as_array())
                         .flatten()

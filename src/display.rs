@@ -51,7 +51,7 @@ impl Display {
 
     pub fn resolutions(&self, resolutions: Vec<Resolution>) {
         self.line('=');
-        self.print_centered(&format!("Resolution selection"));
+        self.print_centered("Resolution selection");
         self.line('=');
         let mut lengths = Vec::new();
         let mut max_len = 10;
@@ -64,12 +64,10 @@ impl Display {
         }
 
         println!(
-            "{}{} {}{}",
+            "{}Resolution{}Size",
             " ".to_string()
                 .repeat(display_length(resolutions.len()) + 2),
-            "Resolution",
             " ".to_string().repeat(max_len - 10 + 1),
-            "Size"
         );
 
         for (id, r) in resolutions.iter().enumerate() {
