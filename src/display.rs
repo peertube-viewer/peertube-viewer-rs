@@ -136,8 +136,15 @@ impl Display {
     }
 }
 
-fn pretty_size(s: u64) -> String {
-    format!("{}", s)
+fn pretty_size(mut s: u64) -> String {
+    const PREFIXES: [&str; 5] = ["", "K", "M", "G", "E"];
+    let mut id = 0;
+    while s >= 1024 && id < 5 {
+        s /= 1024;
+        id += 1;
+    }
+
+    format!("{}{}B", s, PREFIXES[id])
 }
 
 fn pretty_date(d: &Option<DateTime<FixedOffset>>) -> String {
@@ -186,5 +193,19 @@ mod helpers {
         assert_eq!(display_length(99), 2);
         assert_eq!(display_length(100), 3);
         assert_eq!(display_length(101), 3);
+    }
+
+    #[test]
+    fn size() {
+        assert_eq!(pretty_size(0), "0B");
+        assert_eq!(pretty_size(10), "10B");
+        assert_eq!(pretty_size(1023), "1023B");
+        assert_eq!(pretty_size(1024), "1KB");
+        assert_eq!(pretty_size(1025), "1KB");
+        assert_eq!(pretty_size(2047), "1KB");
+        assert_eq!(pretty_size(2048), "2KB");
+        assert_eq!(pretty_size(2049), "2KB");
+        assert_eq!(pretty_size(1048575), "1023KB");
+        assert_eq!(pretty_size(1048576), "1MB");
     }
 }
