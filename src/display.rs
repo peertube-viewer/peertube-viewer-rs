@@ -54,7 +54,7 @@ impl Display {
         self.print_centered("Resolution selection");
         self.line('=');
         let mut lengths = Vec::new();
-        let mut max_len = 10;
+        let mut max_len = 10; //Length of "Resolution"
         for r in resolutions.iter() {
             let len = r.label().chars().count();
             if len > max_len {
@@ -67,7 +67,7 @@ impl Display {
             "{}Resolution{}Size",
             " ".to_string()
                 .repeat(display_length(resolutions.len()) + 2),
-            " ".to_string().repeat(max_len - 10 + 1),
+            " ".to_string().repeat(max_len - 10 + 2),
         );
 
         for (id, r) in resolutions.iter().enumerate() {
