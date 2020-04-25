@@ -134,21 +134,45 @@ impl Video {
     pub async fn description(&self) -> Result<Option<String>, Box<dyn error::Error>> {
         let mut guard = self.description.lock().await;
         if guard.is_none() {
-            *guard = Some(self.instance.video_description(&self.uuid).await?);
+            *guard = Some(self.fetch_description().await?);
         }
         Ok(guard.as_ref().unwrap().clone())
     }
+
+    async fn fetch_description(&self) -> Result<Option<String>, Box<dyn error::Error>> {
+        self.instance.video_description(&self.uuid).await
+    }
+
+    pub async fn load_description(&self) -> Result<(), Box<dyn error::Error>> {
+        let mut guard = self.description.lock().await;
+        if guard.is_none() {
+            *guard = Some(self.fetch_description().await?);
+        }
+        Ok(())
+    }
+
+    pub async fn load_resolutions(&self) -> Result<(), Box<dyn error::Error>> {
+        let mut guard = self.files.lock().await;
+        if guard.is_none() {
+            *guard = Some(self.fetch_files().await?);
+        }
+        Ok(())
+    }
+
+    pub async fn fetch_files(&self) -> Result<Vec<File>, Box<dyn error::Error>> {
+        Ok(self
+            .instance
+            .video_complete(&self.uuid)
+            .await?
+            .drain(..)
+            .map(|v| v.into())
+            .collect())
+    }
+
     pub async fn resolutions(&self) -> Result<Vec<Resolution>, Box<dyn error::Error>> {
         let mut guard = self.files.lock().await;
         if guard.is_none() {
-            *guard = Some(
-                self.instance
-                    .video_complete(&self.uuid)
-                    .await?
-                    .drain(..)
-                    .map(|v| v.into())
-                    .collect(),
-            );
+            *guard = Some(self.fetch_files().await?);
         }
 
         let resolutions = guard
@@ -158,7 +182,6 @@ impl Video {
             .map(|file| Resolution::from_file(file))
             .collect();
 
-        //TODO Find a way to remove the unnecessary clone
         Ok(resolutions)
     }
 
@@ -170,20 +193,13 @@ impl Video {
         &self.account.display_name
     }
 
-    pub async fn resolution_url(&self, mut id: usize) -> Result<String, Box<dyn error::Error>> {
+    pub async fn resolution_url(&self, mut id: usize) -> String {
         let mut guard = self.files.lock().await;
-        if guard.is_none() {
-            *guard = Some(
-                self.instance
-                    .video_complete(&self.uuid)
-                    .await?
-                    .drain(..)
-                    .map(|v| v.into())
-                    .collect(),
-            );
+        if let Some(res) = guard.as_ref() {
+            res[id].download_url.clone()
+        } else {
+            panic!("Resolution hasn't been fetched");
         }
-
-        Ok(guard.as_ref().unwrap()[id].download_url.clone())
     }
 
     pub fn host(&self) -> &str {

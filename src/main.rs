@@ -41,13 +41,13 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         let cl1 = video_stored.clone();
         #[allow(unused_must_use)]
         spawn_local(async move {
-            cl1.description().await;
+            cl1.load_description().await;
         });
         if config.select_quality() {
             let cl2 = video_stored.clone();
             #[allow(unused_must_use)]
             spawn_local(async move {
-                cl2.resolutions().await;
+                cl2.load_resolutions().await;
             });
         }
         results_rc.push(video_stored);
@@ -61,7 +61,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         display.resolutions(video.resolutions().await?);
         let choice = rl.readline_static(">> ").await?.unwrap();
         let choice = choice.parse::<usize>().unwrap();
-        video.resolution_url(choice - 1).await?
+        video.resolution_url(choice - 1).await
     } else {
         video.watch_url()
     };
