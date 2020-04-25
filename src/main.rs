@@ -47,7 +47,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
             let cl2 = video_stored.clone();
             #[allow(unused_must_use)]
             spawn_local(async move {
-                cl2.files().await;
+                cl2.resolutions().await;
             });
         }
         results_rc.push(video_stored);
@@ -55,12 +55,18 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     display.search_results(&results_rc);
 
     let choice = rl.readline_static(">> ").await?.unwrap();
-
     let choice = choice.parse::<usize>().unwrap();
     let video = &results_rc[choice - 1];
+    let mut video_url = if config.select_quality() {
+        display.resolutions(video.resolutions().await?);
+        let choice = rl.readline_static(">> ").await?.unwrap();
+        let choice = choice.parse::<usize>().unwrap();
+        video.resolution_url(choice - 1).await?
+    } else {
+        video.watch_url()
+    };
     display.info(video).await;
 
-    let mut video_url = video.watch_url();
     Command::new(config.player())
         .arg(video_url)
         .args(config.player_args())

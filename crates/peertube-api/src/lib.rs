@@ -8,4 +8,4 @@ mod instance;
 mod video;
 
 pub use instance::Instance;
-pub use video::Video;
+pub use video::{Resolution, Video};

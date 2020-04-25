@@ -1,4 +1,4 @@
-use peertube_api::Video;
+use peertube_api::{Resolution, Video};
 
 use chrono::{DateTime, FixedOffset};
 use termion::{color, style};
@@ -45,6 +45,45 @@ impl Display {
                 spacing,
                 pretty_duration(*v.duration()),
                 pretty_date(v.published())
+            )
+        }
+    }
+
+    pub fn resolutions(&self, resolutions: Vec<Resolution>) {
+        self.line('=');
+        self.print_centered(&format!("Resolution selection"));
+        self.line('=');
+        let mut lengths = Vec::new();
+        let mut max_len = 10;
+        for r in resolutions.iter() {
+            let len = r.label().chars().count();
+            if len > max_len {
+                max_len = len;
+            }
+            lengths.push(len);
+        }
+
+        println!(
+            "{}{} {}{}",
+            " ".to_string()
+                .repeat(display_length(resolutions.len()) + 2),
+            "Resolution",
+            " ".to_string().repeat(max_len - 10 + 1),
+            "Size"
+        );
+
+        for (id, r) in resolutions.iter().enumerate() {
+            let spacing = " ".to_string().repeat(max_len - lengths[id]);
+            let colon_spacing = " "
+                .to_string()
+                .repeat(display_length(resolutions.len()) - display_length(id + 1));
+            println!(
+                "{}{}: {} {} {}",
+                id + 1,
+                colon_spacing,
+                r.label(),
+                spacing,
+                pretty_size(*r.size()),
             )
         }
     }
@@ -99,6 +138,10 @@ impl Display {
     }
 }
 
+fn pretty_size(s: u64) -> String {
+    format!("{}", s)
+}
+
 fn pretty_date(d: &Option<DateTime<FixedOffset>>) -> String {
     d.map(|t| t.format("%a %b %Y").to_string())
         .unwrap_or_default()
@@ -122,11 +165,28 @@ fn pretty_duration(d: u64) -> String {
 }
 
 fn display_length(mut i: usize) -> usize {
-    let mut len = 0;
+    let mut len = 1;
     while i >= 10 {
         len += 1;
         i /= 10;
     }
 
     len
+}
+
+#[cfg(test)]
+mod helpers {
+    use super::*;
+
+    #[test]
+    fn length() {
+        assert_eq!(display_length(0), 1);
+        assert_eq!(display_length(1), 1);
+        assert_eq!(display_length(9), 1);
+        assert_eq!(display_length(10), 2);
+        assert_eq!(display_length(11), 2);
+        assert_eq!(display_length(99), 2);
+        assert_eq!(display_length(100), 3);
+        assert_eq!(display_length(101), 3);
+    }
 }

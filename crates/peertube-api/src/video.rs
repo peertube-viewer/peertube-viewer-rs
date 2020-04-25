@@ -12,16 +12,33 @@ use std::sync::Arc as FeaturedRc;
 use crate::instance::Instance;
 use peertube_ser::{search, video};
 
-#[derive(Clone, Debug)]
-pub struct File {
+#[derive(Clone, Debug, Getters)]
+struct File {
     magnetUri: String,
     resoltion_id: i64,
     resolution: String,
-    size: i64,
+    size: u64,
     torrentUrl: String,
     torrentDownloadUrl: String,
     fileUrl: String,
     fileDownloadUrl: String,
+}
+
+#[derive(Clone, Debug, Getters)]
+pub struct Resolution {
+    id: i64,
+    label: String,
+    size: u64,
+}
+
+impl Resolution {
+    fn from_file(f: &File) -> Resolution {
+        Resolution {
+            id: f.resoltion_id,
+            label: f.resolution.clone(),
+            size: f.size,
+        }
+    }
 }
 
 impl From<video::File> for File {
@@ -30,7 +47,7 @@ impl From<video::File> for File {
             magnetUri: v.magnetUri,
             resoltion_id: v.resolution.id,
             resolution: v.resolution.label,
-            size: v.size,
+            size: if v.size > 0 { v.size as u64 } else { 0 },
             torrentUrl: v.torrentUrl,
             torrentDownloadUrl: v.torrentDownloadUrl,
             fileUrl: v.fileUrl,
@@ -100,7 +117,7 @@ impl Video {
         }
         Ok(guard.as_ref().unwrap().clone())
     }
-    pub async fn files(&self) -> Result<Vec<File>, Box<dyn error::Error>> {
+    pub async fn resolutions(&self) -> Result<Vec<Resolution>, Box<dyn error::Error>> {
         let mut guard = self.files.lock().await;
         if guard.is_none() {
             *guard = Some(
@@ -112,8 +129,16 @@ impl Video {
                     .collect(),
             );
         }
+
+        let resolutions = guard
+            .as_ref()
+            .unwrap()
+            .iter()
+            .map(|file| Resolution::from_file(file))
+            .collect();
+
         //TODO Find a way to remove the unnecessary clone
-        Ok(guard.as_ref().unwrap().clone())
+        Ok(resolutions)
     }
 
     pub fn channel_display(&self) -> &str {
@@ -122,6 +147,22 @@ impl Video {
 
     pub fn account_display(&self) -> &str {
         &self.account.displayName
+    }
+
+    pub async fn resolution_url(&self, mut id: usize) -> Result<String, Box<dyn error::Error>> {
+        let mut guard = self.files.lock().await;
+        if guard.is_none() {
+            *guard = Some(
+                self.instance
+                    .video_complete(&self.uuid)
+                    .await?
+                    .drain(..)
+                    .map(|v| v.into())
+                    .collect(),
+            );
+        }
+
+        Ok(guard.as_ref().unwrap()[id].fileDownloadUrl.clone())
     }
 
     pub fn host(&self) -> &str {
