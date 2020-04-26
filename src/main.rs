@@ -51,7 +51,6 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         Some(q) => q,
         None => rl.readline_static(">> ").await?.unwrap(),
     };
-    println!("{}", query);
 
     let mut search_results = inst.search_videos(&query).await.unwrap();
     let mut results_rc = Vec::new();
