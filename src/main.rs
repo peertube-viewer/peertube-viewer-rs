@@ -71,7 +71,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         }
         results_rc.push(video_stored);
     }
-    display.search_results(&results_rc);
+    display.search_results(&results_rc, &history);
 
     let choice = rl.readline_static(">> ").await?.unwrap();
     let choice = choice.parse::<usize>().unwrap();

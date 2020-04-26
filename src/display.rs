@@ -1,5 +1,6 @@
 use peertube_api::{Resolution, Video};
 
+use crate::history::History;
 use chrono::{DateTime, FixedOffset};
 use termion::{color, style};
 
@@ -21,7 +22,7 @@ impl Display {
         Display { cols, rows }
     }
 
-    pub fn search_results(&self, videos: &[Rc<Video>]) {
+    pub fn search_results(&self, videos: &[Rc<Video>], history: &History) {
         let mut lengths = Vec::new();
         let mut max_len = 0;
         for v in videos.iter() {
@@ -37,15 +38,29 @@ impl Display {
             let colon_spacing = " "
                 .to_string()
                 .repeat(display_length(videos.len() - 1) - display_length(id + 1));
-            println!(
-                "{}{}: {} {}[{}] {}",
-                id + 1,
-                colon_spacing,
-                v.name(),
-                spacing,
-                pretty_duration(*v.duration()),
-                pretty_date(v.published())
-            )
+            if history.is_viewed(v.uuid()) {
+                println!(
+                    "{}{}{}: {} {}[{}] {}{}",
+                    style::Bold,
+                    id + 1,
+                    colon_spacing,
+                    v.name(),
+                    spacing,
+                    pretty_duration(*v.duration()),
+                    pretty_date(v.published()),
+                    style::Reset,
+                )
+            } else {
+                println!(
+                    "{}{}: {} {}[{}] {}",
+                    id + 1,
+                    colon_spacing,
+                    v.name(),
+                    spacing,
+                    pretty_duration(*v.duration()),
+                    pretty_date(v.published())
+                )
+            }
         }
     }
 
