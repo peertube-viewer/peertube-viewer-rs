@@ -1,6 +1,7 @@
 //use cli_ui::Editor;
 use peertube_api::Instance;
 
+use std::env;
 use std::rc::Rc;
 
 use tokio::process::Command;
@@ -12,7 +13,10 @@ extern crate clap;
 
 mod config;
 mod display;
+mod history;
 mod input;
+
+use history::History;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut basic_rt = runtime::Builder::new()
@@ -27,6 +31,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let (config, initial_query) = config::Config::new();
+    let mut history = History::new();
+
+    let home = env::split_paths(&env::var("HOME").unwrap())
+        .next()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
+    let mut history_location = home.clone();
+    history_location.push_str("/.cache/peertube-viewer-rs/history");
+    history.load_file(&history_location)?;
     let mut rl = input::Editor::new();
     let display = display::Display::new();
     let inst = Instance::new(config.instance().to_string());
@@ -70,6 +85,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         video.watch_url()
     };
     display.info(video).await;
+    history.add_video(video.uuid().clone());
 
     Command::new(config.player())
         .arg(video_url)
@@ -77,5 +93,6 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .spawn()
         .unwrap()
         .await?;
+    history.write_file(&history_location, config.max_hist_lines());
     Ok(())
 }

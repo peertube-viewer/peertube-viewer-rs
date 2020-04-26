@@ -188,6 +188,10 @@ impl Config {
         &self.instance
     }
 
+    pub fn max_hist_lines(&self) -> usize {
+        self.max_hist_lines
+    }
+
     pub fn select_quality(&self) -> bool {
         self.select_quality
     }
