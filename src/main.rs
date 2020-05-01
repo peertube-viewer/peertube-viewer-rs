@@ -1,7 +1,7 @@
 //use cli_ui::Editor;
 use peertube_api::Instance;
 
-use std::env;
+use std::fs::create_dir_all;
 use std::rc::Rc;
 
 use dirs::cache_dir;
@@ -39,11 +39,13 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut rl = input::Editor::new();
 
-    if let Some(mut cache) = cache.as_mut() {
+    if let Some(cache) = cache.as_mut() {
         cache.push("peertube-viewer-rs");
+        create_dir_all(&cache);
+
         let mut view_hist_file = cache.clone();
         view_hist_file.push("history");
-        history.load_file(&view_hist_file)?;
+        history.load_file(&view_hist_file);
         let mut cmd_hist_file = cache.clone();
         cmd_hist_file.push("cmd_history");
         rl.load_history(&cmd_hist_file);
@@ -101,11 +103,10 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap()
         .await?;
 
-    if let Some(mut cache) = cache.as_mut() {
-        cache.push("peertube-viewer-rs");
+    if let Some(cache) = cache.as_ref() {
         let mut view_hist_file = cache.clone();
         view_hist_file.push("history");
-        history.save(&view_hist_file, config.max_hist_lines())?;
+        history.save(&view_hist_file, config.max_hist_lines());
         let mut cmd_hist_file = cache.clone();
         cmd_hist_file.push("cmd_history");
         rl.save_history(&cmd_hist_file);
