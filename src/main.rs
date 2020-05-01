@@ -39,10 +39,15 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .to_str()
         .unwrap()
         .to_string();
-    let mut history_location = home.clone();
-    history_location.push_str("/.cache/peertube-viewer-rs/history");
-    history.load_file(&history_location)?;
+    let mut view_history_location = home.clone();
+    view_history_location.push_str("/.cache/peertube-viewer-rs/history");
+    history.load_file(&view_history_location)?;
     let mut rl = input::Editor::new();
+
+    let mut command_history_location = home.clone();
+    command_history_location.push_str("/.cache/peertube-viewer-rs/cmd_history");
+    rl.load_history(&command_history_location)?;
+
     let display = display::Display::new();
     let inst = Instance::new(config.instance().to_string());
     display.welcome(config.instance());
@@ -51,6 +56,8 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         Some(q) => q,
         None => rl.readline_static(">> ").await?.unwrap(),
     };
+
+    rl.add_history_entry(&query);
 
     let mut search_results = inst.search_videos(&query).await.unwrap();
     let mut results_rc = Vec::new();
@@ -92,6 +99,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .spawn()
         .unwrap()
         .await?;
-    history.write_file(&history_location, config.max_hist_lines());
+    history.write_file(&view_history_location, config.max_hist_lines())?;
+    rl.save_history(&command_history_location)?;
     Ok(())
 }

@@ -36,4 +36,19 @@ impl Editor {
         })
         .await?)
     }
+
+    pub fn load_history(&mut self, path: &str) -> rustyline::Result<()> {
+        let mut ed = self.rl.lock().unwrap();
+        ed.load_history(path)
+    }
+
+    pub fn save_history(&mut self, path: &str) -> rustyline::Result<()> {
+        let ed = self.rl.lock().unwrap();
+        ed.save_history(path)
+    }
+
+    pub fn add_history_entry(&mut self, entry: &str) -> bool {
+        let mut ed = self.rl.lock().unwrap();
+        ed.add_history_entry(entry)
+    }
 }
