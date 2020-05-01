@@ -1,6 +1,6 @@
 use peertube_api::{Resolution, Video};
 
-use crate::history::History;
+use super::history::History;
 use chrono::{DateTime, FixedOffset};
 use termion::{color, style};
 
