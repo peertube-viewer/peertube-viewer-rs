@@ -41,14 +41,15 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     if let Some(cache) = cache.as_mut() {
         cache.push("peertube-viewer-rs");
-        create_dir_all(&cache);
+        create_dir_all(&cache).unwrap_or(());
 
         let mut view_hist_file = cache.clone();
         view_hist_file.push("history");
-        history.load_file(&view_hist_file);
         let mut cmd_hist_file = cache.clone();
         cmd_hist_file.push("cmd_history");
-        rl.load_history(&cmd_hist_file);
+
+        history.load_file(&view_hist_file).unwrap_or(()); // unwrap_or to ignore the unused_must_use warnings
+        rl.load_history(&cmd_hist_file).unwrap_or(()); // we don't care if the loading failed
     }
 
     let display = display::Display::new();
@@ -106,10 +107,12 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(cache) = cache.as_ref() {
         let mut view_hist_file = cache.clone();
         view_hist_file.push("history");
-        history.save(&view_hist_file, config.max_hist_lines());
+        history
+            .save(&view_hist_file, config.max_hist_lines())
+            .unwrap_or(());
         let mut cmd_hist_file = cache.clone();
         cmd_hist_file.push("cmd_history");
-        rl.save_history(&cmd_hist_file);
+        rl.save_history(&cmd_hist_file).unwrap_or(());
     }
     Ok(())
 }
