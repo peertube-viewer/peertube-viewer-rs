@@ -10,7 +10,7 @@ use input::Editor;
 
 use peertube_api::Instance;
 
-use std::fs::create_dir_all;
+use std::fs::create_dir;
 use std::mem::swap;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -42,7 +42,7 @@ impl Cli {
 
         if let Some(cache) = cache.as_mut() {
             cache.push("peertube-viewer-rs");
-            create_dir_all(&cache).unwrap_or(());
+            create_dir(&cache).unwrap_or(());
 
             let mut view_hist_file = cache.clone();
             view_hist_file.push("history");
