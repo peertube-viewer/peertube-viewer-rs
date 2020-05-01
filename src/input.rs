@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+use std::path::PathBuf;
 use tokio::task::spawn_blocking;
 
 pub struct Editor {
@@ -37,12 +38,12 @@ impl Editor {
         .await?)
     }
 
-    pub fn load_history(&mut self, path: &str) -> rustyline::Result<()> {
+    pub fn load_history(&mut self, path: &PathBuf) -> rustyline::Result<()> {
         let mut ed = self.rl.lock().unwrap();
         ed.load_history(path)
     }
 
-    pub fn save_history(&mut self, path: &str) -> rustyline::Result<()> {
+    pub fn save_history(&mut self, path: &PathBuf) -> rustyline::Result<()> {
         let ed = self.rl.lock().unwrap();
         ed.save_history(path)
     }

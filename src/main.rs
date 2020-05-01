@@ -4,6 +4,7 @@ use peertube_api::Instance;
 use std::env;
 use std::rc::Rc;
 
+use dirs::cache_dir;
 use tokio::process::Command;
 use tokio::runtime;
 use tokio::task::{spawn_local, LocalSet};
@@ -31,22 +32,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let (config, initial_query) = config::Config::new();
+
     let mut history = History::new();
 
-    let home = env::split_paths(&env::var("HOME").unwrap())
-        .next()
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .to_string();
-    let mut view_history_location = home.clone();
-    view_history_location.push_str("/.cache/peertube-viewer-rs/history");
-    history.load_file(&view_history_location)?;
+    let mut cache = cache_dir();
+
     let mut rl = input::Editor::new();
 
-    let mut command_history_location = home.clone();
-    command_history_location.push_str("/.cache/peertube-viewer-rs/cmd_history");
-    rl.load_history(&command_history_location)?;
+    if let Some(mut cache) = cache.as_mut() {
+        cache.push("peertube-viewer-rs");
+        let mut view_hist_file = cache.clone();
+        view_hist_file.push("history");
+        history.load_file(&view_hist_file)?;
+        let mut cmd_hist_file = cache.clone();
+        cmd_hist_file.push("cmd_history");
+        rl.load_history(&cmd_hist_file);
+    }
 
     let display = display::Display::new();
     let inst = Instance::new(config.instance().to_string());
@@ -99,7 +100,15 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .spawn()
         .unwrap()
         .await?;
-    history.write_file(&view_history_location, config.max_hist_lines())?;
-    rl.save_history(&command_history_location)?;
+
+    if let Some(mut cache) = cache.as_mut() {
+        cache.push("peertube-viewer-rs");
+        let mut view_hist_file = cache.clone();
+        view_hist_file.push("history");
+        history.save(&view_hist_file, config.max_hist_lines())?;
+        let mut cmd_hist_file = cache.clone();
+        cmd_hist_file.push("cmd_history");
+        rl.save_history(&cmd_hist_file);
+    }
     Ok(())
 }
