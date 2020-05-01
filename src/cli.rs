@@ -33,6 +33,11 @@ pub struct Cli {
 impl Cli {
     pub fn init() -> Cli {
         let (config, initial_query, load_error) = Config::new();
+        let display = Display::new();
+
+        if let Some(err) = load_error {
+            display.err(err);
+        }
 
         let mut history = History::new();
 
@@ -52,8 +57,6 @@ impl Cli {
             history.load_file(&view_hist_file).unwrap_or(()); // unwrap_or to ignore the unused_must_use warnings
             rl.load_history(&cmd_hist_file).unwrap_or(()); // we don't care if the loading failed
         }
-
-        let display = Display::new();
         let instance = Instance::new(config.instance().to_string());
 
         Cli {

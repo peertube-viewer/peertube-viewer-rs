@@ -2,6 +2,7 @@ use peertube_api::{Resolution, Video};
 
 use super::history::History;
 use chrono::{DateTime, FixedOffset};
+use std::fmt;
 use termion::{color, style};
 
 use std::rc::Rc;
@@ -105,6 +106,17 @@ impl Display {
         self.line('=');
         self.print_centered(&format!("Connecting to: {}", instance));
         self.line('=');
+    }
+
+    pub fn err(&self, err: impl fmt::Display) {
+        println!(
+            "{}{}{}{}{}",
+            color::Fg(color::Red),
+            style::Bold,
+            err,
+            style::Reset,
+            color::Fg(color::Reset)
+        );
     }
 
     pub async fn info(&self, video: &Video) {

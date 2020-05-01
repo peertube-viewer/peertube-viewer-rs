@@ -21,6 +21,7 @@ struct PlayerConf {
     pub use_raw_urls: bool,
 }
 
+#[derive(Debug, Clone)]
 pub enum ConfigLoadError {
     UnreadableFile,
     Malformed,
@@ -29,10 +30,12 @@ pub enum ConfigLoadError {
 impl Display for ConfigLoadError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            UnreadableFile => write!(f, "Unreadable config file, using default config"),
-            Malformed => write!(
+            ConfigLoadError::UnreadableFile => {
+                write!(f, "Unable to read the config file, using default config\nUsing default config")
+            }
+            ConfigLoadError::Malformed => write!(
                 f,
-                "The config file is malformed, it should be parsable as a TOML table "
+                "The config file is malformed, it should be parsable as a TOML table\nUsing default config"
             ),
         }
     }
