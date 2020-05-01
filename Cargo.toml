@@ -6,12 +6,12 @@ edition = "2018"
 
 [dependencies]
 peertube-api = {version = "*", path = "crates/peertube-api"}
-tokio = { version = "0.2", features = ["full"] }
-termion = "1.5"
-chrono = "0.4"
-rustyline = "6.1.1"
-clap = "2.33.0" 
-toml = "0.5"
+tokio = { version = "0.2.20", features = ["full"] }
+termion = "1.5.5"
+chrono = "0.4.11"
+rustyline = "6.1.2"
+clap = "2.33.0"
+toml = "0.5.6"
 
 
 [workspace]
