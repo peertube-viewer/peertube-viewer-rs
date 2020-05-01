@@ -1,10 +1,11 @@
 use clap::{Arg, Values};
 use dirs::config_dir;
-use toml::value::Value;
+use toml::value::{Table, Value};
 
 use std::collections::HashSet;
 use std::default::Default;
 use std::env;
+use std::fmt::{self, Display, Formatter};
 use std::fs::read_to_string;
 
 #[derive(Debug)]
@@ -20,6 +21,23 @@ struct PlayerConf {
     pub use_raw_urls: bool,
 }
 
+pub enum ConfigLoadError {
+    UnreadableFile,
+    Malformed,
+}
+
+impl Display for ConfigLoadError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            UnreadableFile => write!(f, "Unreadable config file, using default config"),
+            Malformed => write!(
+                f,
+                "The config file is malformed, it should be parsable as a TOML table "
+            ),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Config {
     player: PlayerConf,
@@ -33,7 +51,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> (Config, Option<String>) {
+    pub fn new() -> (Config, Option<String>, Option<ConfigLoadError>) {
         let app = clap_app!(("peertube-viewer-rs") =>
             (version: "1.0")
             (author: "Sosthène Guédon <sosthene.gued@gmail.com>")
@@ -53,14 +71,23 @@ impl Config {
         );
         let cli_args = app.get_matches();
 
+        let mut load_error = None;
         let config_str = if let Some(c) = cli_args.value_of("config file") {
-            read_to_string(c.to_string()).unwrap_or_default()
+            read_to_string(c.to_string())
+                .map_err(|_| {
+                    load_error = Some(ConfigLoadError::UnreadableFile);
+                })
+                .unwrap_or_default()
         } else {
             match config_dir() {
                 Some(mut d) => {
                     d.push("peertube-viewer-rs");
                     d.push("config.toml");
-                    read_to_string(&d).unwrap_or_default()
+                    read_to_string(&d)
+                        .map_err(|_| {
+                            load_error = Some(ConfigLoadError::UnreadableFile);
+                        })
+                        .unwrap_or_default()
                 }
                 None => String::new(),
             }
@@ -68,7 +95,8 @@ impl Config {
         let config = if let Ok(Value::Table(t)) = config_str.parse() {
             t
         } else {
-            panic!("Config file is not a table");
+            load_error = Some(ConfigLoadError::Malformed);
+            Table::new()
         };
 
         let (config_player_cmd, config_player_args, use_raw_urls) =
@@ -175,7 +203,7 @@ impl Config {
 
         let initial_query = cli_args.values_of("initial query").map(concat);
 
-        (temp, initial_query)
+        (temp, initial_query, load_error)
     }
 
     pub fn player(&self) -> &str {

@@ -32,7 +32,7 @@ pub struct Cli {
 
 impl Cli {
     pub fn init() -> Cli {
-        let (config, initial_query) = Config::new();
+        let (config, initial_query, load_error) = Config::new();
 
         let mut history = History::new();
 
