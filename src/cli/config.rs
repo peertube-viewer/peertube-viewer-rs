@@ -1,9 +1,11 @@
 use clap::{Arg, Values};
+use dirs::config_dir;
 use toml::value::Value;
 
 use std::collections::HashSet;
 use std::default::Default;
 use std::env;
+use std::fs::read_to_string;
 
 #[derive(Debug)]
 struct TorrentConf {
@@ -51,19 +53,19 @@ impl Config {
         );
         let cli_args = app.get_matches();
 
-        let home = env::split_paths(&env::var("HOME").unwrap())
-            .next()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_string();
-        let config_file = if let Some(c) = cli_args.value_of("config file") {
-            c.to_string()
+        let config_str = if let Some(c) = cli_args.value_of("config file") {
+            read_to_string(c.to_string()).unwrap_or_default()
         } else {
-            format!("{}/.config/peertube-viewer-rs/config.toml", home)
+            match config_dir() {
+                Some(mut d) => {
+                    d.push("peertube-viewer-rs");
+                    d.push("config.toml");
+                    read_to_string(&d).unwrap_or_default()
+                }
+                None => String::new(),
+            }
         };
-        let config_str = std::fs::read_to_string(config_file).unwrap();
-        let config = if let Value::Table(t) = config_str.parse().unwrap() {
+        let config = if let Ok(Value::Table(t)) = config_str.parse() {
             t
         } else {
             panic!("Config file is not a table");
