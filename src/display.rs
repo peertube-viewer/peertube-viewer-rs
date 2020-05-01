@@ -222,4 +222,19 @@ mod helpers {
         assert_eq!(pretty_size(1048575), "1023KB");
         assert_eq!(pretty_size(1048576), "1MB");
     }
+
+    #[test]
+    fn duration() {
+        assert_eq!(pretty_duration(0), "00:00");
+        assert_eq!(pretty_duration(1), "00:01");
+        assert_eq!(pretty_duration(9), "00:09");
+        assert_eq!(pretty_duration(59), "00:59");
+        assert_eq!(pretty_duration(60), "01:00");
+        assert_eq!(pretty_duration(119), "01:59");
+        assert_eq!(pretty_duration(120), "02:00");
+        assert_eq!(pretty_duration(3599), "59:59");
+        assert_eq!(pretty_duration(3600), "1:00:00");
+        assert_eq!(pretty_duration(7199), "1:59:59");
+        assert_eq!(pretty_duration(7200), "2:00:00");
+    }
 }
