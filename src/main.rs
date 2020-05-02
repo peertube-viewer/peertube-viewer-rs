@@ -3,7 +3,7 @@ extern crate clap;
 
 mod cli;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() {
     let mut cli = cli::Cli::init();
-    cli.run()
+    cli.run();
 }

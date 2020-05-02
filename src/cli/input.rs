@@ -24,16 +24,6 @@ impl Editor {
         .expect("readline thread panicked")
     }
 
-    pub async fn readline_static(&mut self, prompt: &'static str) -> rustyline::Result<String> {
-        let rl_cloned = self.rl.clone();
-        spawn_blocking(move || {
-            let mut ed = rl_cloned.lock().unwrap();
-            ed.readline(&prompt)
-        })
-        .await
-        .expect("readline thread panicked")
-    }
-
     pub fn load_history(&mut self, path: &PathBuf) -> rustyline::Result<()> {
         let mut ed = self.rl.lock().unwrap();
         ed.load_history(path)
