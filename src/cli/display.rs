@@ -2,6 +2,7 @@ use peertube_api::{Resolution, Video};
 
 use super::history::History;
 use chrono::{DateTime, FixedOffset};
+use std::convert::AsRef;
 use std::fmt;
 use termion::{color, style};
 
@@ -108,7 +109,7 @@ impl Display {
         self.line('=');
     }
 
-    pub fn err(&self, err: impl fmt::Display) {
+    pub fn err<T: fmt::Display>(&self, err: &T) {
         println!(
             "{}{}{}{}{}",
             color::Fg(color::Red),

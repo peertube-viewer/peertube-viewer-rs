@@ -36,7 +36,7 @@ impl Cli {
         let display = Display::new();
 
         if let Some(err) = load_error {
-            display.err(err);
+            display.err(&err);
         }
 
         let mut history = History::new();
