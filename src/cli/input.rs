@@ -18,7 +18,13 @@ impl Editor {
         let rl_cloned = self.rl.clone();
         spawn_blocking(move || {
             let mut ed = rl_cloned.lock().unwrap();
-            ed.readline(&prompt)
+            loop {
+                match ed.readline(&prompt) {
+                    Ok(l) if l != "" => return Ok(l),
+                    Ok(_) => continue,
+                    e @ Err(_) => return e,
+                }
+            }
         })
         .await
         .expect("readline thread panicked")
