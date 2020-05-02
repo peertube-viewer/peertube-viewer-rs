@@ -78,7 +78,7 @@ impl Cli {
 
         let query = match initial_query {
             Some(q) => q,
-            None => self.rl.readline_static(">> ").await?.unwrap(),
+            None => self.rl.readline_static(">> ").await.unwrap(),
         };
 
         self.rl.add_history_entry(&query);
@@ -103,12 +103,12 @@ impl Cli {
         }
         self.display.search_results(&results_rc, &self.history);
 
-        let choice = self.rl.readline_static(">> ").await?.unwrap();
+        let choice = self.rl.readline_static(">> ").await.unwrap();
         let choice = choice.parse::<usize>().unwrap();
         let video = &results_rc[choice - 1];
         let video_url = if self.config.select_quality() {
             self.display.resolutions(video.resolutions().await?);
-            let choice = self.rl.readline_static(">> ").await?.unwrap();
+            let choice = self.rl.readline_static(">> ").await.unwrap();
             let choice = choice.parse::<usize>().unwrap();
             video.resolution_url(choice - 1).await
         } else {

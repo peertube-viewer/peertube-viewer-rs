@@ -14,28 +14,24 @@ impl Editor {
         }
     }
 
-    pub async fn readline(
-        &mut self,
-        prompt: String,
-    ) -> Result<rustyline::Result<String>, Box<dyn std::error::Error>> {
+    pub async fn readline(&mut self, prompt: String) -> rustyline::Result<String> {
         let rl_cloned = self.rl.clone();
-        Ok(spawn_blocking(move || {
+        spawn_blocking(move || {
             let mut ed = rl_cloned.lock().unwrap();
             ed.readline(&prompt)
         })
-        .await?)
+        .await
+        .expect("readline thread panicked")
     }
 
-    pub async fn readline_static(
-        &mut self,
-        prompt: &'static str,
-    ) -> Result<rustyline::Result<String>, Box<dyn std::error::Error>> {
+    pub async fn readline_static(&mut self, prompt: &'static str) -> rustyline::Result<String> {
         let rl_cloned = self.rl.clone();
-        Ok(spawn_blocking(move || {
+        spawn_blocking(move || {
             let mut ed = rl_cloned.lock().unwrap();
             ed.readline(&prompt)
         })
-        .await?)
+        .await
+        .expect("readline thread panicked")
     }
 
     pub fn load_history(&mut self, path: &PathBuf) -> rustyline::Result<()> {
