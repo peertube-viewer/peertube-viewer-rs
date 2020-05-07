@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 peertube-api = {version = "*", path = "crates/peertube-api"}
-tokio = { version = "0.2.20", features = ["rt-core", "rt-util", "process"]}
+tokio = { version = "0.2.20", features = ["rt-core", "rt-util", "process"] }
 termion = "1.5.5"
 chrono = "0.4.11"
 rustyline = "6.1.2"
