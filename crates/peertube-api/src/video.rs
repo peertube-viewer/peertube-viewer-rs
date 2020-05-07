@@ -2,13 +2,12 @@ use chrono::{DateTime, FixedOffset};
 use derive_getters::Getters;
 use tokio::sync::Mutex;
 
-use std::error;
-
 #[cfg(not(feature = "send"))]
 use std::rc::Rc as FeaturedRc;
 #[cfg(feature = "send")]
 use std::sync::Arc as FeaturedRc;
 
+use crate::error::{self, Error};
 use crate::instance::Instance;
 use peertube_ser::{search, video};
 
@@ -132,7 +131,7 @@ impl Video {
         video_url.push_str(&self.uuid);
         video_url
     }
-    pub async fn description(&self) -> Result<Option<String>, Box<dyn error::Error>> {
+    pub async fn description(&self) -> error::Result<Option<String>> {
         let mut guard = self.description.lock().await;
         if guard.is_none() {
             *guard = Some(self.fetch_description().await?);
@@ -140,11 +139,11 @@ impl Video {
         Ok(guard.as_ref().unwrap().clone())
     }
 
-    async fn fetch_description(&self) -> Result<Option<String>, Box<dyn error::Error>> {
+    async fn fetch_description(&self) -> error::Result<Option<String>> {
         self.instance.video_description(&self.uuid).await
     }
 
-    pub async fn load_description(&self) -> Result<(), Box<dyn error::Error>> {
+    pub async fn load_description(&self) -> error::Result<()> {
         let mut guard = self.description.lock().await;
         if guard.is_none() {
             *guard = Some(self.fetch_description().await?);
@@ -152,7 +151,7 @@ impl Video {
         Ok(())
     }
 
-    pub async fn load_resolutions(&self) -> Result<(), Box<dyn error::Error>> {
+    pub async fn load_resolutions(&self) -> error::Result<()> {
         let mut guard = self.files.lock().await;
         if guard.is_none() {
             *guard = Some(self.fetch_files().await?);
@@ -160,7 +159,7 @@ impl Video {
         Ok(())
     }
 
-    async fn fetch_files(&self) -> Result<Vec<File>, Box<dyn error::Error>> {
+    async fn fetch_files(&self) -> error::Result<Vec<File>> {
         Ok(self
             .instance
             .video_complete(&self.uuid)
@@ -170,7 +169,7 @@ impl Video {
             .collect())
     }
 
-    pub async fn resolutions(&self) -> Result<Vec<Resolution>, Box<dyn error::Error>> {
+    pub async fn resolutions(&self) -> error::Result<Vec<Resolution>> {
         let mut guard = self.files.lock().await;
         if guard.is_none() {
             *guard = Some(self.fetch_files().await?);

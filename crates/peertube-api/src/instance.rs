@@ -1,4 +1,3 @@
-use std::error;
 #[cfg(not(feature = "send"))]
 use std::rc::Rc as FeaturedRc;
 #[cfg(feature = "send")]
@@ -9,6 +8,7 @@ use reqwest::Client;
 use peertube_ser::search::Search;
 use peertube_ser::video::{Description, File, Video as FullVideo};
 
+use crate::error::{self, Error};
 use crate::video::Video;
 
 pub struct Instance {
@@ -27,7 +27,7 @@ impl Instance {
     pub async fn search_videos(
         self: &FeaturedRc<Instance>,
         query: &str,
-    ) -> Result<Vec<Video>, Box<dyn error::Error>> {
+    ) -> error::Result<Vec<Video>> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/search/videos");
         let mut search_res: Search = serde_json::from_str(
@@ -53,7 +53,7 @@ impl Instance {
     pub async fn video_description(
         self: &FeaturedRc<Instance>,
         uuid: &str,
-    ) -> Result<Option<String>, Box<dyn error::Error>> {
+    ) -> error::Result<Option<String>> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/videos/");
         url.push_str(uuid);
@@ -67,7 +67,7 @@ impl Instance {
     pub async fn video_complete(
         self: &FeaturedRc<Instance>,
         uuid: &str,
-    ) -> Result<Vec<File>, Box<dyn error::Error>> {
+    ) -> error::Result<Vec<File>> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/videos/");
         url.push_str(uuid);
