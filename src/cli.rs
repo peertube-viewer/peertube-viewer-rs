@@ -81,7 +81,7 @@ impl Cli {
         let mut initial_query = None;
         swap(&mut initial_query, &mut self.initial_query);
 
-        let query = match initial_query {
+        let mut query = match initial_query {
             Some(q) => q,
             None => match self.rl.readline(">> ".to_string()).await {
                 Ok(l) => l,
@@ -93,8 +93,61 @@ impl Cli {
             },
         };
 
-        self.rl.add_history_entry(&query);
+        let mut changed_query = true;
 
+        let mut results_rc = Vec::new();
+        loop {
+            if changed_query {
+                self.rl.add_history_entry(&query);
+                results_rc = self.search(&query).await?;
+            }
+            self.display.search_results(&results_rc, &self.history);
+
+            let choice = self.rl.readline(">> ".to_string()).await.unwrap();
+            let choice = choice.parse::<usize>().unwrap();
+            let video = &results_rc[choice - 1];
+            let video_url = if self.config.select_quality() {
+                self.display.resolutions(video.resolutions().await?);
+                let choice = self.rl.readline(">> ".to_string()).await.unwrap();
+                let choice = choice.parse::<usize>().unwrap();
+                if self.config.use_torrent() {
+                    video.torrent_url(choice - 1).await
+                } else {
+                    video.resolution_url(choice - 1).await
+                }
+            } else if self.config.use_torrent() {
+                video.resolutions().await?;
+                video.torrent_url(choice - 1).await
+            } else {
+                video.watch_url()
+            };
+            self.display.info(video).await;
+            self.history.add_video(video.uuid().clone());
+
+            Command::new(self.config.player())
+                .args(self.config.player_args())
+                .arg(video_url)
+                .spawn()
+                .map_err(error::Error::VideoLaunch)?
+                .await
+                .map_err(error::Error::VideoLaunch)?;
+        }
+        Ok(())
+    }
+
+    pub fn run(&mut self) -> Result<(), error::Error> {
+        let mut basic_rt = runtime::Builder::new()
+            .enable_all()
+            .basic_scheduler()
+            .build()
+            .map_err(error::Error::RuntimeInit)?;
+        basic_rt.block_on(async {
+            let local = LocalSet::new();
+            local.run_until(self.main_loop()).await
+        })
+    }
+
+    async fn search(&mut self, query: &str) -> Result<Vec<Rc<peertube_api::Video>>, error::Error> {
         let mut search_results = self.instance.search_videos(&query).await?;
         let mut results_rc = Vec::new();
         for video in search_results.drain(..) {
@@ -113,49 +166,8 @@ impl Cli {
             }
             results_rc.push(video_stored);
         }
-        self.display.search_results(&results_rc, &self.history);
 
-        let choice = self.rl.readline(">> ".to_string()).await.unwrap();
-        let choice = choice.parse::<usize>().unwrap();
-        let video = &results_rc[choice - 1];
-        let video_url = if self.config.select_quality() {
-            self.display.resolutions(video.resolutions().await?);
-            let choice = self.rl.readline(">> ".to_string()).await.unwrap();
-            let choice = choice.parse::<usize>().unwrap();
-            if self.config.use_torrent() {
-                video.torrent_url(choice - 1).await
-            } else {
-                video.resolution_url(choice - 1).await
-            }
-        } else if self.config.use_torrent() {
-            video.resolutions().await?;
-            video.torrent_url(choice - 1).await
-        } else {
-            video.watch_url()
-        };
-        self.display.info(video).await;
-        self.history.add_video(video.uuid().clone());
-
-        Command::new(self.config.player())
-            .args(self.config.player_args())
-            .arg(video_url)
-            .spawn()
-            .map_err(error::Error::VideoLaunch)?
-            .await
-            .map_err(error::Error::VideoLaunch)?;
-        Ok(())
-    }
-
-    pub fn run(&mut self) -> Result<(), error::Error> {
-        let mut basic_rt = runtime::Builder::new()
-            .enable_all()
-            .basic_scheduler()
-            .build()
-            .map_err(error::Error::RuntimeInit)?;
-        basic_rt.block_on(async {
-            let local = LocalSet::new();
-            local.run_until(self.main_loop()).await
-        })
+        Ok(results_rc)
     }
 }
 
