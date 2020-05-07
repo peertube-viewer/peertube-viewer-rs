@@ -95,7 +95,7 @@ impl Cli {
 
         self.rl.add_history_entry(&query);
 
-        let mut search_results = self.instance.search_videos(&query).await.unwrap();
+        let mut search_results = self.instance.search_videos(&query).await?;
         let mut results_rc = Vec::new();
         for video in search_results.drain(..) {
             let video_stored = Rc::new(video);
@@ -133,7 +133,7 @@ impl Cli {
             .arg(video_url)
             .args(self.config.player_args())
             .spawn()
-            .unwrap()
+            .map_err(|e| error::Error::VideoLaunch(e))?
             .await
             .map_err(|e| error::Error::VideoLaunch(e))?;
         Ok(())
