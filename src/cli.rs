@@ -140,9 +140,9 @@ impl Cli {
             .args(self.config.player_args())
             .arg(video_url)
             .spawn()
-            .map_err(|e| error::Error::VideoLaunch(e))?
+            .map_err(error::Error::VideoLaunch)?
             .await
-            .map_err(|e| error::Error::VideoLaunch(e))?;
+            .map_err(error::Error::VideoLaunch)?;
         Ok(())
     }
 
@@ -151,7 +151,7 @@ impl Cli {
             .enable_all()
             .basic_scheduler()
             .build()
-            .map_err(|e| error::Error::RuntimeInit(e))?;
+            .map_err(error::Error::RuntimeInit)?;
         basic_rt.block_on(async {
             let local = LocalSet::new();
             local.run_until(self.main_loop()).await
