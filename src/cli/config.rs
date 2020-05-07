@@ -223,7 +223,7 @@ impl Config {
 
         let mut temp = Config::default();
         temp.player = player;
-        temp.instance = Config::correct_instance(instance);
+        temp.instance = correct_instance(instance);
         temp.torrent = torrent.map(|t| (t, cli_args.is_present("TORRENT")));
         temp.select_quality = cli_args.is_present("SELECTQUALITY");
 
@@ -265,23 +265,22 @@ impl Config {
     pub fn select_quality(&self) -> bool {
         self.select_quality
     }
-
-    fn correct_instance(s: &str) -> String {
-        let mut s = if s.starts_with("https://") {
-            s.to_string()
-        } else if s.starts_with("http://") {
-            format!("https://{}", &s[7..])
-        } else {
-            format!("https://{}", s)
-        };
-        if let Some(c) = s.pop() {
-            if c != '/' {
-                s.push(c);
-            }
+}
+fn correct_instance(s: &str) -> String {
+    let mut s = if s.starts_with("https://") {
+        s.to_string()
+    } else if s.starts_with("http://") {
+        format!("https://{}", &s[7..])
+    } else {
+        format!("https://{}", s)
+    };
+    if let Some(c) = s.pop() {
+        if c != '/' {
+            s.push(c);
         }
-
-        s
     }
+
+    s
 }
 
 fn concat(v: Values) -> String {
@@ -325,5 +324,19 @@ impl Default for Config {
             select_quality: false,
             max_hist_lines: 2000,
         }
+    }
+}
+
+#[cfg(test)]
+mod helpers {
+
+    use super::*;
+
+    #[test]
+    fn instance_correction() {
+        assert_eq!(correct_instance("http://foo.bar/"), "https://foo.bar");
+        assert_eq!(correct_instance("foo.bar"), "https://foo.bar");
+        assert_eq!(correct_instance("foo.bar/"), "https://foo.bar");
+        assert_eq!(correct_instance("https://foo.bar/"), "https://foo.bar");
     }
 }
