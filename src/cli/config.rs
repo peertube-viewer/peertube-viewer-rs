@@ -283,9 +283,12 @@ fn correct_instance(s: &str) -> String {
     s
 }
 
-fn concat(v: Values) -> String {
+fn concat(mut v: Values) -> String {
     let mut concatenated = String::new();
-    for s in v {
+    if let Some(s) = v.next() {
+        concatenated.push_str(s);
+    }
+    for s in v.skip(1) {
         concatenated.push(' ');
         concatenated.push_str(s);
     }
