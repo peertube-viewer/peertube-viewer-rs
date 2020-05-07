@@ -122,7 +122,14 @@ impl Cli {
             self.display.resolutions(video.resolutions().await?);
             let choice = self.rl.readline(">> ".to_string()).await.unwrap();
             let choice = choice.parse::<usize>().unwrap();
-            video.resolution_url(choice - 1).await
+            if self.config.use_torrent() {
+                video.torrent_url(choice - 1).await
+            } else {
+                video.resolution_url(choice - 1).await
+            }
+        } else if self.config.use_torrent() {
+            video.resolutions().await?;
+            video.torrent_url(choice - 1).await
         } else {
             video.watch_url()
         };
@@ -130,8 +137,8 @@ impl Cli {
         self.history.add_video(video.uuid().clone());
 
         Command::new(self.config.player())
-            .arg(video_url)
             .args(self.config.player_args())
+            .arg(video_url)
             .spawn()
             .map_err(|e| error::Error::VideoLaunch(e))?
             .await

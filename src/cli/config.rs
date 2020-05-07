@@ -30,6 +30,7 @@ pub enum ConfigLoadError {
     UnreadableFile(io::Error, PathBuf),
     TomlError(TomlError),
     NotATable,
+    NotAString,
 }
 
 impl Display for ConfigLoadError {
@@ -50,6 +51,10 @@ impl Display for ConfigLoadError {
                 f,
                 "The config file is malformed, it should be a TOML table\nUsing default config"
             ),
+            ConfigLoadError::NotAString => write!(
+                f,
+                "Command arguments need to be a table of String\n Ignoring bad arguments"
+            ),
         }
     }
 }
@@ -59,7 +64,7 @@ impl error::Error for ConfigLoadError {
         match self {
             ConfigLoadError::UnreadableFile(err, _) => Some(err),
             ConfigLoadError::TomlError(err) => Some(err),
-            ConfigLoadError::NotATable => unimplemented!(),
+            ConfigLoadError::NotATable | ConfigLoadError::NotAString => None,
         }
     }
 }
@@ -137,11 +142,7 @@ impl Config {
                         .flatten()
                         .map(|s| s.to_string())
                         .unwrap_or_else(|| "mpv".to_string()),
-                    t.get("args")
-                        .map(|cmd| cmd.as_array())
-                        .flatten()
-                        .map(|v| v.iter().map(|s| s.to_string()).collect())
-                        .unwrap_or_default(),
+                    get_args(t, &mut load_error),
                     t.get("use-raw-urls")
                         .map(|b| b.as_bool())
                         .flatten()
@@ -174,12 +175,7 @@ impl Config {
             {
                 Some(TorrentConf {
                     client: s,
-                    args: t
-                        .get("args")
-                        .map(|cmd| cmd.as_array())
-                        .flatten()
-                        .map(|v| v.iter().map(|s| s.to_string()).collect())
-                        .unwrap_or_default(),
+                    args: get_args(t, &mut load_error),
                 })
             } else {
                 None
@@ -237,15 +233,29 @@ impl Config {
     }
 
     pub fn player(&self) -> &str {
-        &self.player.client
+        match &self.torrent {
+            Some((tor, true)) => &tor.client,
+            _ => &self.player.client,
+        }
     }
 
     pub fn player_args(&self) -> &Vec<String> {
-        &self.player.args
+        match &self.torrent {
+            Some((tor, true)) => &tor.args,
+            _ => &self.player.args,
+        }
     }
 
     pub fn instance(&self) -> &str {
         &self.instance
+    }
+
+    pub fn use_torrent(&self) -> bool {
+        if let Some((_, true)) = self.torrent {
+            true
+        } else {
+            false
+        }
     }
 
     pub fn max_hist_lines(&self) -> usize {
@@ -281,6 +291,24 @@ fn concat(v: Values) -> String {
         concatenated.push_str(s);
     }
     concatenated
+}
+
+fn get_args(t: &Table, load_error: &mut Option<ConfigLoadError>) -> Vec<String> {
+    t.get("args")
+        .map(|cmd| cmd.as_array())
+        .flatten()
+        .map(|v| {
+            v.iter()
+                .filter_map(|s| {
+                    let res = s.as_str().map(|s| s.to_string());
+                    if res.is_none() {
+                        *load_error = Some(ConfigLoadError::NotAString)
+                    }
+                    res
+                })
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 impl Default for Config {

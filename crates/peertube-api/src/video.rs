@@ -202,6 +202,15 @@ impl Video {
         }
     }
 
+    pub async fn torrent_url(&self, id: usize) -> String {
+        let guard = self.files.lock().await;
+        if let Some(res) = guard.as_ref() {
+            res[id].torrent_download_url.clone()
+        } else {
+            panic!("Resolution hasn't been fetched");
+        }
+    }
+
     pub fn host(&self) -> &str {
         &self.account.host
     }
