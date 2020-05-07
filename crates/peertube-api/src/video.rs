@@ -123,6 +123,26 @@ impl Video {
             None
         }
     }
+    pub fn from(i: &FeaturedRc<Instance>, mut v: video::Video) -> Video {
+        Video {
+            instance: i.clone(),
+            name: v.name,
+            uuid: v.uuid,
+            duration: floor_default(v.duration),
+            likes: floor_default(v.likes),
+            dislikes: floor_default(v.dislikes),
+            views: floor_default(v.views),
+            published: v
+                .publishedAt
+                .map(|d| DateTime::parse_from_rfc3339(&d).ok())
+                .flatten(),
+            short_desc: v.description,
+            description: Mutex::new(None),
+            files: Mutex::new(Some(v.files.drain(..).map(|v| v.into()).collect())),
+            channel: v.channel.into(),
+            account: v.account.into(),
+        }
+    }
 
     pub fn watch_url(&self) -> String {
         let mut video_url = "https://".to_string();

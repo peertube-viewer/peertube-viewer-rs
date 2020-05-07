@@ -1,3 +1,4 @@
+use crate::search::{Channel, IdentifiedLabel, Language};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -9,6 +10,27 @@ pub struct Description {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Video {
+    pub uuid: String,
+    pub createdAt: Option<String>,
+    pub publishedAt: Option<String>,
+    pub updatedAt: Option<String>,
+    pub originallyPublishedAt: Option<String>,
+    pub description: Option<String>,
+    pub duration: Option<i64>,
+    pub isLocal: Option<bool>,
+    pub name: String,
+    pub thumbnailPath: Option<String>,
+    pub previewPath: Option<String>,
+    pub embedPath: Option<String>,
+    pub views: Option<i64>,
+    pub likes: Option<i64>,
+    pub dislikes: Option<i64>,
+    pub account: Channel,
+    pub channel: Channel,
+    pub category: IdentifiedLabel,
+    pub licence: IdentifiedLabel,
+    pub language: Language,
+    pub privacy: IdentifiedLabel,
     pub files: Vec<File>,
 }
 

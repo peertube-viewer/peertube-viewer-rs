@@ -62,7 +62,15 @@ impl Cli {
             history.load_file(&view_hist_file).unwrap_or(()); // unwrap_or to ignore the unused_must_use warnings
             rl.load_history(&cmd_hist_file).unwrap_or(()); // we don't care if the loading failed
         }
-        let instance = Instance::new(config.instance().to_string());
+        let instance = match initial_query.as_ref() {
+            Some(s) if s.starts_with("http://") || s.starts_with("https://") => {
+                match s.split('/').nth(2) {
+                    Some(s) => Instance::new(format!("https://{}", s)),
+                    None => Instance::new(config.instance().to_string()),
+                }
+            }
+            None | Some(_) => Instance::new(config.instance().to_string()),
+        };
 
         Cli {
             config,
@@ -76,52 +84,69 @@ impl Cli {
     }
 
     async fn main_loop(&mut self) -> Result<(), error::Error> {
-        self.display.welcome(self.config.instance());
+        self.display.welcome(self.instance.host());
 
         let mut initial_query = None;
         swap(&mut initial_query, &mut self.initial_query);
 
-        let mut query = match initial_query {
-            Some(q) => q,
-            None => self.rl.readline(">> ".to_string()).await?,
+        let mut is_url = initial_query
+            .as_ref()
+            .map(|s| s.starts_with("http://") || s.starts_with("https://"))
+            == Some(true);
+
+        let (mut query, is_single_url) = match initial_query {
+            Some(v) if is_url => match v.split(' ').nth(1) {
+                Some(q) => (q.to_string(), false),
+                None => match v.split('/').nth(5) {
+                    Some(uuid) => (uuid.to_string(), true),
+                    None => (self.rl.readline(">> ".to_string()).await?, false),
+                },
+            },
+            Some(q) => (q, false),
+            None => (self.rl.readline(">> ".to_string()).await?, false),
         };
 
         let mut changed_query = true;
 
         let mut results_rc = Vec::new();
         loop {
-            if changed_query {
-                if query == ":q" {
-                    continue;
-                }
-                self.rl.add_history_entry(&query);
-                results_rc = self.search(&query).await?;
-            }
-            self.display.search_results(&results_rc, &self.history);
-
-            let mut choice = None;
-            loop {
-                let s = self.rl.readline(">> ".to_string()).await?;
-                match s.parse::<usize>() {
-                    Ok(id) if id < results_rc.len() => {
-                        choice = Some(id);
-                        break;
+            let video;
+            if !is_single_url {
+                if changed_query {
+                    if query == ":q" {
+                        continue;
                     }
-                    Ok(_) => continue,
-                    Err(_) => {
-                        query = s;
-                        choice = None;
-                        changed_query = true
+                    self.rl.add_history_entry(&query);
+                    results_rc = self.search(&query).await?;
+                }
+                self.display.search_results(&results_rc, &self.history);
+
+                let mut choice = None;
+                loop {
+                    let s = self.rl.readline(">> ".to_string()).await?;
+                    match s.parse::<usize>() {
+                        Ok(id) if id < results_rc.len() => {
+                            choice = Some(id);
+                            break;
+                        }
+                        Ok(_) => continue,
+                        Err(_) => {
+                            query = s;
+                            choice = None;
+                            changed_query = true
+                        }
                     }
                 }
+
+                let choice = match choice {
+                    Some(id) => id,
+                    None => continue,
+                };
+                video = results_rc[choice - 1].clone();
+            } else {
+                video = Rc::new(self.instance.single_video(&query).await?)
             }
 
-            let choice = match choice {
-                Some(id) => id,
-                None => continue,
-            };
-
-            let video = &results_rc[choice - 1];
             let video_url = if self.config.select_quality() {
                 let resolutions = video.resolutions().await?;
                 let nb_resolutions = resolutions.len();
@@ -149,11 +174,11 @@ impl Cli {
                 }
             } else if self.config.use_torrent() {
                 video.resolutions().await?;
-                video.torrent_url(choice - 1).await
+                video.torrent_url(0).await
             } else {
                 video.watch_url()
             };
-            self.display.info(video).await;
+            self.display.info(&video).await;
             self.history.add_video(video.uuid().clone());
 
             changed_query = false;
@@ -164,6 +189,10 @@ impl Cli {
                 .map_err(error::Error::VideoLaunch)?
                 .await
                 .map_err(error::Error::VideoLaunch)?;
+
+            if is_single_url {
+                break;
+            }
         }
         Ok(())
     }

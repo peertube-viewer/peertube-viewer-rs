@@ -50,6 +50,16 @@ impl Instance {
         Ok(res)
     }
 
+    pub async fn single_video(self: &FeaturedRc<Instance>, uuid: &str) -> error::Result<Video> {
+        let mut url = self.host.clone();
+        url.push_str("/api/v1/videos/");
+        url.push_str(uuid);
+        Ok(Video::from(
+            self,
+            serde_json::from_str::<FullVideo>(&*self.client.get(&url).send().await?.text().await?)?,
+        ))
+    }
+
     pub async fn video_description(
         self: &FeaturedRc<Instance>,
         uuid: &str,
