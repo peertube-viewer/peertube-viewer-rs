@@ -168,12 +168,19 @@ impl Cli {
         Ok(())
     }
 
-    pub fn run(&mut self) -> Result<(), error::Error> {
-        let mut basic_rt = runtime::Builder::new()
+    pub fn run(&mut self) {
+        let mut basic_rt = match runtime::Builder::new()
             .enable_all()
             .basic_scheduler()
             .build()
-            .map_err(error::Error::RuntimeInit)?;
+        {
+            Ok(rt) => rt,
+            Err(e) => {
+                self.display.err(&error::Error::RuntimeInit(e));
+                return;
+            }
+        };
+
         basic_rt
             .block_on(async {
                 let local = LocalSet::new();
@@ -187,8 +194,6 @@ impl Cli {
                     return;
                 }
             });
-
-        Ok(())
     }
 
     async fn search(&mut self, query: &str) -> Result<Vec<Rc<peertube_api::Video>>, error::Error> {
