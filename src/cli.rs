@@ -4,6 +4,7 @@ mod history;
 mod input;
 
 use config::Config;
+pub use config::ConfigLoadError;
 use display::Display;
 use history::History;
 use input::Editor;

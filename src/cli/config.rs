@@ -1,12 +1,15 @@
 use clap::{Arg, Values};
 use dirs::config_dir;
-use toml::value::{Table, Value};
+use toml::{
+    de::Error as TomlError,
+    value::{Table, Value},
+};
 
 use std::collections::HashSet;
 use std::default::Default;
-use std::env;
 use std::fmt::{self, Display, Formatter};
 use std::fs::read_to_string;
+use std::{env, error, io};
 
 #[derive(Debug)]
 struct TorrentConf {
@@ -21,22 +24,38 @@ struct PlayerConf {
     pub use_raw_urls: bool,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub enum ConfigLoadError {
-    UnreadableFile,
-    Malformed,
+    UnreadableFile(io::Error),
+    TomlError(TomlError),
+    NotATable,
 }
 
 impl Display for ConfigLoadError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ConfigLoadError::UnreadableFile => {
-                write!(f, "Unable to read the config file, using default config\nUsing default config")
-            }
-            ConfigLoadError::Malformed => write!(
+            ConfigLoadError::UnreadableFile(_) => write!(
                 f,
-                "The config file is malformed, it should be parsable as a TOML table\nUsing default config"
+                "Unable to read the config file, using default config\nUsing default config"
             ),
+            ConfigLoadError::TomlError(_) => write!(
+                f,
+                "The config was not parsable as TOML\nUsing default config"
+            ),
+            ConfigLoadError::NotATable => write!(
+                f,
+                "The config file is malformed, it should be a TOML table\nUsing default config"
+            ),
+        }
+    }
+}
+
+impl error::Error for ConfigLoadError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        match self {
+            ConfigLoadError::UnreadableFile(err) => Some(err),
+            ConfigLoadError::TomlError(err) => Some(err),
+            ConfigLoadError::NotATable => unimplemented!(),
         }
     }
 }
@@ -77,8 +96,8 @@ impl Config {
         let mut load_error = None;
         let config_str = if let Some(c) = cli_args.value_of("config file") {
             read_to_string(c.to_string())
-                .map_err(|_| {
-                    load_error = Some(ConfigLoadError::UnreadableFile);
+                .map_err(|err| {
+                    load_error = Some(ConfigLoadError::UnreadableFile(err));
                 })
                 .unwrap_or_default()
         } else {
@@ -87,21 +106,25 @@ impl Config {
                     d.push("peertube-viewer-rs");
                     d.push("config.toml");
                     read_to_string(&d)
-                        .map_err(|_| {
-                            load_error = Some(ConfigLoadError::UnreadableFile);
+                        .map_err(|err| {
+                            load_error = Some(ConfigLoadError::UnreadableFile(err));
                         })
                         .unwrap_or_default()
                 }
                 None => String::new(),
             }
         };
-        let config = if let Ok(Value::Table(t)) = config_str.parse() {
-            t
-        } else {
-            load_error = Some(ConfigLoadError::Malformed);
-            Table::new()
+        let config = match config_str.parse() {
+            Ok(Value::Table(t)) => t,
+            Ok(_) => {
+                load_error = Some(ConfigLoadError::NotATable);
+                Table::new()
+            }
+            Err(e) => {
+                load_error = Some(ConfigLoadError::TomlError(e));
+                Table::new()
+            }
         };
-
         let (config_player_cmd, config_player_args, use_raw_urls) =
             if let Some(Value::Table(t)) = config.get("player") {
                 (
