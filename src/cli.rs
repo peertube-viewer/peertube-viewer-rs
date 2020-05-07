@@ -9,6 +9,8 @@ use display::Display;
 use history::History;
 use input::Editor;
 
+use crate::error;
+
 use rustyline::error::ReadlineError;
 
 use peertube_api::Instance;
@@ -73,7 +75,7 @@ impl Cli {
         }
     }
 
-    async fn main_loop(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    async fn main_loop(&mut self) -> Result<(), error::Error> {
         self.display.welcome(self.config.instance());
 
         let mut initial_query = None;
@@ -85,8 +87,8 @@ impl Cli {
                 Ok(l) => l,
                 Err(ReadlineError::Eof) | Err(ReadlineError::Interrupted) => return Ok(()),
                 Err(e) => {
-                    self.display.err(&format!("Unexpected input error:\n{}", e));
-                    return Err(Box::new(e));
+                    self.display.err(&e);
+                    return Err(e.into());
                 }
             },
         };
@@ -132,15 +134,17 @@ impl Cli {
             .args(self.config.player_args())
             .spawn()
             .unwrap()
-            .await?;
+            .await
+            .map_err(|e| error::Error::VideoLaunch(e))?;
         Ok(())
     }
 
-    pub fn run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn run(&mut self) -> Result<(), error::Error> {
         let mut basic_rt = runtime::Builder::new()
             .enable_all()
             .basic_scheduler()
-            .build()?;
+            .build()
+            .map_err(|e| error::Error::RuntimeInit(e))?;
         basic_rt.block_on(async {
             let local = LocalSet::new();
             local.run_until(self.main_loop()).await

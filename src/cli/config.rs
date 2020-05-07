@@ -9,6 +9,7 @@ use std::collections::HashSet;
 use std::default::Default;
 use std::fmt::{self, Display, Formatter};
 use std::fs::read_to_string;
+use std::path::PathBuf;
 use std::{env, error, io};
 
 #[derive(Debug)]
@@ -26,7 +27,7 @@ struct PlayerConf {
 
 #[derive(Debug)]
 pub enum ConfigLoadError {
-    UnreadableFile(io::Error),
+    UnreadableFile(io::Error, PathBuf),
     TomlError(TomlError),
     NotATable,
 }
@@ -34,13 +35,16 @@ pub enum ConfigLoadError {
 impl Display for ConfigLoadError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ConfigLoadError::UnreadableFile(_) => write!(
+            ConfigLoadError::UnreadableFile(e, path) => write!(
                 f,
-                "Unable to read the config file, using default config\nUsing default config"
+                "Unable to read the config file at \"{}\":\n{}\nUsing default config",
+                path.display(),
+                e
             ),
-            ConfigLoadError::TomlError(_) => write!(
+            ConfigLoadError::TomlError(e) => write!(
                 f,
-                "The config was not parsable as TOML\nUsing default config"
+                "The config was not parsable as TOML:\n{}\nUsing default config",
+                e
             ),
             ConfigLoadError::NotATable => write!(
                 f,
@@ -53,7 +57,7 @@ impl Display for ConfigLoadError {
 impl error::Error for ConfigLoadError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            ConfigLoadError::UnreadableFile(err) => Some(err),
+            ConfigLoadError::UnreadableFile(err, _) => Some(err),
             ConfigLoadError::TomlError(err) => Some(err),
             ConfigLoadError::NotATable => unimplemented!(),
         }
@@ -97,7 +101,7 @@ impl Config {
         let config_str = if let Some(c) = cli_args.value_of("config file") {
             read_to_string(c.to_string())
                 .map_err(|err| {
-                    load_error = Some(ConfigLoadError::UnreadableFile(err));
+                    load_error = Some(ConfigLoadError::UnreadableFile(err, c.into()));
                 })
                 .unwrap_or_default()
         } else {
@@ -107,7 +111,7 @@ impl Config {
                     d.push("config.toml");
                     read_to_string(&d)
                         .map_err(|err| {
-                            load_error = Some(ConfigLoadError::UnreadableFile(err));
+                            load_error = Some(ConfigLoadError::UnreadableFile(err, d));
                         })
                         .unwrap_or_default()
                 }

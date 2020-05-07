@@ -1,18 +1,24 @@
 use crate::cli::ConfigLoadError;
 use peertube_api::error::Error as ApiError;
-use std::{error, fmt};
+use std::{error, fmt, io};
 
 #[derive(Debug)]
 pub enum Error {
     Api(ApiError),
     Config(ConfigLoadError),
+    Readline(rustyline::error::ReadlineError),
+    RuntimeInit(io::Error),
+    VideoLaunch(io::Error),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::Api(err) => write!(f, "Error connecting to the API: {}", err),
-            Error::Config(err) => write!(f, "Config error: {}", err),
+            Error::Api(_) => write!(f, "Error connecting to the API"),
+            Error::Config(_) => write!(f, "Config error"),
+            Error::Readline(_) => write!(f, "Input error"),
+            Error::RuntimeInit(_) => write!(f, "Unable to init the async runtime"),
+            Error::VideoLaunch(_) => write!(f, "Unable to launch video"),
         }
     }
 }
@@ -22,6 +28,9 @@ impl error::Error for Error {
         match self {
             Error::Api(err) => Some(err),
             Error::Config(err) => Some(err),
+            Error::Readline(err) => Some(err),
+            Error::RuntimeInit(err) => Some(err),
+            Error::VideoLaunch(err) => Some(err),
         }
     }
 }
@@ -35,5 +44,11 @@ impl From<ApiError> for Error {
 impl From<ConfigLoadError> for Error {
     fn from(err: ConfigLoadError) -> Self {
         Error::Config(err)
+    }
+}
+
+impl From<rustyline::error::ReadlineError> for Error {
+    fn from(err: rustyline::error::ReadlineError) -> Self {
+        Error::Readline(err)
     }
 }
