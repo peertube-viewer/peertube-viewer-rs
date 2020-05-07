@@ -83,14 +83,7 @@ impl Cli {
 
         let mut query = match initial_query {
             Some(q) => q,
-            None => match self.rl.readline(">> ".to_string()).await {
-                Ok(l) => l,
-                Err(ReadlineError::Eof) | Err(ReadlineError::Interrupted) => return Ok(()),
-                Err(e) => {
-                    self.display.err(&e);
-                    return Err(e.into());
-                }
-            },
+            None => self.rl.readline(">> ".to_string()).await?,
         };
 
         let mut changed_query = true;
@@ -98,18 +91,57 @@ impl Cli {
         let mut results_rc = Vec::new();
         loop {
             if changed_query {
+                if query == ":q" {
+                    continue;
+                }
                 self.rl.add_history_entry(&query);
                 results_rc = self.search(&query).await?;
             }
             self.display.search_results(&results_rc, &self.history);
 
-            let choice = self.rl.readline(">> ".to_string()).await.unwrap();
-            let choice = choice.parse::<usize>().unwrap();
+            let mut choice = None;
+            loop {
+                let s = self.rl.readline(">> ".to_string()).await?;
+                match s.parse::<usize>() {
+                    Ok(id) if id < results_rc.len() => {
+                        choice = Some(id);
+                        break;
+                    }
+                    Ok(_) => continue,
+                    Err(_) => {
+                        query = s;
+                        choice = None;
+                        changed_query = true
+                    }
+                }
+            }
+
+            let choice = match choice {
+                Some(id) => id,
+                None => continue,
+            };
+
             let video = &results_rc[choice - 1];
             let video_url = if self.config.select_quality() {
-                self.display.resolutions(video.resolutions().await?);
-                let choice = self.rl.readline(">> ".to_string()).await.unwrap();
-                let choice = choice.parse::<usize>().unwrap();
+                let resolutions = video.resolutions().await?;
+                let nb_resolutions = resolutions.len();
+                self.display.resolutions(resolutions);
+                let mut choice = 0;
+                loop {
+                    match self.rl.readline(">> ".to_string()).await?.parse::<usize>() {
+                        Ok(id) if id < nb_resolutions => {
+                            choice = id;
+                            break;
+                        }
+                        Ok(_) => self.display.message(&format!(
+                            "Choice must be inferior to the number of available resolutions: {}",
+                            nb_resolutions
+                        )),
+                        Err(_) => self
+                            .display
+                            .message("Enter a number to select the resolution"),
+                    }
+                }
                 if self.config.use_torrent() {
                     video.torrent_url(choice - 1).await
                 } else {
@@ -124,6 +156,7 @@ impl Cli {
             self.display.info(video).await;
             self.history.add_video(video.uuid().clone());
 
+            changed_query = false;
             Command::new(self.config.player())
                 .args(self.config.player_args())
                 .arg(video_url)
@@ -141,10 +174,21 @@ impl Cli {
             .basic_scheduler()
             .build()
             .map_err(error::Error::RuntimeInit)?;
-        basic_rt.block_on(async {
-            let local = LocalSet::new();
-            local.run_until(self.main_loop()).await
-        })
+        basic_rt
+            .block_on(async {
+                let local = LocalSet::new();
+                local.run_until(self.main_loop()).await
+            })
+            .map_err(|e| match e {
+                error::Error::Readline(ReadlineError::Interrupted)
+                | error::Error::Readline(ReadlineError::Eof) => return,
+                err @ _ => {
+                    self.display.err(&err);
+                    return;
+                }
+            });
+
+        Ok(())
     }
 
     async fn search(&mut self, query: &str) -> Result<Vec<Rc<peertube_api::Video>>, error::Error> {

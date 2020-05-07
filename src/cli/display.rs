@@ -120,6 +120,10 @@ impl Display {
         );
     }
 
+    pub fn message(&self, msg: &str) {
+        println!("{}", msg);
+    }
+
     pub async fn info(&self, video: &Video) {
         self.line('=');
         self.print_centered(video.name());
