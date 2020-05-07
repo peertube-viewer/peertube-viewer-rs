@@ -118,6 +118,16 @@ impl Display {
             style::Reset,
             color::Fg(color::Reset)
         );
+        if let Some(e) = err.source() {
+            println!(
+                "{}{}{}{}{}",
+                color::Fg(color::Red),
+                style::Bold,
+                e,
+                style::Reset,
+                color::Fg(color::Reset)
+            );
+        }
     }
 
     pub fn message(&self, msg: &str) {
