@@ -20,8 +20,8 @@ impl fmt::Display for Error {
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            Error::Reqwest(err) => err.source(),
-            Error::Serde(err) => err.source(),
+            Error::Reqwest(err) => Some(err),
+            Error::Serde(err) => Some(err),
         }
     }
 }
