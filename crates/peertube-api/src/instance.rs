@@ -31,6 +31,8 @@ impl Instance {
     pub async fn search_videos(
         self: &FeaturedRc<Instance>,
         query: &str,
+        nb: usize,
+        skip: usize,
     ) -> error::Result<Vec<Video>> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/search/videos");
@@ -38,7 +40,11 @@ impl Instance {
             &*self
                 .client
                 .get(&url)
-                .query(&[("search", query)])
+                .query(&[
+                    ("search", query),
+                    ("count", &nb.to_string()),
+                    ("start", &skip.to_string()),
+                ])
                 .send()
                 .await?
                 .text()
