@@ -76,6 +76,27 @@ impl From<search::Channel> for Channel {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Description {
+    None,
+    FetchedNone,
+    Fetched(String),
+}
+
+impl Description {
+    pub fn is_none(&self) -> bool {
+        Description::None == *self
+    }
+
+    pub fn to_option(&self) -> Option<String> {
+        if let Description::Fetched(s) = self {
+            Some(s.clone())
+        } else {
+            None
+        }
+    }
+}
+
 /// Handle to a video
 #[derive(Getters)]
 pub struct Video {
@@ -90,7 +111,7 @@ pub struct Video {
     published: Option<DateTime<FixedOffset>>,
     short_desc: Option<String>,
     #[getter(skip)]
-    description: Mutex<Option<Option<String>>>,
+    description: Mutex<Description>,
     #[getter(skip)]
     files: Mutex<Option<Vec<File>>>,
     #[getter(skip)]
@@ -115,7 +136,7 @@ impl Video {
                     .map(|d| DateTime::parse_from_rfc3339(&d).ok())
                     .flatten(),
                 short_desc: v.description,
-                description: Mutex::new(None),
+                description: Mutex::new(Description::None),
                 files: Mutex::new(None),
                 channel: v.channel.into(),
                 account: v.account.into(),
@@ -138,7 +159,7 @@ impl Video {
                 .map(|d| DateTime::parse_from_rfc3339(&d).ok())
                 .flatten(),
             short_desc: v.description,
-            description: Mutex::new(None),
+            description: Mutex::new(Description::None),
             files: Mutex::new(Some(v.files.drain(..).map(|v| v.into()).collect())),
             channel: v.channel.into(),
             account: v.account.into(),
@@ -160,9 +181,12 @@ impl Video {
     pub async fn description(&self) -> error::Result<Option<String>> {
         let mut guard = self.description.lock().await;
         if guard.is_none() {
-            *guard = Some(self.fetch_description().await?);
+            *guard = match self.fetch_description().await? {
+                Some(s) => Description::Fetched(s),
+                None => Description::FetchedNone,
+            };
         }
-        Ok(guard.as_ref().unwrap().clone())
+        Ok(guard.to_option())
     }
 
     async fn fetch_description(&self) -> error::Result<Option<String>> {
@@ -176,7 +200,10 @@ impl Video {
     pub async fn load_description(&self) -> error::Result<()> {
         let mut guard = self.description.lock().await;
         if guard.is_none() {
-            *guard = Some(self.fetch_description().await?);
+            *guard = match self.fetch_description().await? {
+                Some(s) => Description::Fetched(s),
+                None => Description::FetchedNone,
+            };
         }
         Ok(())
     }

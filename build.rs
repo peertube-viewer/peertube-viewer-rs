@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate clap;
 
-use clap::{Arg, Shell, Values};
+use clap::{Arg, Shell};
 use std::{env, fs::create_dir};
 
 fn main() {
