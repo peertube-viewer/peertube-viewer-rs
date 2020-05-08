@@ -54,7 +54,7 @@ impl Display for ConfigLoadError {
             ),
             ConfigLoadError::NotAString => write!(
                 f,
-                "Command arguments need to be a table of String\n Ignoring bad arguments"
+                "Command arguments and blacklisted instances need to be a table of String\n Ignoring bad arguments"
             ),
         }
     }
@@ -155,7 +155,7 @@ impl Config {
                         .flatten()
                         .map(|s| s.to_string())
                         .unwrap_or_else(|| "mpv".to_string()),
-                    get_args(t, &mut load_error),
+                    get_string_array(t, "args", &mut load_error),
                     t.get("use-raw-urls")
                         .map(|b| b.as_bool())
                         .flatten()
@@ -188,7 +188,7 @@ impl Config {
             {
                 Some(TorrentConf {
                     client: s,
-                    args: get_args(t, &mut load_error),
+                    args: get_string_array(t, "args", &mut load_error),
                 })
             } else {
                 None
@@ -234,11 +234,20 @@ impl Config {
             }
         };
 
+        let blacklist = if let Some(Value::Table(t)) = config.get("instances") {
+            get_string_array(t, "blacklist", &mut load_error)
+                .into_iter()
+                .collect()
+        } else {
+            HashSet::new()
+        };
+
         let mut temp = Config::default();
         temp.player = player;
         temp.instance = correct_instance(instance);
         temp.torrent = torrent.map(|t| (t, cli_args.is_present("TORRENT")));
         temp.select_quality = cli_args.is_present("SELECTQUALITY");
+        temp.listed_instances = blacklist;
 
         let initial_query = cli_args.values_of("initial query").map(concat);
 
@@ -282,6 +291,10 @@ impl Config {
     pub fn select_quality(&self) -> bool {
         self.select_quality
     }
+
+    pub fn is_blacklisted(&self, instance: &str) -> bool {
+        self.listed_instances.contains(instance)
+    }
 }
 fn correct_instance(s: &str) -> String {
     let mut s = if s.starts_with("https://") {
@@ -312,8 +325,12 @@ fn concat(mut v: Values) -> String {
     concatenated
 }
 
-fn get_args(t: &Table, load_error: &mut Option<ConfigLoadError>) -> Vec<String> {
-    t.get("args")
+fn get_string_array(
+    t: &Table,
+    name: &str,
+    load_error: &mut Option<ConfigLoadError>,
+) -> Vec<String> {
+    t.get(name)
         .map(|cmd| cmd.as_array())
         .flatten()
         .map(|v| {

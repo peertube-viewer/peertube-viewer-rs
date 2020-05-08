@@ -243,7 +243,10 @@ impl Cli {
     async fn search(&mut self, query: &str) -> Result<Vec<Rc<peertube_api::Video>>, error::Error> {
         let mut search_results = self.instance.search_videos(&query).await?;
         let mut results_rc = Vec::new();
-        for video in search_results.drain(..) {
+        for video in search_results
+            .drain(..)
+            .filter(|v| !self.config.is_blacklisted(v.host()))
+        {
             let video_stored = Rc::new(video);
             let cl1 = video_stored.clone();
             #[allow(unused_must_use)]
