@@ -69,6 +69,7 @@ impl error::Error for ConfigLoadError {
     }
 }
 
+/// Config for the cli interface
 #[derive(Debug)]
 pub struct Config {
     player: PlayerConf,
@@ -102,7 +103,10 @@ impl Config {
         );
         let cli_args = app.get_matches();
 
+        // Any error that occured during loading
         let mut load_error = None;
+
+        // Parse config as an String with default to empty string
         let config_str = if let Some(c) = cli_args.value_of("config file") {
             read_to_string(c.to_string())
                 .map_err(|err| {
@@ -123,6 +127,8 @@ impl Config {
                 None => String::new(),
             }
         };
+
+        // Parse config as TOML with default to empty
         let config = match config_str.parse() {
             Ok(Value::Table(t)) => t,
             Ok(_) => {
@@ -134,6 +140,7 @@ impl Config {
                 Table::new()
             }
         };
+
         let (config_player_cmd, config_player_args, use_raw_urls) =
             if let Some(Value::Table(t)) = config.get("player") {
                 (

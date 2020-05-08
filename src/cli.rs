@@ -36,6 +36,7 @@ pub struct Cli {
 }
 
 impl Cli {
+    /// Loads an instance of the cli
     pub fn init() -> Cli {
         let (config, initial_query, load_error) = Config::new();
         let display = Display::new();
@@ -50,6 +51,7 @@ impl Cli {
 
         let mut rl = Editor::new();
 
+        // Loads the history if available
         if let Some(cache) = cache.as_mut() {
             cache.push("peertube-viewer-rs");
             create_dir(&cache).unwrap_or(());
@@ -62,6 +64,8 @@ impl Cli {
             history.load_file(&view_hist_file).unwrap_or(()); // unwrap_or to ignore the unused_must_use warnings
             rl.load_history(&cmd_hist_file).unwrap_or(()); // we don't care if the loading failed
         }
+
+        // If the initial query is a url, connect to the corresponding instance
         let instance = match initial_query.as_ref() {
             Some(s) if s.starts_with("http://") || s.starts_with("https://") => {
                 match s.split('/').nth(2) {
@@ -83,6 +87,7 @@ impl Cli {
         }
     }
 
+    /// Main loop for he cli interface
     async fn main_loop(&mut self) -> Result<(), error::Error> {
         self.display.welcome(self.instance.host());
 
@@ -94,6 +99,7 @@ impl Cli {
             .map(|s| s.starts_with("http://") || s.starts_with("https://"))
             == Some(true);
 
+        // Check if the initital query is a video url
         let (mut query, is_single_url) = match initial_query {
             Some(v) if is_url => match v.split(' ').nth(1) {
                 Some(q) => (q.to_string(), false),
@@ -110,6 +116,7 @@ impl Cli {
 
         let mut results_rc = Vec::new();
 
+        // Main loop
         loop {
             let video;
             if !is_single_url {
@@ -124,6 +131,9 @@ impl Cli {
                 self.display.search_results(&results_rc, &self.history);
 
                 let choice;
+
+                // Getting the choice among the search results
+                // If the user doesn't input a number, it is a new query
                 loop {
                     let s = self.rl.readline(">> ".to_string()).await?;
                     match s.parse::<usize>() {
@@ -150,6 +160,7 @@ impl Cli {
                 video = Rc::new(self.instance.single_video(&query).await?)
             }
 
+            // Resolution selection
             let video_url = if self.config.select_quality() {
                 let resolutions = video.resolutions().await?;
                 let nb_resolutions = resolutions.len();
@@ -228,6 +239,7 @@ impl Cli {
             });
     }
 
+    /// Performs a search and launches asynchronous loading of additionnal video info
     async fn search(&mut self, query: &str) -> Result<Vec<Rc<peertube_api::Video>>, error::Error> {
         let mut search_results = self.instance.search_videos(&query).await?;
         let mut results_rc = Vec::new();
