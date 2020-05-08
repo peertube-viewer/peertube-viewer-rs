@@ -1,5 +1,5 @@
 clap_app!(("peertube-viewer-rs") =>
-(version: "1.0")
+(version: env!("CARGO_PKG_VERSION"))
 (author: "Sosthène Guédon <sosthene.gued@gmail.com>")
 (about: "Peertube cli client")
 (@arg USERAWURL:--("use-raw-url")  "the raw url will be passed to the player. It may be neccessary for players without native support for peertube such as vlc. Some players (ex : mpv) may be able to show the video title in their interface if this option isn't used")
