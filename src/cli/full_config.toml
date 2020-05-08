@@ -5,6 +5,8 @@ use-raw-url = false
 
 [instances]
 main = "video.ploud.fr"
+
+# whitelist = ["video.ploud.fr"]
 blacklist = ["peertube.social"]
 
 [torrent]

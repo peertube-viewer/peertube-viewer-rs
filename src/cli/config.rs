@@ -77,6 +77,7 @@ pub struct Config {
     instance: String,
     torrent: Option<(TorrentConf, bool)>,
     listed_instances: HashSet<String>,
+    is_whitelist: bool,
 
     select_quality: bool,
 
@@ -223,12 +224,24 @@ impl Config {
             }
         };
 
-        let blacklist = if let Some(Value::Table(t)) = config.get("instances") {
-            get_string_array(t, "blacklist", &mut load_error)
-                .into_iter()
-                .collect()
+        let (list, is_whitelist) = if let Some(Value::Table(t)) = config.get("instances") {
+            if t.contains_key("whitelist") {
+                (
+                    get_string_array(t, "whitelist", &mut load_error)
+                        .into_iter()
+                        .collect(),
+                    true,
+                )
+            } else {
+                (
+                    get_string_array(t, "blacklist", &mut load_error)
+                        .into_iter()
+                        .collect(),
+                    false,
+                )
+            }
         } else {
-            HashSet::new()
+            (HashSet::new(), false)
         };
 
         let mut temp = Config::default();
@@ -236,7 +249,8 @@ impl Config {
         temp.instance = correct_instance(instance);
         temp.torrent = torrent.map(|t| (t, cli_args.is_present("TORRENT")));
         temp.select_quality = cli_args.is_present("SELECTQUALITY");
-        temp.listed_instances = blacklist;
+        temp.listed_instances = list;
+        temp.is_whitelist = is_whitelist;
 
         let initial_query = cli_args.values_of("initial query").map(concat);
 
@@ -282,7 +296,11 @@ impl Config {
     }
 
     pub fn is_blacklisted(&self, instance: &str) -> bool {
-        self.listed_instances.contains(instance)
+        if self.is_whitelist {
+            !self.listed_instances.contains(instance)
+        } else {
+            self.listed_instances.contains(instance)
+        }
     }
 }
 fn correct_instance(s: &str) -> String {
@@ -347,6 +365,7 @@ impl Default for Config {
             instance: "video.ploud.fr".to_string(),
             torrent: None,
             listed_instances: HashSet::new(),
+            is_whitelist: false,
             select_quality: false,
             max_hist_lines: 2000,
         }
