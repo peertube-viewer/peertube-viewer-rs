@@ -28,6 +28,7 @@ use tokio::task::{spawn_local, LocalSet};
 pub struct Cli {
     config: Config,
     history: History,
+    query_offset: usize,
     rl: Editor,
     cache: Option<PathBuf>,
     display: Display,
@@ -88,6 +89,7 @@ impl Cli {
             config,
             history,
             rl,
+            query_offset: 0,
             cache,
             display,
             instance,
@@ -120,6 +122,8 @@ impl Cli {
             None => (self.rl.readline(">> ".to_string()).await?, false),
         };
 
+        let mut old_query = query.clone();
+
         let mut changed_query = true;
 
         let mut results_rc = Vec::new();
@@ -132,8 +136,21 @@ impl Cli {
                     changed_query = false;
                     if query == ":q" {
                         break;
+                    } else if query == ":n" {
+                        self.query_offset += 20;
+                        query = old_query.clone();
+                    } else if query == ":p" {
+                        self.query_offset = if self.query_offset < 20 {
+                            0
+                        } else {
+                            self.query_offset - 20
+                        };
+                        query = old_query.clone();
+                    } else {
+                        old_query = query.clone();
+                        self.query_offset = 0;
+                        self.rl.add_history_entry(&query);
                     }
-                    self.rl.add_history_entry(&query);
                     results_rc = self.search(&query).await?;
                 }
                 self.display.search_results(&results_rc, &self.history);
@@ -249,7 +266,10 @@ impl Cli {
 
     /// Performs a search and launches asynchronous loading of additionnal video info
     async fn search(&mut self, query: &str) -> Result<Vec<Rc<peertube_api::Video>>, Error> {
-        let mut search_results = self.instance.search_videos(&query).await?;
+        let mut search_results = self
+            .instance
+            .search_videos(&query, 20, self.query_offset)
+            .await?;
         let mut results_rc = Vec::new();
         for video in search_results
             .drain(..)
