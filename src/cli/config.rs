@@ -10,6 +10,7 @@ use std::default::Default;
 use std::fmt::{self, Display};
 use std::fs::read_to_string;
 use std::path::PathBuf;
+use std::process::exit;
 use std::{error, io};
 
 #[derive(Debug)]
@@ -89,7 +90,7 @@ impl Config {
             (author: "Sosthène Guédon <sosthene.gued@gmail.com>")
             (about: "Peertube cli client")
             (@arg USERAWURL:--("use-raw-url")  "the raw url will be passed to the player. It may be neccessary for players without native support for peertube such as vlc. Some players (ex : mpv) may be able to show the video title in their interface if this option isn't used")
-            (@arg PRINTDEFAULTCONFIG: --("print-default-config")  "print the default confing to stdout")
+            (@arg PRINTDEFAULTCONFIG: --("print-default-config")  "print the default confing to stdout and exit")
             (@arg SELECTQUALITY: --("select-quality") -s  "When playing a video with this option, the user will be prompted to chose the video quality")
             (@arg TORRENT:--("use-torrent")  "will download the video via the torrent downloader instead of playing it")
             (@arg ("player args"):--("player-args") +takes_value ... "arguments to be passed to the player")
@@ -102,6 +103,11 @@ impl Config {
             Arg::with_name("initial query" ).multiple(true).index(1).short("q").long("query").long_help("initial query to be searched.\nIf it is a url, it will try to play it as a video")
         );
         let cli_args = app.get_matches();
+
+        if cli_args.is_present("PRINTDEFAULTCONFIG") {
+            print!("{}", include_str!("default_config.toml"));
+            exit(0);
+        }
 
         // Any error that occured during loading
         let mut load_error = None;
