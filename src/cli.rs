@@ -7,7 +7,7 @@ use config::Config;
 pub use config::ConfigLoadError;
 use display::Display;
 use history::History;
-use input::Editor;
+use input::{Editor, Message};
 
 use crate::error::Error;
 
@@ -28,6 +28,7 @@ use tokio::task::{spawn_local, LocalSet};
 pub struct Cli {
     config: Config,
     history: History,
+    query_offset: usize,
     rl: Editor,
     cache: Option<PathBuf>,
     display: Display,
@@ -88,6 +89,7 @@ impl Cli {
             config,
             history,
             rl,
+            query_offset: 0,
             cache,
             display,
             instance,
@@ -120,6 +122,8 @@ impl Cli {
             None => (self.rl.readline(">> ".to_string()).await?, false),
         };
 
+        let mut old_query = query.clone();
+
         let mut changed_query = true;
 
         let mut results_rc = Vec::new();
@@ -132,8 +136,21 @@ impl Cli {
                     changed_query = false;
                     if query == ":q" {
                         break;
+                    } else if query == ":n" {
+                        self.query_offset += 20;
+                        query = old_query.clone();
+                    } else if query == ":p" {
+                        self.query_offset = if self.query_offset < 20 {
+                            0
+                        } else {
+                            self.query_offset - 20
+                        };
+                        query = old_query.clone();
+                    } else {
+                        old_query = query.clone();
+                        self.query_offset = 0;
+                        self.rl.add_history_entry(&query);
                     }
-                    self.rl.add_history_entry(&query);
                     results_rc = self.search(&query).await?;
                 }
                 self.display.search_results(&results_rc, &self.history);
@@ -142,20 +159,41 @@ impl Cli {
 
                 // Getting the choice among the search results
                 // If the user doesn't input a number, it is a new query
+                // Get what the user is typing and load
+                // the corresponding video in the background
+                let mut handle = self
+                    .rl
+                    .helped_readline(">> ".to_string(), Some(results_rc.len()));
                 loop {
-                    let s = self.rl.readline(">> ".to_string()).await?;
-                    match s.parse::<usize>() {
-                        Ok(id) if id <= results_rc.len() => {
-                            choice = id;
-                            break;
+                    match handle.next().await {
+                        Message::Over(res) => {
+                            let s = res?;
+                            match s.parse::<usize>() {
+                                Ok(id) if id > 0 && id <= results_rc.len() => {
+                                    choice = id;
+                                    break;
+                                }
+                                Err(_) | Ok(_) => {
+                                    query = s;
+                                    choice = 0;
+                                    changed_query = true;
+                                    break;
+                                }
+                            }
                         }
-                        Ok(_) => continue,
-                        Err(_) => {
-                            query = s;
-                            choice = 0;
-                            changed_query = true;
-                            break;
+
+                        Message::Number(id) => {
+                            let video_cloned = results_rc[id - 1].clone();
+                            spawn_local(async move { video_cloned.load_description().await });
+                            if self.config.select_quality() || self.config.use_raw_url() {
+                                let cl2 = results_rc[id - 1].clone();
+                                #[allow(unused_must_use)]
+                                spawn_local(async move {
+                                    cl2.load_resolutions().await;
+                                });
+                            }
                         }
+                        _ => {}
                     }
                 }
 
@@ -249,25 +287,16 @@ impl Cli {
 
     /// Performs a search and launches asynchronous loading of additionnal video info
     async fn search(&mut self, query: &str) -> Result<Vec<Rc<peertube_api::Video>>, Error> {
-        let mut search_results = self.instance.search_videos(&query).await?;
+        let mut search_results = self
+            .instance
+            .search_videos(&query, 20, self.query_offset)
+            .await?;
         let mut results_rc = Vec::new();
         for video in search_results
             .drain(..)
             .filter(|v| !self.config.is_blacklisted(v.host()))
         {
             let video_stored = Rc::new(video);
-            let cl1 = video_stored.clone();
-            #[allow(unused_must_use)]
-            spawn_local(async move {
-                cl1.load_description().await;
-            });
-            if self.config.select_quality() || self.config.use_raw_url() {
-                let cl2 = video_stored.clone();
-                #[allow(unused_must_use)]
-                spawn_local(async move {
-                    cl2.load_resolutions().await;
-                });
-            }
             results_rc.push(video_stored);
         }
 
