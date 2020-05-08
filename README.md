@@ -14,7 +14,7 @@ Compiling requires a rust toolchain to be installed
 cargo build --locked --release
 ```
 
-The executable can then be found in `target/release/peertube-viewer-rs`, while autocompletion for a few shells will be found in in the root directory of the project.
+The executable can then be found in `target/release/peertube-viewer-rs`, while autocompletion for a few shells will be found in in the `completions` directory.
 
 
 
