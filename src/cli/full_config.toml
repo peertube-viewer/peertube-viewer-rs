@@ -1,0 +1,12 @@
+[player]
+command = "mpv"
+args = ["--volume=30"]
+use-raw-url = false
+
+[instances]
+main = "video.ploud.fr"
+blacklist = ["peertube.social"]
+
+[torrent]
+command = "transmission-remote"
+args = ["-a"]

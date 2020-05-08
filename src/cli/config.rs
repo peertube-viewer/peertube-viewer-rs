@@ -91,6 +91,7 @@ impl Config {
             (about: "Peertube cli client")
             (@arg USERAWURL:--("use-raw-url")  "the raw url will be passed to the player. It may be neccessary for players without native support for peertube such as vlc. Some players (ex : mpv) may be able to show the video title in their interface if this option isn't used")
             (@arg PRINTDEFAULTCONFIG: --("print-default-config")  "print the default confing to stdout and exit")
+            (@arg PRINTFULLCONFIG: --("print-full-config")  "print an example of all possible config options and exit")
             (@arg SELECTQUALITY: --("select-quality") -s  "When playing a video with this option, the user will be prompted to chose the video quality")
             (@arg TORRENT:--("use-torrent")  "will download the video via the torrent downloader instead of playing it")
             (@arg ("player args"):--("player-args") +takes_value ... "arguments to be passed to the player")
@@ -106,6 +107,11 @@ impl Config {
 
         if cli_args.is_present("PRINTDEFAULTCONFIG") {
             print!("{}", include_str!("default_config.toml"));
+            exit(0);
+        }
+
+        if cli_args.is_present("PRINTFULLCONFIG") {
+            print!("{}", include_str!("full_config.toml"));
             exit(0);
         }
 
