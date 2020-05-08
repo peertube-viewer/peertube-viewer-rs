@@ -3,6 +3,7 @@ name = "peertube-viewer"
 version = "0.1.0"
 authors = ["Sosthène Guédon <sosthene.gued@gmail.com>"]
 edition = "2018"
+build = "build.rs"
 
 [dependencies]
 peertube-api = {version = "*", path = "crates/peertube-api"}
@@ -17,3 +18,7 @@ dirs = "2.0.2"
 
 [workspace]
 members = ["crates/peertube-api/", "crates/peertube-ser/"]
+
+[build-dependencies]
+clap = "2.33.0"
+
