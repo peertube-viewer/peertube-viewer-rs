@@ -45,6 +45,7 @@ impl History {
         }
     }
 
+    #[allow(clippy::ptr_arg)]
     pub fn is_viewed(&self, uuid: &String) -> bool {
         self.videos.contains(uuid)
     }
