@@ -1,3 +1,8 @@
 /target/
 **/*.rs.bk
+_peertube-viewer-rs
+_peertube-viewer-rs.ps1
+peertube-viewer-rs.bash
+peertube-viewer-rs.elv
+peertube-viewer-rs.fish
 
