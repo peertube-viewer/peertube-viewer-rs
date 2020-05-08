@@ -131,7 +131,7 @@ impl Cli {
                 if changed_query {
                     changed_query = false;
                     if query == ":q" {
-                        continue;
+                        break;
                     }
                     self.rl.add_history_entry(&query);
                     results_rc = self.search(&query).await?;
