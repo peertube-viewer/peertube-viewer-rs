@@ -76,6 +76,7 @@ impl From<search::Channel> for Channel {
     }
 }
 
+/// Handle to a video
 #[derive(Getters)]
 pub struct Video {
     #[getter(skip)]
@@ -144,6 +145,7 @@ impl Video {
         }
     }
 
+    /// Get the url to watch the video from a browser
     pub fn watch_url(&self) -> String {
         let mut video_url = "https://".to_string();
         video_url.push_str(&self.account.host);
@@ -151,6 +153,10 @@ impl Video {
         video_url.push_str(&self.uuid);
         video_url
     }
+
+    /// Get the full description
+    /// During the lifetime of the struct, the description will be fetched only once and the result
+    /// is stored and re-used
     pub async fn description(&self) -> error::Result<Option<String>> {
         let mut guard = self.description.lock().await;
         if guard.is_none() {
@@ -163,6 +169,10 @@ impl Video {
         self.instance.video_description(&self.uuid).await
     }
 
+    /// Fetch the description but don't return it to avoid an unnecessary copy
+    /// The result is store withing the struct
+    ///
+    /// Used to asynchronously load the description for later use
     pub async fn load_description(&self) -> error::Result<()> {
         let mut guard = self.description.lock().await;
         if guard.is_none() {
@@ -171,6 +181,10 @@ impl Video {
         Ok(())
     }
 
+    /// Fetch the available resolutions but don't return it to avoid an unnecessary copy
+    /// The result is store withing the struct
+    ///
+    /// Used to asynchronously load the resolutions for later use
     pub async fn load_resolutions(&self) -> error::Result<()> {
         let mut guard = self.files.lock().await;
         if guard.is_none() {
@@ -189,6 +203,9 @@ impl Video {
             .collect())
     }
 
+    /// Get the available resolutions
+    /// During the lifetime of the struct, the resolutions will be fetched only once and the result
+    /// is stored and re-used
     pub async fn resolutions(&self) -> error::Result<Vec<Resolution>> {
         let mut guard = self.files.lock().await;
         if guard.is_none() {
@@ -213,6 +230,7 @@ impl Video {
         &self.account.display_name
     }
 
+    /// Get a url for a given resolution
     pub async fn resolution_url(&self, id: usize) -> String {
         let guard = self.files.lock().await;
         if let Some(res) = guard.as_ref() {
@@ -222,6 +240,7 @@ impl Video {
         }
     }
 
+    /// Get a torrent url for a given resolution
     pub async fn torrent_url(&self, id: usize) -> String {
         let guard = self.files.lock().await;
         if let Some(res) = guard.as_ref() {

@@ -1,12 +1,14 @@
 use crate::search::{Channel, IdentifiedLabel, Language};
 use serde::{Deserialize, Serialize};
 
+/// Structure used to deserialize the json output from fetching a video description
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Description {
     pub description: Option<String>,
 }
 
+/// Structure used to deserialize the json output from fetching video data
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Video {
@@ -31,6 +33,9 @@ pub struct Video {
     pub licence: IdentifiedLabel,
     pub language: Language,
     pub privacy: IdentifiedLabel,
+
+    /// The list of files for the video
+    /// Each file corresponds to an available resolution
     pub files: Vec<File>,
 }
 

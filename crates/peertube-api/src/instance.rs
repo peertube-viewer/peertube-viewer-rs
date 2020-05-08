@@ -11,6 +11,9 @@ use peertube_ser::video::{Description, File, Video as FullVideo};
 use crate::error;
 use crate::video::Video;
 
+/// Connexion to an instance
+/// Video that this instance returns through `search_videos` will all use the instance which
+/// created them. This avoids connecting to many distinct instances.
 pub struct Instance {
     client: Client,
     host: String,
@@ -24,6 +27,7 @@ impl Instance {
         })
     }
 
+    /// Perform a search for the given query
     pub async fn search_videos(
         self: &FeaturedRc<Instance>,
         query: &str,
@@ -50,6 +54,7 @@ impl Instance {
         Ok(res)
     }
 
+    /// Load a single video from its uuid
     pub async fn single_video(self: &FeaturedRc<Instance>, uuid: &str) -> error::Result<Video> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/videos/");
@@ -60,6 +65,7 @@ impl Instance {
         ))
     }
 
+    /// Fetch a video description
     pub async fn video_description(
         self: &FeaturedRc<Instance>,
         uuid: &str,
@@ -74,6 +80,7 @@ impl Instance {
         Ok(desc.description)
     }
 
+    /// Fetch the files for a given video uuid
     pub async fn video_complete(
         self: &FeaturedRc<Instance>,
         uuid: &str,
