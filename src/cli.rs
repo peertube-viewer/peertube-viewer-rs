@@ -109,6 +109,7 @@ impl Cli {
         let mut changed_query = true;
 
         let mut results_rc = Vec::new();
+
         loop {
             let video;
             if !is_single_url {
@@ -175,8 +176,11 @@ impl Cli {
                     video.resolution_url(choice - 1).await
                 }
             } else if self.config.use_torrent() {
-                video.resolutions().await?;
+                video.load_resolutions().await?;
                 video.torrent_url(0).await
+            } else if self.config.use_raw_url() {
+                video.load_resolutions().await?;
+                video.resolution_url(0).await
             } else {
                 video.watch_url()
             };
@@ -234,7 +238,7 @@ impl Cli {
             spawn_local(async move {
                 cl1.load_description().await;
             });
-            if self.config.select_quality() {
+            if self.config.select_quality() || self.config.use_raw_url() {
                 let cl2 = video_stored.clone();
                 #[allow(unused_must_use)]
                 spawn_local(async move {

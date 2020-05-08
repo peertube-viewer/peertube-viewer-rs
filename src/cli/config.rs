@@ -239,6 +239,10 @@ impl Config {
         }
     }
 
+    pub fn use_raw_url(&self) -> bool {
+        self.player.use_raw_urls
+    }
+
     pub fn player_args(&self) -> &Vec<String> {
         match &self.torrent {
             Some((tor, true)) => &tor.args,
