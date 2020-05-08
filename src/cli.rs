@@ -89,7 +89,7 @@ impl Cli {
         let mut initial_query = None;
         swap(&mut initial_query, &mut self.initial_query);
 
-        let mut is_url = initial_query
+        let is_url = initial_query
             .as_ref()
             .map(|s| s.starts_with("http://") || s.starts_with("https://"))
             == Some(true);
@@ -113,6 +113,7 @@ impl Cli {
             let video;
             if !is_single_url {
                 if changed_query {
+                    changed_query = false;
                     if query == ":q" {
                         continue;
                     }
@@ -121,27 +122,28 @@ impl Cli {
                 }
                 self.display.search_results(&results_rc, &self.history);
 
-                let mut choice = None;
+                let choice;
                 loop {
                     let s = self.rl.readline(">> ".to_string()).await?;
                     match s.parse::<usize>() {
-                        Ok(id) if id < results_rc.len() => {
-                            choice = Some(id);
+                        Ok(id) if id <= results_rc.len() => {
+                            choice = id;
                             break;
                         }
                         Ok(_) => continue,
                         Err(_) => {
                             query = s;
-                            choice = None;
-                            changed_query = true
+                            choice = 0;
+                            changed_query = true;
+                            break;
                         }
                     }
                 }
 
-                let choice = match choice {
-                    Some(id) => id,
-                    None => continue,
-                };
+                if changed_query {
+                    continue;
+                }
+
                 video = results_rc[choice - 1].clone();
             } else {
                 video = Rc::new(self.instance.single_video(&query).await?)
@@ -151,7 +153,7 @@ impl Cli {
                 let resolutions = video.resolutions().await?;
                 let nb_resolutions = resolutions.len();
                 self.display.resolutions(resolutions);
-                let mut choice = 0;
+                let choice;
                 loop {
                     match self.rl.readline(">> ".to_string()).await?.parse::<usize>() {
                         Ok(id) if id < nb_resolutions => {
@@ -215,13 +217,10 @@ impl Cli {
                 let local = LocalSet::new();
                 local.run_until(self.main_loop()).await
             })
-            .map_err(|e| match e {
+            .unwrap_or_else(|e| match e {
                 error::Error::Readline(ReadlineError::Interrupted)
-                | error::Error::Readline(ReadlineError::Eof) => return,
-                err @ _ => {
-                    self.display.err(&err);
-                    return;
-                }
+                | error::Error::Readline(ReadlineError::Eof) => (),
+                err => self.display.err(&err),
             });
     }
 

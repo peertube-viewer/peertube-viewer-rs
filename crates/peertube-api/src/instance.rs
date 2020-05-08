@@ -8,7 +8,7 @@ use reqwest::Client;
 use peertube_ser::search::Search;
 use peertube_ser::video::{Description, File, Video as FullVideo};
 
-use crate::error::{self, Error};
+use crate::error;
 use crate::video::Video;
 
 pub struct Instance {

@@ -2,26 +2,23 @@ use peertube_api::{Resolution, Video};
 
 use super::history::History;
 use chrono::{DateTime, FixedOffset};
-use std::convert::AsRef;
 use std::error::Error;
 use termion::{color, style};
 
 use std::rc::Rc;
 
 const DEFAULT_COLS: usize = 20;
-const DEFAULT_ROWS: usize = 20;
 
 pub struct Display {
     cols: usize,
-    rows: usize,
 }
 
 impl Display {
     pub fn new() -> Display {
-        let (cols, rows) = termion::terminal_size()
-            .map(|(c, r)| (c as usize, r as usize))
-            .unwrap_or((DEFAULT_COLS, DEFAULT_ROWS));
-        Display { cols, rows }
+        let cols = termion::terminal_size()
+            .map(|(c, _r)| c as usize)
+            .unwrap_or(DEFAULT_COLS);
+        Display { cols }
     }
 
     pub fn search_results(&self, videos: &[Rc<Video>], history: &History) {

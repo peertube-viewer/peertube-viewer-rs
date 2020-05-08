@@ -7,10 +7,10 @@ use toml::{
 
 use std::collections::HashSet;
 use std::default::Default;
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Display};
 use std::fs::read_to_string;
 use std::path::PathBuf;
-use std::{env, error, io};
+use std::{error, io};
 
 #[derive(Debug)]
 struct TorrentConf {

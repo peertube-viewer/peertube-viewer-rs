@@ -7,7 +7,7 @@ use std::rc::Rc as FeaturedRc;
 #[cfg(feature = "send")]
 use std::sync::Arc as FeaturedRc;
 
-use crate::error::{self, Error};
+use crate::error;
 use crate::instance::Instance;
 use peertube_ser::{search, video};
 
