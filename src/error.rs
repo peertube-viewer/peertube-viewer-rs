@@ -9,6 +9,7 @@ pub enum Error {
     Readline(rustyline::error::ReadlineError),
     RuntimeInit(io::Error),
     VideoLaunch(io::Error),
+    BlacklistedInstance(String),
 }
 
 impl fmt::Display for Error {
@@ -19,6 +20,9 @@ impl fmt::Display for Error {
             Error::Readline(_) => write!(f, "Input error"),
             Error::RuntimeInit(_) => write!(f, "Unable to init the async runtime"),
             Error::VideoLaunch(_) => write!(f, "Unable to launch video"),
+            Error::BlacklistedInstance(s) => {
+                write!(f, "Connexion to a blacklisted instance: {}", s)
+            }
         }
     }
 }
@@ -31,6 +35,7 @@ impl error::Error for Error {
             Error::Readline(err) => Some(err),
             Error::RuntimeInit(err) => Some(err),
             Error::VideoLaunch(err) => Some(err),
+            Error::BlacklistedInstance(_) => None,
         }
     }
 }

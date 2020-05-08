@@ -5,6 +5,5 @@ mod cli;
 mod error;
 
 fn main() {
-    let mut cli = cli::Cli::init();
-    cli.run();
+    cli::Cli::init().map(|mut cli| cli.run());
 }

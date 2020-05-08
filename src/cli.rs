@@ -9,7 +9,7 @@ use display::Display;
 use history::History;
 use input::Editor;
 
-use crate::error;
+use crate::error::Error;
 
 use rustyline::error::ReadlineError;
 
@@ -37,7 +37,7 @@ pub struct Cli {
 
 impl Cli {
     /// Loads an instance of the cli
-    pub fn init() -> Cli {
+    pub fn init() -> Result<Cli, Error> {
         let (config, initial_query, load_error) = Config::new();
         let display = Display::new();
 
@@ -66,17 +66,25 @@ impl Cli {
         }
 
         // If the initial query is a url, connect to the corresponding instance
-        let instance = match initial_query.as_ref() {
+        let instance_domain = match initial_query.as_ref() {
             Some(s) if s.starts_with("http://") || s.starts_with("https://") => {
                 match s.split('/').nth(2) {
-                    Some(s) => Instance::new(format!("https://{}", s)),
-                    None => Instance::new(config.instance().to_string()),
+                    Some(s) => format!("https://{}", s),
+                    None => config.instance().to_string(),
                 }
             }
-            None | Some(_) => Instance::new(config.instance().to_string()),
+            None | Some(_) => config.instance().to_string(),
         };
 
-        Cli {
+        let instance = Instance::new(if config.is_blacklisted(&instance_domain[8..]) {
+            let err = Error::BlacklistedInstance(instance_domain[8..].to_string());
+            display.err(&err);
+            return Err(err);
+        } else {
+            instance_domain
+        });
+
+        Ok(Cli {
             config,
             history,
             rl,
@@ -84,11 +92,11 @@ impl Cli {
             display,
             instance,
             initial_query,
-        }
+        })
     }
 
     /// Main loop for he cli interface
-    async fn main_loop(&mut self) -> Result<(), error::Error> {
+    async fn main_loop(&mut self) -> Result<(), Error> {
         self.display.welcome(self.instance.host());
 
         let mut initial_query = None;
@@ -203,9 +211,9 @@ impl Cli {
                 .args(self.config.player_args())
                 .arg(video_url)
                 .spawn()
-                .map_err(error::Error::VideoLaunch)?
+                .map_err(Error::VideoLaunch)?
                 .await
-                .map_err(error::Error::VideoLaunch)?;
+                .map_err(Error::VideoLaunch)?;
 
             if is_single_url {
                 break;
@@ -222,7 +230,7 @@ impl Cli {
         {
             Ok(rt) => rt,
             Err(e) => {
-                self.display.err(&error::Error::RuntimeInit(e));
+                self.display.err(&Error::RuntimeInit(e));
                 return;
             }
         };
@@ -233,14 +241,14 @@ impl Cli {
                 local.run_until(self.main_loop()).await
             })
             .unwrap_or_else(|e| match e {
-                error::Error::Readline(ReadlineError::Interrupted)
-                | error::Error::Readline(ReadlineError::Eof) => (),
+                Error::Readline(ReadlineError::Interrupted)
+                | Error::Readline(ReadlineError::Eof) => (),
                 err => self.display.err(&err),
             });
     }
 
     /// Performs a search and launches asynchronous loading of additionnal video info
-    async fn search(&mut self, query: &str) -> Result<Vec<Rc<peertube_api::Video>>, error::Error> {
+    async fn search(&mut self, query: &str) -> Result<Vec<Rc<peertube_api::Video>>, Error> {
         let mut search_results = self.instance.search_videos(&query).await?;
         let mut results_rc = Vec::new();
         for video in search_results
