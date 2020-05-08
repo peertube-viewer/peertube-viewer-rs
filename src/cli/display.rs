@@ -23,12 +23,23 @@ impl Display {
 
     pub fn search_results(&self, videos: &[Rc<Video>], history: &History) {
         let mut lengths = Vec::new();
+        let mut duration_length = Vec::new();
+        let mut pretty_durations = Vec::new();
+        let mut max_duration_len = 0;
         let mut max_len = 0;
         for v in videos.iter() {
             let len = v.name().chars().count();
+            let pretty_dur = pretty_duration(*v.duration());
+            let dur_len = pretty_dur.chars().count();
+            if dur_len > max_duration_len {
+                max_duration_len = dur_len;
+            }
+
             if len > max_len {
                 max_len = len;
             }
+            duration_length.push(dur_len);
+            pretty_durations.push(pretty_dur);
             lengths.push(len);
         }
 
@@ -37,26 +48,31 @@ impl Display {
             let colon_spacing = " "
                 .to_string()
                 .repeat(display_length(videos.len() - 1) - display_length(id + 1));
+            let duration_spacing = " "
+                .to_string()
+                .repeat(max_duration_len - duration_length[id]);
             if history.is_viewed(v.uuid()) {
                 println!(
-                    "{}{}{}: {} {}[{}] {}{}",
+                    "{}{}{}: {} {}[{}] {}{}{}",
                     style::Bold,
                     id + 1,
                     colon_spacing,
                     v.name(),
                     spacing,
-                    pretty_duration(*v.duration()),
+                    pretty_durations[id],
+                    duration_spacing,
                     pretty_date(v.published()),
                     style::Reset,
                 )
             } else {
                 println!(
-                    "{}{}: {} {}[{}] {}",
+                    "{}{}: {} {}[{}] {}{}",
                     id + 1,
                     colon_spacing,
                     v.name(),
                     spacing,
-                    pretty_duration(*v.duration()),
+                    pretty_durations[id],
+                    duration_spacing,
                     pretty_date(v.published())
                 )
             }
