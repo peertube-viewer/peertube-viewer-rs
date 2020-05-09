@@ -285,7 +285,7 @@ impl Cli {
             });
     }
 
-    /// Performs a search and launches asynchronous loading of additionnal video info
+    /// Performs a search and filters blacklisted instances
     async fn search(&mut self, query: &str) -> Result<Vec<Rc<peertube_api::Video>>, Error> {
         let mut search_results = self
             .instance
