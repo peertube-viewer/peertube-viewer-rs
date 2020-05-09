@@ -16,7 +16,6 @@ use rustyline::error::ReadlineError;
 use peertube_api::Instance;
 
 use std::fs::create_dir;
-use std::mem::swap;
 use std::path::PathBuf;
 use std::rc::Rc;
 
@@ -34,12 +33,13 @@ pub struct Cli {
     display: Display,
     instance: Rc<Instance>,
     initial_query: Option<String>,
+    is_single_url: bool,
 }
 
 impl Cli {
     /// Loads an instance of the cli
     pub fn init() -> Result<Cli, Error> {
-        let (config, initial_query, load_error) = Config::new();
+        let (config, mut initial_query, load_error) = Config::new();
         let display = Display::new();
 
         if let Some(err) = load_error {
@@ -67,10 +67,22 @@ impl Cli {
         }
 
         // If the initial query is a url, connect to the corresponding instance
+        let mut is_single_url = false;
         let instance_domain = match initial_query.as_ref() {
             Some(s) if s.starts_with("http://") || s.starts_with("https://") => {
                 match s.split('/').nth(2) {
-                    Some(s) => format!("https://{}", s),
+                    Some(domain) => {
+                        let instance_temp = format!("https://{}", domain);
+                        match s.split('/').nth(5) {
+                            Some(uuid) => {
+                                is_single_url = true;
+                                initial_query = Some(uuid.to_string())
+                            }
+
+                            None => initial_query = None,
+                        }
+                        instance_temp
+                    }
                     None => config.instance().to_string(),
                 }
             }
@@ -85,6 +97,10 @@ impl Cli {
             instance_domain
         });
 
+        if !is_single_url {
+            display.welcome(instance.host());
+        }
+
         Ok(Cli {
             config,
             history,
@@ -94,32 +110,16 @@ impl Cli {
             display,
             instance,
             initial_query,
+            is_single_url,
         })
     }
 
     /// Main loop for he cli interface
     async fn main_loop(&mut self) -> Result<(), Error> {
-        self.display.welcome(self.instance.host());
-
-        let mut initial_query = None;
-        swap(&mut initial_query, &mut self.initial_query);
-
-        let is_url = initial_query
-            .as_ref()
-            .map(|s| s.starts_with("http://") || s.starts_with("https://"))
-            == Some(true);
-
         // Check if the initital query is a video url
-        let (mut query, is_single_url) = match initial_query {
-            Some(v) if is_url => match v.split(' ').nth(1) {
-                Some(q) => (q.to_string(), false),
-                None => match v.split('/').nth(5) {
-                    Some(uuid) => (uuid.to_string(), true),
-                    None => (self.rl.readline(">> ".to_string()).await?, false),
-                },
-            },
-            Some(q) => (q, false),
-            None => (self.rl.readline(">> ".to_string()).await?, false),
+        let mut query = match self.initial_query.take() {
+            Some(q) => q,
+            None => self.rl.readline(">> ".to_string()).await?,
         };
 
         let mut old_query = query.clone();
@@ -128,7 +128,7 @@ impl Cli {
 
         let mut results_rc = Vec::new();
 
-        if is_single_url {
+        if self.is_single_url {
             self.play_vid(&self.instance.single_video(&query).await?)
                 .await?;
             return Ok(());
