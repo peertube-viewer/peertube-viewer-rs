@@ -214,10 +214,13 @@ impl Cli {
                 let choice;
                 loop {
                     match self.rl.readline(">> ".to_string()).await?.parse::<usize>() {
-                        Ok(id) if id < nb_resolutions => {
+                        Ok(id) if id <= nb_resolutions && id > 0 => {
                             choice = id;
                             break;
                         }
+                        Ok(0) => self
+                            .display
+                            .message("0 is not a valid choice for a resolution"),
                         Ok(_) => self.display.message(&format!(
                             "Choice must be inferior to the number of available resolutions: {}",
                             nb_resolutions
@@ -285,7 +288,7 @@ impl Cli {
             });
     }
 
-    /// Performs a search and launches asynchronous loading of additionnal video info
+    /// Performs a search and filters blacklisted instances
     async fn search(&mut self, query: &str) -> Result<Vec<Rc<peertube_api::Video>>, Error> {
         let mut search_results = self
             .instance
