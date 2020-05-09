@@ -128,138 +128,140 @@ impl Cli {
 
         let mut results_rc = Vec::new();
 
+        if is_single_url {
+            self.play_vid(&self.instance.single_video(&query).await?)
+                .await?;
+            return Ok(());
+        }
+
         // Main loop
         loop {
             let video;
-            if !is_single_url {
-                if changed_query {
-                    changed_query = false;
-                    if query == ":q" {
-                        break;
-                    } else if query == ":n" {
-                        self.query_offset += 20;
-                        query = old_query.clone();
-                    } else if query == ":p" {
-                        self.query_offset = if self.query_offset < 20 {
-                            0
-                        } else {
-                            self.query_offset - 20
-                        };
-                        query = old_query.clone();
+            if changed_query {
+                changed_query = false;
+                if query == ":q" {
+                    break;
+                } else if query == ":n" {
+                    self.query_offset += 20;
+                    query = old_query.clone();
+                } else if query == ":p" {
+                    self.query_offset = if self.query_offset < 20 {
+                        0
                     } else {
-                        old_query = query.clone();
-                        self.query_offset = 0;
-                        self.rl.add_history_entry(&query);
-                    }
-                    results_rc = self.search(&query).await?;
-                }
-                self.display.search_results(&results_rc, &self.history);
-
-                let choice;
-
-                // Getting the choice among the search results
-                // If the user doesn't input a number, it is a new query
-                // Get what the user is typing and load
-                // the corresponding video in the background
-                let mut handle = self
-                    .rl
-                    .helped_readline(">> ".to_string(), Some(results_rc.len()));
-                loop {
-                    match handle.next().await {
-                        Message::Over(res) => {
-                            let s = res?;
-                            match s.parse::<usize>() {
-                                Ok(id) if id > 0 && id <= results_rc.len() => {
-                                    choice = id;
-                                    break;
-                                }
-                                Err(_) | Ok(_) => {
-                                    query = s;
-                                    choice = 0;
-                                    changed_query = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        Message::Number(id) => {
-                            let video_cloned = results_rc[id - 1].clone();
-                            spawn_local(async move { video_cloned.load_description().await });
-                            if self.config.select_quality() || self.config.use_raw_url() {
-                                let cl2 = results_rc[id - 1].clone();
-                                #[allow(unused_must_use)]
-                                spawn_local(async move {
-                                    cl2.load_resolutions().await;
-                                });
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-
-                if changed_query {
-                    continue;
-                }
-
-                video = results_rc[choice - 1].clone();
-            } else {
-                video = Rc::new(self.instance.single_video(&query).await?)
-            }
-
-            // Resolution selection
-            let video_url = if self.config.select_quality() {
-                let resolutions = video.resolutions().await?;
-                let nb_resolutions = resolutions.len();
-                self.display.resolutions(resolutions);
-                let choice;
-                loop {
-                    match self.rl.readline(">> ".to_string()).await?.parse::<usize>() {
-                        Ok(id) if id <= nb_resolutions && id > 0 => {
-                            choice = id;
-                            break;
-                        }
-                        Ok(0) => self
-                            .display
-                            .message("0 is not a valid choice for a resolution"),
-                        Ok(_) => self.display.message(&format!(
-                            "Choice must be inferior to the number of available resolutions: {}",
-                            nb_resolutions
-                        )),
-                        Err(_) => self
-                            .display
-                            .message("Enter a number to select the resolution"),
-                    }
-                }
-                if self.config.use_torrent() {
-                    video.torrent_url(choice - 1).await
+                        self.query_offset - 20
+                    };
+                    query = old_query.clone();
                 } else {
-                    video.resolution_url(choice - 1).await
+                    old_query = query.clone();
+                    self.query_offset = 0;
+                    self.rl.add_history_entry(&query);
                 }
-            } else if self.config.use_torrent() {
-                video.load_resolutions().await?;
-                video.torrent_url(0).await
-            } else if self.config.use_raw_url() {
-                video.load_resolutions().await?;
-                video.resolution_url(0).await
-            } else {
-                video.watch_url()
-            };
-            self.display.info(&video).await;
-            self.history.add_video(video.uuid().clone());
-
-            changed_query = false;
-            Command::new(self.config.player())
-                .args(self.config.player_args())
-                .arg(video_url)
-                .spawn()
-                .map_err(Error::VideoLaunch)?
-                .await
-                .map_err(Error::VideoLaunch)?;
-
-            if is_single_url {
-                break;
+                results_rc = self.search(&query).await?;
             }
+            self.display.search_results(&results_rc, &self.history);
+
+            let choice;
+
+            // Getting the choice among the search results
+            // If the user doesn't input a number, it is a new query
+            // Get what the user is typing and load
+            // the corresponding video in the background
+            let mut handle = self
+                .rl
+                .helped_readline(">> ".to_string(), Some(results_rc.len()));
+            loop {
+                match handle.next().await {
+                    Message::Over(res) => {
+                        let s = res?;
+                        match s.parse::<usize>() {
+                            Ok(id) if id > 0 && id <= results_rc.len() => {
+                                choice = id;
+                                break;
+                            }
+                            Err(_) | Ok(_) => {
+                                query = s;
+                                choice = 0;
+                                changed_query = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    Message::Number(id) => {
+                        let video_cloned = results_rc[id - 1].clone();
+                        spawn_local(async move { video_cloned.load_description().await });
+                        if self.config.select_quality() || self.config.use_raw_url() {
+                            let cl2 = results_rc[id - 1].clone();
+                            #[allow(unused_must_use)]
+                            spawn_local(async move {
+                                cl2.load_resolutions().await;
+                            });
+                        }
+                    }
+                    _ => {}
+                }
+            }
+
+            if changed_query {
+                continue;
+            }
+
+            video = results_rc[choice - 1].clone();
+
+            self.play_vid(&video).await?;
         }
+        Ok(())
+    }
+
+    async fn play_vid(&mut self, video: &peertube_api::Video) -> Result<(), Error> {
+        // Resolution selection
+        let video_url = if self.config.select_quality() {
+            let resolutions = video.resolutions().await?;
+            let nb_resolutions = resolutions.len();
+            self.display.resolutions(resolutions);
+            let choice;
+            loop {
+                match self.rl.readline(">> ".to_string()).await?.parse::<usize>() {
+                    Ok(id) if id <= nb_resolutions && id > 0 => {
+                        choice = id;
+                        break;
+                    }
+                    Ok(0) => self
+                        .display
+                        .message("0 is not a valid choice for a resolution"),
+                    Ok(_) => self.display.message(&format!(
+                        "Choice must be inferior to the number of available resolutions: {}",
+                        nb_resolutions
+                    )),
+                    Err(_) => self
+                        .display
+                        .message("Enter a number to select the resolution"),
+                }
+            }
+            if self.config.use_torrent() {
+                video.torrent_url(choice - 1).await
+            } else {
+                video.resolution_url(choice - 1).await
+            }
+        } else if self.config.use_torrent() {
+            video.load_resolutions().await?;
+            video.torrent_url(0).await
+        } else if self.config.use_raw_url() {
+            video.load_resolutions().await?;
+            video.resolution_url(0).await
+        } else {
+            video.watch_url()
+        };
+        self.display.info(&video).await;
+        self.history.add_video(video.uuid().clone());
+
+        Command::new(self.config.player())
+            .args(self.config.player_args())
+            .arg(video_url)
+            .spawn()
+            .map_err(Error::VideoLaunch)?
+            .await
+            .map_err(Error::VideoLaunch)?;
         Ok(())
     }
 
