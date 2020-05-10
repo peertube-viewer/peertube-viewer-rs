@@ -72,14 +72,18 @@ impl Cli {
             Some(s) if s.starts_with("http://") || s.starts_with("https://") => {
                 match s.split('/').nth(2) {
                     Some(domain) => {
-                        let instance_temp = format!("https://{}", domain);
+                        let instance_temp = dbg!(format!(
+                            "https://{}",
+                            domain.split(' ').next().expect("Unreachable")
+                        ));
                         match s.split('/').nth(5) {
                             Some(uuid) => {
                                 is_single_url = true;
-                                initial_query = Some(uuid.to_string())
+                                initial_query =
+                                    Some(uuid.split(' ').next().expect("Unreachable").to_string());
                             }
 
-                            None => initial_query = None,
+                            None => initial_query = s.splitn(2, ' ').nth(1).map(|s| s.to_string()),
                         }
                         instance_temp
                     }

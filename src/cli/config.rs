@@ -325,7 +325,7 @@ fn concat(mut v: Values) -> String {
     if let Some(s) = v.next() {
         concatenated.push_str(s);
     }
-    for s in v.skip(1) {
+    for s in v {
         concatenated.push(' ');
         concatenated.push_str(s);
     }
