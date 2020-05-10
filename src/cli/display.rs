@@ -1,8 +1,8 @@
 use peertube_api::{Resolution, Video};
 
 use super::history::History;
-use chrono::{DateTime, FixedOffset};
-use std::error::Error;
+use chrono::{DateTime, Duration, FixedOffset, Utc};
+use std::{error::Error, time::SystemTime};
 use termion::{color, style};
 
 use std::rc::Rc;
@@ -165,7 +165,7 @@ impl Display {
         println!("views    : {}", video.views());
         println!("likes    : {}", video.likes());
         println!("dislikes : {}", video.dislikes());
-        println!("released : {}", pretty_date(video.published()));
+        println!("released : {}", full_date(video.published()));
         println!("account  : {}", video.account_display());
         println!("channel  : {}", video.channel_display());
         println!("host     : {}", video.host());
@@ -202,8 +202,27 @@ fn pretty_size(mut s: u64) -> String {
 }
 
 fn pretty_date(d: &Option<DateTime<FixedOffset>>) -> String {
+    let now: DateTime<Utc> = SystemTime::now().into();
+    d.map(|t| pretty_duration_since(now.naive_local().signed_duration_since(t.naive_local())))
+        .unwrap_or_default()
+}
+
+fn full_date(d: &Option<DateTime<FixedOffset>>) -> String {
     d.map(|t| t.format("%a %b %Y").to_string())
         .unwrap_or_default()
+}
+fn pretty_duration_since(d: Duration) -> String {
+    if d.num_milliseconds() < 0 {
+        return "From the future. Bug?".to_string();
+    }
+    match d {
+        d if d.num_hours() < 1 => format!("{}min", d.num_minutes()),
+        d if d.num_days() < 1 => format!("{}h", d.num_hours()),
+        d if d.num_weeks() < 1 => format!("{}d", d.num_days()),
+        d if d.num_weeks() < 5 => format!("{}w", d.num_weeks()),
+        d if d.num_days() < 365 => format!("{}m", d.num_days() / 30),
+        d => format!("{}y", d.num_days() / 365),
+    }
 }
 
 fn pretty_duration(d: u64) -> String {
