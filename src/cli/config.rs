@@ -1,4 +1,4 @@
-use clap::{App, Arg, Values};
+use clap::{App, Values};
 use dirs::config_dir;
 use toml::{
     de::Error as TomlError,

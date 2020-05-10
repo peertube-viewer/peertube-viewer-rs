@@ -1,7 +1,6 @@
-#[macro_use]
 extern crate clap;
 
-use clap::{App, Arg, Shell, YamlLoader};
+use clap::{App, Shell, YamlLoader};
 use std::{
     env,
     fs::{create_dir, read_to_string, write},
