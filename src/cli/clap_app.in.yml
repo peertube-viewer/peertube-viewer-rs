@@ -1,5 +1,5 @@
 name: peertube-viewer-rs
-version: dev
+version:
 author: Sosthène Guédon <sosthene.gued@gmail.com>
 about: Peertube cli client
 
