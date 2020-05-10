@@ -1,3 +1,4 @@
 /target/
 **/*.rs.bk
 /completions/
+src/cli/clap_app.yml
