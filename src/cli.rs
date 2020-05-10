@@ -22,7 +22,9 @@ use std::rc::Rc;
 use dirs::cache_dir;
 use tokio::process::Command;
 use tokio::runtime;
-use tokio::task::{spawn_local, LocalSet};
+use tokio::task::{spawn_local, JoinHandle, LocalSet};
+
+const SEARCH_TOTAL: usize = 20;
 
 pub struct Cli {
     config: Config,
@@ -72,10 +74,8 @@ impl Cli {
             Some(s) if s.starts_with("http://") || s.starts_with("https://") => {
                 match s.split('/').nth(2) {
                     Some(domain) => {
-                        let instance_temp = dbg!(format!(
-                            "https://{}",
-                            domain.split(' ').next().expect("Unreachable")
-                        ));
+                        let instance_temp =
+                            format!("https://{}", domain.split(' ').next().expect("Unreachable"));
                         match s.split('/').nth(5) {
                             Some(uuid) => {
                                 is_single_url = true;
@@ -131,6 +131,8 @@ impl Cli {
         let mut changed_query = true;
 
         let mut results_rc = Vec::new();
+        let mut next_results = SearchResults::None;
+        let mut prev_results = SearchResults::None;
 
         if self.is_single_url {
             self.play_vid(&self.instance.single_video(&query).await?)
@@ -142,25 +144,74 @@ impl Cli {
         loop {
             let video;
             if changed_query {
+                let mut should_search = true;
                 changed_query = false;
                 if query == ":q" {
                     break;
                 } else if query == ":n" {
-                    self.query_offset += 20;
+                    self.query_offset += SEARCH_TOTAL;
                     query = old_query.clone();
+
+                    if let SearchResults::Loading(f) = next_results {
+                        prev_results = SearchResults::Loaded(results_rc);
+                        results_rc = f
+                            .await
+                            .unwrap()?
+                            .into_iter()
+                            .filter(|v| !self.config.is_blacklisted(v.host()))
+                            .map(Rc::new)
+                            .collect();
+                        next_results = SearchResults::None;
+                        should_search = false;
+                    } else if let SearchResults::Loaded(res) = next_results {
+                        prev_results = SearchResults::Loaded(results_rc);
+                        next_results = SearchResults::None;
+                        results_rc = res;
+                        should_search = false;
+                    }
                 } else if query == ":p" {
-                    self.query_offset = if self.query_offset < 20 {
-                        0
+                    let is_start = self.query_offset == 0;
+                    if is_start {
+                        should_search = false;
                     } else {
-                        self.query_offset - 20
-                    };
-                    query = old_query.clone();
+                        self.query_offset = self.query_offset.saturating_sub(SEARCH_TOTAL);
+                        query = old_query.clone();
+
+                        if let SearchResults::Loading(f) = prev_results {
+                            next_results = SearchResults::Loaded(results_rc);
+                            results_rc = f
+                                .await
+                                .unwrap()?
+                                .into_iter()
+                                .filter(|v| !self.config.is_blacklisted(v.host()))
+                                .map(Rc::new)
+                                .collect();
+                            prev_results = SearchResults::None;
+                            should_search = false;
+                        } else if let SearchResults::Loaded(res) = prev_results {
+                            next_results = SearchResults::Loaded(results_rc);
+                            prev_results = SearchResults::None;
+                            results_rc = res;
+                            should_search = false;
+                        }
+                    }
                 } else {
                     old_query = query.clone();
                     self.query_offset = 0;
+                    next_results = SearchResults::None;
+                    prev_results = SearchResults::None;
                     self.rl.add_history_entry(&query);
                 }
-                results_rc = self.search(&query).await?;
+                if should_search {
+                    results_rc = self
+                        .instance
+                        .search_videos(&query, SEARCH_TOTAL, self.query_offset)
+                        .await?
+                        .into_iter()
+                        .filter(|v| !self.config.is_blacklisted(v.host()))
+                        .map(Rc::new)
+                        .collect()
+                }
             }
             self.display.search_results(&results_rc, &self.history);
 
@@ -201,6 +252,30 @@ impl Cli {
                                 cl2.load_resolutions().await;
                             });
                         }
+                    }
+                    Message::CommandNext if next_results.is_none() => {
+                        let instance_cloned = self.instance.clone();
+                        let query_cloned = query.clone();
+                        let offset = self.query_offset;
+                        next_results = SearchResults::Loading(spawn_local(async move {
+                            instance_cloned
+                                .search_videos(&query_cloned, SEARCH_TOTAL, offset + SEARCH_TOTAL)
+                                .await
+                        }));
+                    }
+                    Message::CommandPrev if self.query_offset != 0 && prev_results.is_none() => {
+                        let instance_cloned = self.instance.clone();
+                        let query_cloned = query.clone();
+                        let offset = self.query_offset;
+                        prev_results = SearchResults::Loading(spawn_local(async move {
+                            instance_cloned
+                                .search_videos(
+                                    &query_cloned,
+                                    SEARCH_TOTAL,
+                                    offset.saturating_sub(SEARCH_TOTAL),
+                                )
+                                .await
+                        }));
                     }
                     _ => {}
                 }
@@ -293,24 +368,6 @@ impl Cli {
                 err => self.display.err(&err),
             });
     }
-
-    /// Performs a search and filters blacklisted instances
-    async fn search(&mut self, query: &str) -> Result<Vec<Rc<peertube_api::Video>>, Error> {
-        let mut search_results = self
-            .instance
-            .search_videos(&query, 20, self.query_offset)
-            .await?;
-        let mut results_rc = Vec::new();
-        for video in search_results
-            .drain(..)
-            .filter(|v| !self.config.is_blacklisted(v.host()))
-        {
-            let video_stored = Rc::new(video);
-            results_rc.push(video_stored);
-        }
-
-        Ok(results_rc)
-    }
 }
 
 impl Drop for Cli {
@@ -324,6 +381,22 @@ impl Drop for Cli {
             let mut cmd_hist_file = cache.clone();
             cmd_hist_file.push("cmd_history");
             self.rl.save_history(&cmd_hist_file).unwrap_or(());
+        }
+    }
+}
+
+enum SearchResults {
+    None,
+    Loading(JoinHandle<Result<Vec<peertube_api::Video>, peertube_api::error::Error>>),
+    Loaded(Vec<Rc<peertube_api::Video>>),
+}
+
+impl SearchResults {
+    pub fn is_none(&self) -> bool {
+        if let SearchResults::None = self {
+            true
+        } else {
+            false
         }
     }
 }
