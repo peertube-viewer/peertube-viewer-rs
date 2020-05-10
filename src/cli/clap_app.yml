@@ -1,0 +1,68 @@
+name: peertube-viewer-rs
+version: dev
+author: Sosthène Guédon <sosthene.gued@gmail.com>
+about: Peertube cli client
+
+args:
+    - USERAWURL:
+        long: use-raw-url
+        help: "the raw url will be passed to the player. It may be neccessary for players without native support for peertube such as vlc. Some players (ex : mpv) may be able to show the video title in their interface if this option isn't used"
+
+    - PRINTDEFAULTCONFIG:
+        long: print-default-config
+        help: print the default confing to stdout and exit
+
+    - PRINTFULLCONFIG: 
+        long: print-full-example-config
+        help: "print an example of all possible config options and exit"
+
+    - SELECTQUALITY:
+        short: -s  
+        long: select-quality 
+        help: When playing a video with this option, the user will be prompted to chose the video quality
+
+    - TORRENT:
+        long: use-torrent
+        help: will download the video via the torrent downloader instead of playing it
+
+    - player-args:
+        long: player-args 
+        takes_value: true 
+        multiple: true 
+        help: arguments to be passed to the player
+
+    - player:
+        short: p 
+        long: player 
+        takes_value: true
+        help: player to play the videos with
+
+    - torrent-downloader:
+        long: torrent-downloader  
+        takes_value: true   
+        help: choose the torrent software to download the videos with
+
+    - torrent-downloader-arguments:
+        long: torrent-downloader-args
+        takes_value: true
+        multiple: true 
+        help: arguments to be passed to the torrent downloader
+
+    - instance:
+        short: i 
+        long: instance 
+        takes_value: true 
+        help: instance to be browsed
+
+    - config-file:
+        short: c 
+        long: config 
+        takes_value: true 
+        help: Sets a custom config file
+
+    - initial-query:
+        takes_value: true
+        multiple: true 
+        help: "initial query to be searched.\nIf it is a url, it will try to play it as a video"
+        
+

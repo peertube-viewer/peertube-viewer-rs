@@ -1,4 +1,4 @@
-use clap::{Arg, Values};
+use clap::{App, Arg, Values};
 use dirs::config_dir;
 use toml::{
     de::Error as TomlError,
@@ -86,7 +86,8 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> (Config, Option<String>, Option<ConfigLoadError>) {
-        let app = include!("clap_app");
+        let yml = load_yaml!("clap_app.yml");
+        let app = App::from_yaml(yml);
         let cli_args = app.get_matches();
 
         if cli_args.is_present("PRINTDEFAULTCONFIG") {
@@ -103,7 +104,7 @@ impl Config {
         let mut load_error = None;
 
         // Parse config as an String with default to empty string
-        let config_str = if let Some(c) = cli_args.value_of("config file") {
+        let config_str = if let Some(c) = cli_args.value_of("config-file") {
             read_to_string(c.to_string())
                 .map_err(|err| {
                     load_error = Some(ConfigLoadError::UnreadableFile(err, c.into()));
@@ -159,7 +160,7 @@ impl Config {
             .map(|c| c.to_string())
             .unwrap_or(config_player_cmd);
         let args = cli_args
-            .values_of("player args")
+            .values_of("player-args")
             .map(|v| v.map(|s| s.to_string()).collect())
             .unwrap_or(config_player_args);
         let use_raw_urls = cli_args.is_present("USERAWURL") & use_raw_urls;
@@ -189,21 +190,21 @@ impl Config {
 
         let torrent = if let Some(conf) = torrent_config {
             let client = cli_args
-                .value_of("torrent")
+                .value_of("torrent-downloader")
                 .map(|c| c.to_string())
                 .unwrap_or(conf.client);
             let args = cli_args
-                .values_of("torrent args")
+                .values_of("torrent-downloader-arguments")
                 .map(|v| v.map(|s| s.to_string()).collect())
                 .unwrap_or(conf.args);
             Some(TorrentConf { client, args })
         } else {
             let client = cli_args
-                .value_of("torrent")
+                .value_of("torrent-downloader")
                 .map(|c| c.to_string())
                 .unwrap_or_default();
             let args = cli_args
-                .values_of("torrent args")
+                .values_of("torrent-downloader-arguments")
                 .map(|v| v.map(|s| s.to_string()).collect())
                 .unwrap_or_default();
             Some(TorrentConf { client, args })
@@ -252,7 +253,7 @@ impl Config {
         temp.listed_instances = list;
         temp.is_whitelist = is_whitelist;
 
-        let initial_query = cli_args.values_of("initial query").map(concat);
+        let initial_query = cli_args.values_of("initial-query").map(concat);
 
         (temp, initial_query, load_error)
     }
