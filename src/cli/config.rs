@@ -65,7 +65,7 @@ impl Display for ConfigLoadError {
             ),
             ConfigLoadError::UseTorrentAndNoInfo=> write!(
                 f,
-                "--use-torrent requires a torrent to be set"
+                "--use-torrent requires a torrent to be set\nUsing player instead of torrent"
             ),
         }
     }
