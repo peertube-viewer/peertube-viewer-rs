@@ -32,6 +32,7 @@ pub enum ConfigLoadError {
     TomlError(TomlError),
     NotATable,
     NotAString,
+    IncorrectTag(String),
 }
 
 impl Display for ConfigLoadError {
@@ -47,6 +48,11 @@ impl Display for ConfigLoadError {
                 f,
                 "The config was not parsable as TOML:\n{}\nUsing default config",
                 e
+            ),
+            ConfigLoadError::IncorrectTag(name) => write!(
+                f,
+                "Option {} didn't have a correct tag\nUsing default tag",
+               name 
             ),
             ConfigLoadError::NotATable => write!(
                 f,
@@ -65,9 +71,18 @@ impl error::Error for ConfigLoadError {
         match self {
             ConfigLoadError::UnreadableFile(err, _) => Some(err),
             ConfigLoadError::TomlError(err) => Some(err),
-            ConfigLoadError::NotATable | ConfigLoadError::NotAString => None,
+            ConfigLoadError::NotATable
+            | ConfigLoadError::NotAString
+            | ConfigLoadError::IncorrectTag(_) => None,
         }
     }
+}
+
+#[derive(PartialEq, Eq, Debug)]
+pub enum NsfwBehavior {
+    Block,
+    Tag,
+    Let,
 }
 
 /// Config for the cli interface
@@ -78,6 +93,8 @@ pub struct Config {
     torrent: Option<(TorrentConf, bool)>,
     listed_instances: HashSet<String>,
     is_whitelist: bool,
+
+    nsfw: NsfwBehavior,
 
     select_quality: bool,
 
@@ -245,8 +262,31 @@ impl Config {
             (HashSet::new(), false)
         };
 
+        let nsfw = if cli_args.is_present("let-nsfw") {
+            NsfwBehavior::Let
+        } else if cli_args.is_present("block-nsfw") {
+            NsfwBehavior::Block
+        } else if let Some(Value::Table(t)) = config.get("general") {
+            if let Some(Value::String(s)) = t.get("nsfw") {
+                if s == "block" {
+                    NsfwBehavior::Block
+                } else if s == "let" {
+                    NsfwBehavior::Let
+                } else if s == "tag" {
+                    NsfwBehavior::Tag
+                } else {
+                    load_error = Some(ConfigLoadError::IncorrectTag("nsfw".to_string()));
+                    NsfwBehavior::Tag
+                }
+            } else {
+                NsfwBehavior::Tag
+            }
+        } else {
+            NsfwBehavior::Tag
+        };
         let mut temp = Config::default();
         temp.player = player;
+        temp.nsfw = nsfw;
         temp.instance = correct_instance(instance);
         temp.torrent = torrent.map(|t| (t, cli_args.is_present("TORRENT")));
         temp.select_quality = cli_args.is_present("SELECTQUALITY");
@@ -365,6 +405,7 @@ impl Default for Config {
             },
             instance: "video.ploud.fr".to_string(),
             torrent: None,
+            nsfw: NsfwBehavior::Tag,
             listed_instances: HashSet::new(),
             is_whitelist: false,
             select_quality: false,

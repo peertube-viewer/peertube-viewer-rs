@@ -1,3 +1,9 @@
+[general]
+
+# available options: block, tag(add a nswf tag to search results), let(do nothing)
+# default is tag
+nsfw = "block"
+
 [player]
 command = "mpv"
 args = ["--volume=30"]

@@ -1,3 +1,6 @@
+[general]
+nsfw: "tag"
+
 [player]
 command = "mpv"
 

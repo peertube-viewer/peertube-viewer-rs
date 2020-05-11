@@ -60,6 +60,14 @@ args:
         takes_value: true 
         help: Sets a custom config file
 
+    - let-nsfw:
+        long: let-nsfw 
+        help: "Don't tag nsfw results"
+
+    - block-nsfw:
+        long: block-nsfw 
+        help: Block nsfw search results
+
     - initial-query:
         takes_value: true
         multiple: true 
