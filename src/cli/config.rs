@@ -108,7 +108,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> (Config, Option<String>, Option<ConfigLoadError>) {
+    pub fn new() -> (Config, Option<String>, Vec<ConfigLoadError>) {
         let yml = load_yaml!("clap_app.yml");
         let app = App::from_yaml(yml);
         let cli_args = app.get_matches();
@@ -124,13 +124,13 @@ impl Config {
         }
 
         // Any error that occured during loading
-        let mut load_error = None;
+        let mut load_errors = Vec::new();
 
         // Parse config as an String with default to empty string
         let config_str = if let Some(c) = cli_args.value_of("config-file") {
             read_to_string(c.to_string())
                 .map_err(|err| {
-                    load_error = Some(ConfigLoadError::UnreadableFile(err, c.into()));
+                    load_errors.push(ConfigLoadError::UnreadableFile(err, c.into()));
                 })
                 .unwrap_or_default()
         } else {
@@ -140,7 +140,7 @@ impl Config {
                     d.push("config.toml");
                     read_to_string(&d)
                         .map_err(|err| {
-                            load_error = Some(ConfigLoadError::UnreadableFile(err, d));
+                            load_errors.push(ConfigLoadError::UnreadableFile(err, d));
                         })
                         .unwrap_or_default()
                 }
@@ -152,11 +152,11 @@ impl Config {
         let config = match config_str.parse() {
             Ok(Value::Table(t)) => t,
             Ok(_) => {
-                load_error = Some(ConfigLoadError::NotATable);
+                load_errors.push(ConfigLoadError::NotATable);
                 Table::new()
             }
             Err(e) => {
-                load_error = Some(ConfigLoadError::TomlError(e));
+                load_errors.push(ConfigLoadError::TomlError(e));
                 Table::new()
             }
         };
@@ -169,7 +169,7 @@ impl Config {
                         .flatten()
                         .map(|s| s.to_string())
                         .unwrap_or_else(|| "mpv".to_string()),
-                    get_string_array(t, "args", &mut load_error),
+                    get_string_array(t, "args", &mut load_errors),
                     t.get("use-raw-urls")
                         .map(|b| b.as_bool())
                         .flatten()
@@ -202,7 +202,7 @@ impl Config {
             {
                 Some(TorrentConf {
                     client: s,
-                    args: get_string_array(t, "args", &mut load_error),
+                    args: get_string_array(t, "args", &mut load_errors),
                 })
             } else {
                 None
@@ -251,14 +251,14 @@ impl Config {
         let (list, is_whitelist) = if let Some(Value::Table(t)) = config.get("instances") {
             if t.contains_key("whitelist") {
                 (
-                    get_string_array(t, "whitelist", &mut load_error)
+                    get_string_array(t, "whitelist", &mut load_errors)
                         .into_iter()
                         .collect(),
                     true,
                 )
             } else {
                 (
-                    get_string_array(t, "blacklist", &mut load_error)
+                    get_string_array(t, "blacklist", &mut load_errors)
                         .into_iter()
                         .collect(),
                     false,
@@ -283,7 +283,7 @@ impl Config {
                 } else if s == "tag" {
                     NsfwBehavior::Tag
                 } else {
-                    load_error = Some(ConfigLoadError::IncorrectTag("nsfw".to_string()));
+                    load_errors.push(ConfigLoadError::IncorrectTag("nsfw".to_string()));
                     NsfwBehavior::Tag
                 }
             } else {
@@ -303,7 +303,7 @@ impl Config {
 
         let initial_query = cli_args.values_of("initial-query").map(concat);
 
-        (temp, initial_query, load_error)
+        (temp, initial_query, load_errors)
     }
 
     pub fn player(&self) -> &str {
@@ -385,11 +385,7 @@ fn concat(mut v: Values) -> String {
     concatenated
 }
 
-fn get_string_array(
-    t: &Table,
-    name: &str,
-    load_error: &mut Option<ConfigLoadError>,
-) -> Vec<String> {
+fn get_string_array(t: &Table, name: &str, load_errors: &mut Vec<ConfigLoadError>) -> Vec<String> {
     t.get(name)
         .map(|cmd| cmd.as_array())
         .flatten()
@@ -398,7 +394,7 @@ fn get_string_array(
                 .filter_map(|s| {
                     let res = s.as_str().map(|s| s.to_string());
                     if res.is_none() {
-                        *load_error = Some(ConfigLoadError::NotAString)
+                        load_errors.push(ConfigLoadError::NotAString)
                     }
                     res
                 })
