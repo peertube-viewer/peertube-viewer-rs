@@ -45,9 +45,7 @@ impl Display {
         }
 
         for (id, v) in videos.iter().enumerate() {
-            if v.nsfw() && self.nsfw.is_block() {
-                continue;
-            }
+            debug_assert!(!(v.nsfw() && self.nsfw.is_block()));
 
             let spacing = " ".to_string().repeat(max_len - lengths[id]);
             let colon_spacing = " "
