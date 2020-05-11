@@ -503,6 +503,38 @@ mod config {
         assert_eq!(config.select_quality(), true);
         assert_eq!(config.use_raw_url(), true);
     }
+
+    #[test]
+    fn torrent_options() {
+        let path = PathBuf::from("src/cli/full_config.toml");
+        let (mut config, mut errors) = Config::from_config_file(&path);
+        let yml = load_yaml!("clap_app.yml");
+        assert_eq!(errors.len(), 0);
+        assert_eq!(config.nsfw(), NsfwBehavior::Block);
+        assert_eq!(config.player(), "mpv");
+        assert_eq!(*config.player_args(), vec!["--volume=30"]);
+        assert_eq!(config.instance(), "https://skeptikon.fr");
+        assert_eq!(config.is_blacklisted("peertube.social"), true);
+        assert_eq!(config.use_raw_url(), false);
+        assert_eq!(config.select_quality(), false);
+        assert_eq!(config.use_torrent(), false);
+
+        let app = App::from_yaml(yml);
+        let matches = app
+            .get_matches_from_safe(vec![
+                "peertube-viewer-rs",
+                "--torrent-downloader",
+                "args-downloader",
+                "--torrent-downloader-args=test",
+                "--use-torrent",
+            ])
+            .unwrap();
+        errors = config.update_with_args(matches);
+        assert_eq!(errors.len(), 0);
+        assert_eq!(config.player(), "args-downloader");
+        assert_eq!(*config.player_args(), vec!["test", "-a"]);
+        assert_eq!(config.use_torrent(), true);
+    }
 }
 
 #[cfg(test)]
