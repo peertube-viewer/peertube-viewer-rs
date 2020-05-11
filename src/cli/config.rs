@@ -161,23 +161,8 @@ impl Config {
             }
         };
 
-        let (config_player_cmd, config_player_args, use_raw_urls) =
-            if let Some(Value::Table(t)) = config.get("player") {
-                (
-                    t.get("command")
-                        .map(|cmd| cmd.as_str())
-                        .flatten()
-                        .map(|s| s.to_string())
-                        .unwrap_or_else(|| "mpv".to_string()),
-                    get_string_array(t, "args", &mut load_errors),
-                    t.get("use-raw-urls")
-                        .map(|b| b.as_bool())
-                        .flatten()
-                        .unwrap_or(false),
-                )
-            } else {
-                ("mpv".to_string(), Vec::new(), false)
-            };
+        let (config_player_cmd, config_player_args, use_raw_urls): (_, _, bool) = unimplemented!();
+
         let client = cli_args
             .value_of("player")
             .map(|c| c.to_string())
@@ -193,23 +178,7 @@ impl Config {
             use_raw_urls,
         };
 
-        let torrent_config = if let Some(Value::Table(t)) = config.get("torrent") {
-            if let Some(s) = t
-                .get("command")
-                .map(|cmd| cmd.as_str())
-                .flatten()
-                .map(|s| s.to_string())
-            {
-                Some(TorrentConf {
-                    client: s,
-                    args: get_string_array(t, "args", &mut load_errors),
-                })
-            } else {
-                None
-            }
-        } else {
-            None
-        };
+        let torrent_config: Option<TorrentConf> = unimplemented!();
 
         let torrent = if let Some(conf) = torrent_config {
             let client = cli_args
@@ -248,6 +217,115 @@ impl Config {
             }
         };
 
+        let nsfw = if cli_args.is_present("let-nsfw") {
+            NsfwBehavior::Let
+        } else if cli_args.is_present("block-nsfw") {
+            NsfwBehavior::Block
+        } else if cli_args.is_present("tag-nsfw") {
+            NsfwBehavior::Tag
+        } else {
+            NsfwBehavior::Tag
+        };
+        let mut temp = Config::default();
+        temp.player = player;
+        temp.nsfw = nsfw;
+        temp.instance = correct_instance(instance);
+        temp.torrent = torrent.map(|t| (t, cli_args.is_present("TORRENT")));
+        temp.select_quality = cli_args.is_present("SELECTQUALITY");
+
+        let initial_query = cli_args.values_of("initial-query").map(concat);
+
+        (temp, initial_query, load_errors)
+    }
+
+    fn from_config_file(path: &PathBuf) -> (Config, Vec<ConfigLoadError>) {
+        let mut temp = Config::default();
+        let mut load_errors = Vec::new();
+
+        /* ---File parsing--- */
+
+        let config_str = read_to_string(path)
+            .map_err(|e| load_errors.push(ConfigLoadError::UnreadableFile(e, path.clone())))
+            .unwrap_or_default();
+
+        // Parse config as TOML with default to empty
+        let config = match config_str.parse() {
+            Ok(Value::Table(t)) => t,
+            Ok(_) => {
+                load_errors.push(ConfigLoadError::NotATable);
+                Table::new()
+            }
+            Err(e) => {
+                load_errors.push(ConfigLoadError::TomlError(e));
+                Table::new()
+            }
+        };
+
+        /* ---Player configuration --- */
+        let (player_cmd, player_args, use_raw_urls) =
+            if let Some(Value::Table(t)) = config.get("player") {
+                (
+                    t.get("command")
+                        .map(|cmd| cmd.as_str())
+                        .flatten()
+                        .map(|s| s.to_string())
+                        .unwrap_or_else(|| "mpv".to_string()),
+                    get_string_array(t, "args", &mut load_errors),
+                    t.get("use-raw-urls")
+                        .map(|b| b.as_bool())
+                        .flatten()
+                        .unwrap_or(false),
+                )
+            } else {
+                ("mpv".to_string(), Vec::new(), false)
+            };
+
+        temp.player = PlayerConf {
+            client: player_cmd,
+            args: player_args,
+            use_raw_urls,
+        };
+
+        /* ---Torrent configuration --- */
+        let torrent = if let Some(Value::Table(t)) = config.get("torrent") {
+            if let Some(s) = t
+                .get("command")
+                .map(|cmd| cmd.as_str())
+                .flatten()
+                .map(|s| s.to_string())
+            {
+                Some(TorrentConf {
+                    client: s,
+                    args: get_string_array(t, "args", &mut load_errors),
+                })
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
+        /* ---Nsfw configuration --- */
+        temp.nsfw = if let Some(Value::Table(t)) = config.get("general") {
+            if let Some(Value::String(s)) = t.get("nsfw") {
+                if s == "block" {
+                    NsfwBehavior::Block
+                } else if s == "let" {
+                    NsfwBehavior::Let
+                } else if s == "tag" {
+                    NsfwBehavior::Tag
+                } else {
+                    load_errors.push(ConfigLoadError::IncorrectTag("nsfw".to_string()));
+                    NsfwBehavior::Tag
+                }
+            } else {
+                NsfwBehavior::Tag
+            }
+        } else {
+            NsfwBehavior::Tag
+        };
+
+        /* ---Blacklist configuration --- */
         let (list, is_whitelist) = if let Some(Value::Table(t)) = config.get("instances") {
             if t.contains_key("whitelist") {
                 (
@@ -268,47 +346,10 @@ impl Config {
             (HashSet::new(), false)
         };
 
-        let nsfw = if cli_args.is_present("let-nsfw") {
-            NsfwBehavior::Let
-        } else if cli_args.is_present("block-nsfw") {
-            NsfwBehavior::Block
-        } else if cli_args.is_present("tag-nsfw") {
-            NsfwBehavior::Tag
-        } else if let Some(Value::Table(t)) = config.get("general") {
-            if let Some(Value::String(s)) = t.get("nsfw") {
-                if s == "block" {
-                    NsfwBehavior::Block
-                } else if s == "let" {
-                    NsfwBehavior::Let
-                } else if s == "tag" {
-                    NsfwBehavior::Tag
-                } else {
-                    load_errors.push(ConfigLoadError::IncorrectTag("nsfw".to_string()));
-                    NsfwBehavior::Tag
-                }
-            } else {
-                NsfwBehavior::Tag
-            }
-        } else {
-            NsfwBehavior::Tag
-        };
-        let mut temp = Config::default();
-        temp.player = player;
-        temp.nsfw = nsfw;
-        temp.instance = correct_instance(instance);
-        temp.torrent = torrent.map(|t| (t, cli_args.is_present("TORRENT")));
-        temp.select_quality = cli_args.is_present("SELECTQUALITY");
         temp.listed_instances = list;
         temp.is_whitelist = is_whitelist;
 
-        let initial_query = cli_args.values_of("initial-query").map(concat);
-
-        (temp, initial_query, load_errors)
-    }
-
-    fn from_config_file(path: &PathBuf) -> (Config, Vec<ConfigLoadError>) {
-        let mut temp = Config::default();
-        let mut load_errors = Vec::new();
+        temp.torrent = torrent.map(|t| (t, false));
 
         (temp, load_errors)
     }
