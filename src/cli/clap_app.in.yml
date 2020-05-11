@@ -64,6 +64,10 @@ args:
         long: let-nsfw 
         help: "Don't tag nsfw results"
 
+    - tag-nsfw:
+        long: tag-nsfw 
+        help: "Tag nsfw results. This is the default behavio. This flag is only useful to override the config file"
+
     - block-nsfw:
         long: block-nsfw 
         help: Block nsfw search results

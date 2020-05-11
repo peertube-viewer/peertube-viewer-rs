@@ -272,6 +272,8 @@ impl Config {
             NsfwBehavior::Let
         } else if cli_args.is_present("block-nsfw") {
             NsfwBehavior::Block
+        } else if cli_args.is_present("tag-nsfw") {
+            NsfwBehavior::Tag
         } else if let Some(Value::Table(t)) = config.get("general") {
             if let Some(Value::String(s)) = t.get("nsfw") {
                 if s == "block" {
