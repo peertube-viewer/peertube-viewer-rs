@@ -30,6 +30,7 @@ struct PlayerConf {
 pub enum ConfigLoadError {
     UnreadableFile(io::Error, PathBuf),
     TomlError(TomlError),
+    UseTorrentAndNoInfo,
     NotATable,
     NotAString,
     IncorrectTag(String),
@@ -62,6 +63,10 @@ impl Display for ConfigLoadError {
                 f,
                 "Command arguments and blacklisted instances need to be a table of String\n Ignoring bad arguments"
             ),
+            ConfigLoadError::UseTorrentAndNoInfo=> write!(
+                f,
+                "--use-torrent requires a torrent to be set"
+            ),
         }
     }
 }
@@ -73,6 +78,7 @@ impl error::Error for ConfigLoadError {
             ConfigLoadError::NotATable
             | ConfigLoadError::NotAString
             | ConfigLoadError::TomlError(_)
+            | ConfigLoadError::UseTorrentAndNoInfo
             | ConfigLoadError::IncorrectTag(_) => None,
         }
     }
@@ -123,119 +129,25 @@ impl Config {
             exit(0);
         }
 
-        // Any error that occured during loading
-        let mut load_errors = Vec::new();
+        let initial_query = cli_args.values_of("initial-query").map(concat);
 
         // Parse config as an String with default to empty string
-        let config_str = if let Some(c) = cli_args.value_of("config-file") {
-            read_to_string(c.to_string())
-                .map_err(|err| {
-                    load_errors.push(ConfigLoadError::UnreadableFile(err, c.into()));
-                })
-                .unwrap_or_default()
+        let (mut config, mut load_errors) = if let Some(c) = cli_args.value_of("config-file") {
+            Config::from_config_file(&PathBuf::from(c))
         } else {
             match config_dir() {
                 Some(mut d) => {
                     d.push("peertube-viewer-rs");
                     d.push("config.toml");
-                    read_to_string(&d)
-                        .map_err(|err| {
-                            load_errors.push(ConfigLoadError::UnreadableFile(err, d));
-                        })
-                        .unwrap_or_default()
+                    Config::from_config_file(&d)
                 }
-                None => String::new(),
+                None => (Config::default(), Vec::new()),
             }
         };
 
-        // Parse config as TOML with default to empty
-        let config = match config_str.parse() {
-            Ok(Value::Table(t)) => t,
-            Ok(_) => {
-                load_errors.push(ConfigLoadError::NotATable);
-                Table::new()
-            }
-            Err(e) => {
-                load_errors.push(ConfigLoadError::TomlError(e));
-                Table::new()
-            }
-        };
+        load_errors.append(&mut config.update_with_args(cli_args));
 
-        let (config_player_cmd, config_player_args, use_raw_urls): (_, _, bool) = unimplemented!();
-
-        let client = cli_args
-            .value_of("player")
-            .map(|c| c.to_string())
-            .unwrap_or(config_player_cmd);
-        let args = cli_args
-            .values_of("player-args")
-            .map(|v| v.map(|s| s.to_string()).collect())
-            .unwrap_or(config_player_args);
-        let use_raw_urls = cli_args.is_present("USERAWURL") & use_raw_urls;
-        let player = PlayerConf {
-            client,
-            args,
-            use_raw_urls,
-        };
-
-        let torrent_config: Option<TorrentConf> = unimplemented!();
-
-        let torrent = if let Some(conf) = torrent_config {
-            let client = cli_args
-                .value_of("torrent-downloader")
-                .map(|c| c.to_string())
-                .unwrap_or(conf.client);
-            let args = cli_args
-                .values_of("torrent-downloader-arguments")
-                .map(|v| v.map(|s| s.to_string()).collect())
-                .unwrap_or(conf.args);
-            Some(TorrentConf { client, args })
-        } else {
-            let client = cli_args
-                .value_of("torrent-downloader")
-                .map(|c| c.to_string())
-                .unwrap_or_default();
-            let args = cli_args
-                .values_of("torrent-downloader-arguments")
-                .map(|v| v.map(|s| s.to_string()).collect())
-                .unwrap_or_default();
-            Some(TorrentConf { client, args })
-        };
-
-        let instance = if let Some(i) = cli_args.value_of("instance") {
-            i
-        } else {
-            match config.get("instance") {
-                Some(Value::Table(t)) => {
-                    if let Some(Value::String(s)) = t.get("main") {
-                        s
-                    } else {
-                        "video.ploud.fr"
-                    }
-                }
-                _ => "video.ploud.fr",
-            }
-        };
-
-        let nsfw = if cli_args.is_present("let-nsfw") {
-            NsfwBehavior::Let
-        } else if cli_args.is_present("block-nsfw") {
-            NsfwBehavior::Block
-        } else if cli_args.is_present("tag-nsfw") {
-            NsfwBehavior::Tag
-        } else {
-            NsfwBehavior::Tag
-        };
-        let mut temp = Config::default();
-        temp.player = player;
-        temp.nsfw = nsfw;
-        temp.instance = correct_instance(instance);
-        temp.torrent = torrent.map(|t| (t, cli_args.is_present("TORRENT")));
-        temp.select_quality = cli_args.is_present("SELECTQUALITY");
-
-        let initial_query = cli_args.values_of("initial-query").map(concat);
-
-        (temp, initial_query, load_errors)
+        (config, initial_query, load_errors)
     }
 
     fn from_config_file(path: &PathBuf) -> (Config, Vec<ConfigLoadError>) {
@@ -346,6 +258,15 @@ impl Config {
             (HashSet::new(), false)
         };
 
+        match config.get("instances") {
+            Some(Value::Table(t)) => {
+                if let Some(Value::String(s)) = t.get("main") {
+                    temp.instance = correct_instance(s);
+                }
+            }
+            _ => {}
+        }
+
         temp.listed_instances = list;
         temp.is_whitelist = is_whitelist;
 
@@ -355,7 +276,75 @@ impl Config {
     }
 
     fn update_with_args(&mut self, args: ArgMatches) -> Vec<ConfigLoadError> {
-        unimplemented!()
+        let mut load_errors = Vec::new();
+
+        if args.is_present("let-nsfw") {
+            self.nsfw = NsfwBehavior::Let
+        } else if args.is_present("block-nsfw") {
+            self.nsfw = NsfwBehavior::Block
+        } else if args.is_present("tag-nsfw") {
+            self.nsfw = NsfwBehavior::Tag
+        }
+
+        if let Some(i) = args.value_of("instance") {
+            self.instance = correct_instance(i);
+        }
+
+        /* ---Torrent configuration --- */
+        let client = args.value_of("torrent-downloader").map(|c| c.to_string());
+        let torrent_args = args
+            .values_of("torrent-downloader-arguments")
+            .map(|v| v.map(|s| s.to_string()).collect::<Vec<String>>());
+
+        let use_torrent = args.is_present("TORRENT");
+        if self.torrent.is_none() && use_torrent && !args.is_present("torrent-downloader") {
+            load_errors.push(ConfigLoadError::UseTorrentAndNoInfo);
+        }
+
+        match (self.torrent.take(), client, torrent_args) {
+            (None, Some(client), None) => {
+                self.torrent = Some((
+                    TorrentConf {
+                        client,
+                        args: Vec::new(),
+                    },
+                    use_torrent,
+                ))
+            }
+
+            (None, Some(client), Some(a)) => {
+                self.torrent = Some((TorrentConf { client, args: a }, use_torrent))
+            }
+            (Some((conf, _)), client, torrent_args) => {
+                let mut conf_args = conf.args;
+                self.torrent = Some((
+                    TorrentConf {
+                        client: client.unwrap_or(conf.client),
+                        args: torrent_args
+                            .map(|mut a| {
+                                a.append(&mut conf_args);
+                                a
+                            })
+                            .unwrap_or(conf_args),
+                    },
+                    use_torrent,
+                ))
+            }
+            _ => {}
+        }
+
+        /* ---Player configuration --- */
+        args.value_of("player")
+            .map(|c| self.player.client = c.to_string());
+        args.values_of("player-args").map(|v| {
+            v.map(|s| self.player.args.push(s.to_string()))
+                .any(|_| false)
+        });
+        self.player.use_raw_urls = args.is_present("USERAWURL");
+
+        self.select_quality = args.is_present("SELECTQUALITY");
+
+        load_errors
     }
 
     pub fn player(&self) -> &str {
@@ -487,16 +476,32 @@ mod config {
         assert_eq!(config.nsfw(), NsfwBehavior::Block);
         assert_eq!(config.player(), "mpv");
         assert_eq!(*config.player_args(), vec!["--volume=30"]);
-        assert_eq!(config.instance(), "video.ploud.fr");
+        assert_eq!(config.instance(), "https://skeptikon.fr");
         assert_eq!(config.is_blacklisted("peertube.social"), true);
         assert_eq!(config.use_raw_url(), false);
+        assert_eq!(config.select_quality(), false);
 
         let app = App::from_yaml(yml);
         let matches = app
-            .get_matches_from_safe(vec!["peertube-viewer-rs", "--instance=test.com"])
+            .get_matches_from_safe(vec![
+                "peertube-viewer-rs",
+                "--player",
+                "args-player",
+                "--player-args=--no-video",
+                "--instance=args.ploud.fr",
+                "--use-raw-url",
+                "--let-nsfw",
+                "-s",
+            ])
             .unwrap();
         errors = config.update_with_args(matches);
         assert_eq!(errors.len(), 0);
+        assert_eq!(config.nsfw(), NsfwBehavior::Let);
+        assert_eq!(config.player(), "args-player");
+        assert_eq!(*config.player_args(), vec!["--volume=30", "--no-video"]);
+        assert_eq!(config.instance(), "https://args.ploud.fr");
+        assert_eq!(config.select_quality(), true);
+        assert_eq!(config.use_raw_url(), true);
     }
 }
 

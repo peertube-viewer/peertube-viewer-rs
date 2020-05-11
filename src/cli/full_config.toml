@@ -10,7 +10,7 @@ args = ["--volume=30"]
 use-raw-url = false
 
 [instances]
-main = "video.ploud.fr"
+main = "skeptikon.fr"
 
 # whitelist = ["video.ploud.fr"]
 blacklist = ["peertube.social"]
