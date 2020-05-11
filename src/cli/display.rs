@@ -1,6 +1,6 @@
 use peertube_api::{Resolution, Video};
 
-use super::history::History;
+use super::{config::NsfwBehavior, history::History};
 use chrono::{DateTime, Duration, FixedOffset, Utc};
 use std::{error::Error, time::SystemTime};
 use termion::{color, style};
@@ -11,14 +11,15 @@ const DEFAULT_COLS: usize = 20;
 
 pub struct Display {
     cols: usize,
+    nsfw: NsfwBehavior,
 }
 
 impl Display {
-    pub fn new() -> Display {
+    pub fn new(nsfw: NsfwBehavior) -> Display {
         let cols = termion::terminal_size()
             .map(|(c, _r)| c as usize)
             .unwrap_or(DEFAULT_COLS);
-        Display { cols }
+        Display { cols, nsfw }
     }
 
     pub fn search_results(&self, videos: &[Rc<Video>], history: &History) {
@@ -44,6 +45,10 @@ impl Display {
         }
 
         for (id, v) in videos.iter().enumerate() {
+            if v.nsfw() && self.nsfw.is_block() {
+                continue;
+            }
+
             let spacing = " ".to_string().repeat(max_len - lengths[id]);
             let colon_spacing = " "
                 .to_string()
@@ -53,7 +58,7 @@ impl Display {
                 .repeat(max_duration_len - duration_length[id]);
             if history.is_viewed(v.uuid()) {
                 println!(
-                    "{}{}{}: {} {}[{}] {}{}{}",
+                    "{}{}{}: {} {}[{}] {}{}{} {}{}{}",
                     style::Bold,
                     id + 1,
                     colon_spacing,
@@ -63,17 +68,31 @@ impl Display {
                     duration_spacing,
                     pretty_date(v.published()),
                     style::Reset,
+                    color::Fg(color::Red),
+                    if v.nsfw() && self.nsfw == NsfwBehavior::Tag {
+                        "nsfw"
+                    } else {
+                        ""
+                    },
+                    color::Fg(color::Reset)
                 )
             } else {
                 println!(
-                    "{}{}: {} {}[{}] {}{}",
+                    "{}{}: {} {}[{}] {}{} {}{}{}",
                     id + 1,
                     colon_spacing,
                     v.name(),
                     spacing,
                     pretty_durations[id],
                     duration_spacing,
-                    pretty_date(v.published())
+                    pretty_date(v.published()),
+                    color::Fg(color::Red),
+                    if v.nsfw() && self.nsfw == NsfwBehavior::Tag {
+                        "nsfw"
+                    } else {
+                        ""
+                    },
+                    color::Fg(color::Reset)
                 )
             }
         }
@@ -170,6 +189,9 @@ impl Display {
         println!("channel  : {}", video.channel_display());
         println!("host     : {}", video.host());
         println!("url      : {}", video.watch_url());
+        if video.nsfw() {
+            println!("{}nsfw{}", color::Fg(color::Red), style::Reset,);
+        }
         self.line('=');
     }
 

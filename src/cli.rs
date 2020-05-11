@@ -42,7 +42,7 @@ impl Cli {
     /// Loads an instance of the cli
     pub fn init() -> Result<Cli, Error> {
         let (config, mut initial_query, load_error) = Config::new();
-        let display = Display::new();
+        let display = Display::new(config.nsfw());
 
         if let Some(err) = load_error {
             display.err(&err);
@@ -93,13 +93,16 @@ impl Cli {
             None | Some(_) => config.instance().to_string(),
         };
 
-        let instance = Instance::new(if config.is_blacklisted(&instance_domain[8..]) {
-            let err = Error::BlacklistedInstance(instance_domain[8..].to_string());
-            display.err(&err);
-            return Err(err);
-        } else {
-            instance_domain
-        });
+        let instance = Instance::new(
+            if config.is_blacklisted(&instance_domain[8..]) {
+                let err = Error::BlacklistedInstance(instance_domain[8..].to_string());
+                display.err(&err);
+                return Err(err);
+            } else {
+                instance_domain
+            },
+            !config.nsfw().is_block(),
+        );
 
         if !is_single_url {
             display.welcome(instance.host());

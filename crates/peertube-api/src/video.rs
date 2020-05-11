@@ -107,6 +107,8 @@ pub struct Video {
     duration: u64,
     views: u64,
     likes: u64,
+    #[getter(skip)]
+    nsfw: bool,
     dislikes: u64,
     published: Option<DateTime<FixedOffset>>,
     short_desc: Option<String>,
@@ -131,6 +133,7 @@ impl Video {
                 likes: floor_default(v.likes),
                 dislikes: floor_default(v.dislikes),
                 views: floor_default(v.views),
+                nsfw: v.nsfw.unwrap_or(false),
                 published: v
                     .publishedAt
                     .map(|d| DateTime::parse_from_rfc3339(&d).ok())
@@ -154,6 +157,7 @@ impl Video {
             likes: floor_default(v.likes),
             dislikes: floor_default(v.dislikes),
             views: floor_default(v.views),
+            nsfw: v.nsfw.unwrap_or(false),
             published: v
                 .publishedAt
                 .map(|d| DateTime::parse_from_rfc3339(&d).ok())
@@ -279,6 +283,10 @@ impl Video {
 
     pub fn host(&self) -> &str {
         &self.account.host
+    }
+
+    pub fn nsfw(&self) -> bool {
+        self.nsfw
     }
 }
 

@@ -78,11 +78,17 @@ impl error::Error for ConfigLoadError {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum NsfwBehavior {
     Block,
     Tag,
     Let,
+}
+
+impl NsfwBehavior {
+    pub fn is_block(self) -> bool {
+        self == NsfwBehavior::Block
+    }
 }
 
 /// Config for the cli interface
@@ -342,6 +348,10 @@ impl Config {
         } else {
             self.listed_instances.contains(instance)
         }
+    }
+
+    pub fn nsfw(&self) -> NsfwBehavior {
+        self.nsfw
     }
 }
 fn correct_instance(s: &str) -> String {

@@ -17,13 +17,15 @@ use crate::video::Video;
 pub struct Instance {
     client: Client,
     host: String,
+    include_nsfw: &'static str,
 }
 
 impl Instance {
-    pub fn new(host: String) -> FeaturedRc<Instance> {
+    pub fn new(host: String, include_nsfw: bool) -> FeaturedRc<Instance> {
         FeaturedRc::new(Instance {
             client: Client::new(),
             host,
+            include_nsfw: nsfw_string(include_nsfw),
         })
     }
 
@@ -44,6 +46,7 @@ impl Instance {
                     ("search", query),
                     ("count", &nb.to_string()),
                     ("start", &skip.to_string()),
+                    ("nsfw", self.include_nsfw),
                 ])
                 .send()
                 .await?
@@ -102,5 +105,13 @@ impl Instance {
 
     pub fn host(&self) -> &String {
         &self.host
+    }
+}
+
+fn nsfw_string(include_nsfw: bool) -> &'static str {
+    if include_nsfw {
+        "both"
+    } else {
+        "false"
     }
 }
