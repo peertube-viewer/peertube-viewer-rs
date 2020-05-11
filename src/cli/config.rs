@@ -1,4 +1,4 @@
-use clap::{App, Values};
+use clap::{App, ArgMatches, Values};
 use dirs::config_dir;
 use toml::{
     de::Error as TomlError,
@@ -306,6 +306,17 @@ impl Config {
         (temp, initial_query, load_errors)
     }
 
+    fn from_config_file(path: &PathBuf) -> (Config, Vec<ConfigLoadError>) {
+        let mut temp = Config::default();
+        let mut load_errors = Vec::new();
+
+        (temp, load_errors)
+    }
+
+    fn update_with_args(&mut self, args: ArgMatches) -> Vec<ConfigLoadError> {
+        unimplemented!()
+    }
+
     pub fn player(&self) -> &str {
         match &self.torrent {
             Some((tor, true)) => &tor.client,
@@ -423,8 +434,33 @@ impl Default for Config {
 }
 
 #[cfg(test)]
-mod helpers {
+mod config {
+    use super::*;
 
+    #[test]
+    fn load_config_then_args() {
+        let path = PathBuf::from("src/cli/full_config.toml");
+        let (mut config, mut errors) = Config::from_config_file(&path);
+        let yml = load_yaml!("clap_app.yml");
+        assert_eq!(errors.len(), 0);
+        assert_eq!(config.nsfw(), NsfwBehavior::Block);
+        assert_eq!(config.player(), "mpv");
+        assert_eq!(*config.player_args(), vec!["--volume=30"]);
+        assert_eq!(config.instance(), "video.ploud.fr");
+        assert_eq!(config.is_blacklisted("peertube.social"), true);
+        assert_eq!(config.use_raw_url(), false);
+
+        let app = App::from_yaml(yml);
+        let matches = app
+            .get_matches_from_safe(vec!["peertube-viewer-rs", "--instance=test.com"])
+            .unwrap();
+        errors = config.update_with_args(matches);
+        assert_eq!(errors.len(), 0);
+    }
+}
+
+#[cfg(test)]
+mod helpers {
     use super::*;
 
     #[test]
