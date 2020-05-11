@@ -466,12 +466,12 @@ impl Default for Config {
 #[cfg(test)]
 mod config {
     use super::*;
+    use clap::ErrorKind;
 
     #[test]
     fn load_config_then_args() {
         let path = PathBuf::from("src/cli/full_config.toml");
         let (mut config, mut errors) = Config::from_config_file(&path);
-        let yml = load_yaml!("clap_app.yml");
         assert_eq!(errors.len(), 0);
         assert_eq!(config.nsfw(), NsfwBehavior::Block);
         assert_eq!(config.player(), "mpv");
@@ -481,6 +481,7 @@ mod config {
         assert_eq!(config.use_raw_url(), false);
         assert_eq!(config.select_quality(), false);
 
+        let yml = load_yaml!("clap_app.yml");
         let app = App::from_yaml(yml);
         let matches = app
             .get_matches_from_safe(vec![
@@ -508,7 +509,6 @@ mod config {
     fn torrent_options() {
         let path = PathBuf::from("src/cli/full_config.toml");
         let (mut config, mut errors) = Config::from_config_file(&path);
-        let yml = load_yaml!("clap_app.yml");
         assert_eq!(errors.len(), 0);
         assert_eq!(config.nsfw(), NsfwBehavior::Block);
         assert_eq!(config.player(), "mpv");
@@ -519,6 +519,7 @@ mod config {
         assert_eq!(config.select_quality(), false);
         assert_eq!(config.use_torrent(), false);
 
+        let yml = load_yaml!("clap_app.yml");
         let app = App::from_yaml(yml);
         let matches = app
             .get_matches_from_safe(vec![
@@ -534,6 +535,41 @@ mod config {
         assert_eq!(config.player(), "args-downloader");
         assert_eq!(*config.player_args(), vec!["test", "-a"]);
         assert_eq!(config.use_torrent(), true);
+    }
+
+    #[test]
+    fn conflicting_args1() {
+        let yml = load_yaml!("clap_app.yml");
+        let app = App::from_yaml(yml);
+        assert_eq!(
+            app.get_matches_from_safe(vec!["peertube-viewer-rs", "--block-nsfw", "--let-nsfw"])
+                .unwrap_err()
+                .kind,
+            ErrorKind::ArgumentConflict
+        );
+    }
+    #[test]
+    fn conflicting_args2() {
+        let yml = load_yaml!("clap_app.yml");
+        let app = App::from_yaml(yml);
+        assert_eq!(
+            app.get_matches_from_safe(vec!["peertube-viewer-rs", "--block-nsfw", "--tag-nsfw"])
+                .unwrap_err()
+                .kind,
+            ErrorKind::ArgumentConflict
+        );
+    }
+
+    #[test]
+    fn conflicting_args3() {
+        let yml = load_yaml!("clap_app.yml");
+        let app = App::from_yaml(yml);
+        assert_eq!(
+            app.get_matches_from_safe(vec!["peertube-viewer-rs", "--let-nsfw", "--tag-nsfw"])
+                .unwrap_err()
+                .kind,
+            ErrorKind::ArgumentConflict
+        );
     }
 }
 

@@ -62,14 +62,17 @@ args:
 
     - let-nsfw:
         long: let-nsfw 
+        conflicts_with: tag-nsfw
         help: "Don't tag nsfw results"
 
     - tag-nsfw:
         long: tag-nsfw 
+        conflicts_with: block-nsfw
         help: "Tag nsfw results. This is the default behavio. This flag is only useful to override the config file"
 
     - block-nsfw:
         long: block-nsfw 
+        conflicts_with: let-nsfw
         help: Block nsfw search results
 
     - initial-query:
