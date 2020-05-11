@@ -1,8 +1,5 @@
 [player]
 command = "mpv"
-args = []
-use-raw-url = false
 
 [instances]
 main = "video.ploud.fr"
-blacklist = []
