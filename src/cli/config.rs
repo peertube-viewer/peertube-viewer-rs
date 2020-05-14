@@ -73,14 +73,7 @@ impl Display for ConfigLoadError {
 
 impl error::Error for ConfigLoadError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match self {
-            ConfigLoadError::UnreadableFile(err, _) => Some(err),
-            ConfigLoadError::NotATable
-            | ConfigLoadError::NotAString
-            | ConfigLoadError::TomlError(_)
-            | ConfigLoadError::UseTorrentAndNoInfo
-            | ConfigLoadError::IncorrectTag(_) => None,
-        }
+        None
     }
 }
 
