@@ -1,8 +1,8 @@
 use peertube_api::{Resolution, Video};
 
-use super::history::History;
-use chrono::{DateTime, FixedOffset};
-use std::error::Error;
+use super::{config::NsfwBehavior, history::History};
+use chrono::{DateTime, Duration, FixedOffset, Utc};
+use std::{error::Error, fmt, time::SystemTime};
 use termion::{color, style};
 
 use std::rc::Rc;
@@ -11,14 +11,39 @@ const DEFAULT_COLS: usize = 20;
 
 pub struct Display {
     cols: usize,
+    nsfw: NsfwBehavior,
+    colors: bool,
+}
+
+#[derive(Debug)]
+enum MaybeColor<T: color::Color> {
+    No,
+    Fg(color::Fg<T>),
+}
+
+impl<T: color::Color> fmt::Display for MaybeColor<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            MaybeColor::No => write!(f, ""),
+            MaybeColor::Fg(c) => write!(f, "{}", c),
+        }
+    }
 }
 
 impl Display {
-    pub fn new() -> Display {
+    pub fn new(nsfw: NsfwBehavior, colors: bool) -> Display {
         let cols = termion::terminal_size()
             .map(|(c, _r)| c as usize)
             .unwrap_or(DEFAULT_COLS);
-        Display { cols }
+        Display { cols, nsfw, colors }
+    }
+
+    fn fg_color<C: color::Color>(&self, c: C) -> MaybeColor<C> {
+        if self.colors {
+            MaybeColor::Fg(color::Fg(c))
+        } else {
+            MaybeColor::No
+        }
     }
 
     pub fn search_results(&self, videos: &[Rc<Video>], history: &History) {
@@ -27,8 +52,14 @@ impl Display {
         let mut pretty_durations = Vec::new();
         let mut max_duration_len = 0;
         let mut max_len = 0;
+        let mut max_channel_len = 0;
+        let mut max_host_len = 0;
+        let mut channels_length = Vec::new();
+        let mut hosts_length = Vec::new();
         for v in videos.iter() {
             let len = v.name().chars().count();
+            let channel_len = v.channel_display_name().chars().count();
+            let host_len = v.host().chars().count();
             let pretty_dur = pretty_duration(*v.duration());
             let dur_len = pretty_dur.chars().count();
             if dur_len > max_duration_len {
@@ -38,12 +69,24 @@ impl Display {
             if len > max_len {
                 max_len = len;
             }
+
+            if channel_len > max_channel_len {
+                max_channel_len = channel_len;
+            }
+
+            if host_len > max_host_len {
+                max_host_len = host_len;
+            }
             duration_length.push(dur_len);
+            channels_length.push(channel_len);
+            hosts_length.push(host_len);
             pretty_durations.push(pretty_dur);
             lengths.push(len);
         }
 
         for (id, v) in videos.iter().enumerate() {
+            debug_assert!(!(v.nsfw() && self.nsfw.is_block()));
+
             let spacing = " ".to_string().repeat(max_len - lengths[id]);
             let colon_spacing = " "
                 .to_string()
@@ -51,31 +94,57 @@ impl Display {
             let duration_spacing = " "
                 .to_string()
                 .repeat(max_duration_len - duration_length[id]);
-            if history.is_viewed(v.uuid()) {
-                println!(
-                    "{}{}{}: {} {}[{}] {}{}{}",
-                    style::Bold,
-                    id + 1,
-                    colon_spacing,
+            let channel_spacing = " "
+                .to_string()
+                .repeat(max_channel_len - channels_length[id]);
+            let host_spacing = " ".to_string().repeat(max_host_len - hosts_length[id]);
+            let views_str = display_count(*v.views());
+            let view_spacing = " ".to_string().repeat(4 - views_str.chars().count());
+
+            let name = if history.is_viewed(v.uuid()) {
+                format!("{}{}{}", style::Bold, v.name(), style::Reset,)
+            } else {
+                format!(
+                    "{}{}{}",
+                    self.fg_color(color::Blue),
                     v.name(),
-                    spacing,
-                    pretty_durations[id],
-                    duration_spacing,
-                    pretty_date(v.published()),
-                    style::Reset,
+                    self.fg_color(color::Reset),
+                )
+            };
+
+            let aligned = format!(
+                "{}{}: {} {}{}{} {}{}{} {}{}[{}] {}{}{} {}{}{}",
+                id + 1,
+                colon_spacing,
+                name,
+                spacing,
+                self.fg_color(color::Green),
+                v.channel_display_name(),
+                channel_spacing,
+                self.fg_color(color::Cyan),
+                v.host(),
+                host_spacing,
+                self.fg_color(color::Yellow),
+                pretty_durations[id],
+                duration_spacing,
+                self.fg_color(color::Green),
+                views_str,
+                view_spacing,
+                pretty_date(v.published()),
+                self.fg_color(color::Reset),
+            );
+
+            let tagged = if v.nsfw() && self.nsfw == NsfwBehavior::Tag {
+                format!(
+                    "{} {}nsfw{}",
+                    aligned,
+                    self.fg_color(color::Red),
+                    self.fg_color(color::Reset)
                 )
             } else {
-                println!(
-                    "{}{}: {} {}[{}] {}{}",
-                    id + 1,
-                    colon_spacing,
-                    v.name(),
-                    spacing,
-                    pretty_durations[id],
-                    duration_spacing,
-                    pretty_date(v.published())
-                )
-            }
+                aligned
+            };
+            println!("{}", tagged);
         }
     }
 
@@ -125,20 +194,20 @@ impl Display {
     pub fn err<T: Error>(&self, err: &T) {
         println!(
             "{}{}{}{}{}",
-            color::Fg(color::Red),
+            self.fg_color(color::Red),
             style::Bold,
             err,
             style::Reset,
-            color::Fg(color::Reset)
+            self.fg_color(color::Reset)
         );
         if let Some(e) = err.source() {
             println!(
                 "{}{}{}{}{}",
-                color::Fg(color::Red),
+                self.fg_color(color::Red),
                 style::Bold,
                 e,
                 style::Reset,
-                color::Fg(color::Reset)
+                self.fg_color(color::Reset)
             );
         }
     }
@@ -165,11 +234,14 @@ impl Display {
         println!("views    : {}", video.views());
         println!("likes    : {}", video.likes());
         println!("dislikes : {}", video.dislikes());
-        println!("released : {}", pretty_date(video.published()));
+        println!("released : {}", full_date(video.published()));
         println!("account  : {}", video.account_display());
         println!("channel  : {}", video.channel_display());
         println!("host     : {}", video.host());
         println!("url      : {}", video.watch_url());
+        if video.nsfw() {
+            println!("{}nsfw{}", self.fg_color(color::Red), style::Reset,);
+        }
         self.line('=');
     }
 
@@ -201,9 +273,39 @@ fn pretty_size(mut s: u64) -> String {
     format!("{}{}B", s, PREFIXES[id])
 }
 
+fn display_count(mut c: u64) -> String {
+    const PREFIXES: [&str; 5] = ["", "K", "M", "G", "E"];
+    let mut id = 0;
+    while c >= 1000 && id < 5 {
+        c /= 1000;
+        id += 1;
+    }
+
+    format!("{}{}", c, PREFIXES[id])
+}
+
 fn pretty_date(d: &Option<DateTime<FixedOffset>>) -> String {
+    let now: DateTime<Utc> = SystemTime::now().into();
+    d.map(|t| pretty_duration_since(now.naive_local().signed_duration_since(t.naive_local())))
+        .unwrap_or_default()
+}
+
+fn full_date(d: &Option<DateTime<FixedOffset>>) -> String {
     d.map(|t| t.format("%a %b %Y").to_string())
         .unwrap_or_default()
+}
+fn pretty_duration_since(d: Duration) -> String {
+    if d.num_milliseconds() < 0 {
+        return "From the future. Bug?".to_string();
+    }
+    match d {
+        d if d.num_hours() < 1 => format!("{}min", d.num_minutes()),
+        d if d.num_days() < 1 => format!("{}h", d.num_hours()),
+        d if d.num_weeks() < 1 => format!("{}d", d.num_days()),
+        d if d.num_weeks() < 5 => format!("{}w", d.num_weeks()),
+        d if d.num_days() < 365 => format!("{}m", d.num_days() / 30),
+        d => format!("{}y", d.num_days() / 365),
+    }
 }
 
 fn pretty_duration(d: u64) -> String {
@@ -247,6 +349,20 @@ mod helpers {
         assert_eq!(display_length(99), 2);
         assert_eq!(display_length(100), 3);
         assert_eq!(display_length(101), 3);
+    }
+
+    #[test]
+    fn count() {
+        assert_eq!(display_count(0), "0");
+        assert_eq!(display_count(10), "10");
+        assert_eq!(display_count(999), "999");
+        assert_eq!(display_count(1000), "1K");
+        assert_eq!(display_count(1001), "1K");
+        assert_eq!(display_count(1999), "1K");
+        assert_eq!(display_count(2000), "2K");
+        assert_eq!(display_count(2001), "2K");
+        assert_eq!(display_count(999999), "999K");
+        assert_eq!(display_count(1000000), "1M");
     }
 
     #[test]

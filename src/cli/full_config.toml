@@ -1,10 +1,19 @@
+[general]
+
+# available options: block, tag(add a nswf tag to search results), let(do nothing)
+# default is tag
+nsfw = "block"
+
+# enable or disable, defaults to enable
+colors = "disable"
+
 [player]
 command = "mpv"
 args = ["--volume=30"]
 use-raw-url = false
 
 [instances]
-main = "video.ploud.fr"
+main = "skeptikon.fr"
 
 # whitelist = ["video.ploud.fr"]
 blacklist = ["peertube.social"]

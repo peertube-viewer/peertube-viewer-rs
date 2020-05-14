@@ -1,6 +1,6 @@
 .\" Manpage for peertube-viewer-rs
 
-.TH man  "2020" "1.1.1" "peertube-viewer-rs manpage"
+.TH man  "2020" "1.2.0" "peertube-viewer-rs manpage"
 
 .SH NAME
 peertube-viewer a simple peertube cli browser
@@ -49,6 +49,12 @@ Use the provided torrent downloader instead of the video player
 
 .B --config, -c 
 Use a specified config file
+
+.B --[no-]color
+specify whether colors should be used
+
+.B --[block/tag/let]-nsfw
+Specify the behavior for nsfw videos (block them, add a nsfw tag in the search results or let them be)
 
 .SH config
 A config file can be put in `$XDG_CONFIG_HOME/peertube-viewer-rs/config.toml` or `/home/sos/.config/peertube-viewer-rs/config.toml`.

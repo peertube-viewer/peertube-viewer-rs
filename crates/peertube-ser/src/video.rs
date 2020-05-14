@@ -27,6 +27,7 @@ pub struct Video {
     pub views: Option<i64>,
     pub likes: Option<i64>,
     pub dislikes: Option<i64>,
+    pub nsfw: Option<bool>,
     pub account: Channel,
     pub channel: Channel,
     pub category: IdentifiedLabel,
