@@ -28,8 +28,14 @@ impl Display {
         let mut pretty_durations = Vec::new();
         let mut max_duration_len = 0;
         let mut max_len = 0;
+        let mut max_channel_len = 0;
+        let mut max_host_len = 0;
+        let mut channels_length = Vec::new();
+        let mut hosts_length = Vec::new();
         for v in videos.iter() {
             let len = v.name().chars().count();
+            let channel_len = v.channel_display_name().chars().count();
+            let host_len = v.host().chars().count();
             let pretty_dur = pretty_duration(*v.duration());
             let dur_len = pretty_dur.chars().count();
             if dur_len > max_duration_len {
@@ -39,7 +45,17 @@ impl Display {
             if len > max_len {
                 max_len = len;
             }
+
+            if channel_len > max_channel_len {
+                max_channel_len = channel_len;
+            }
+
+            if host_len > max_host_len {
+                max_host_len = host_len;
+            }
             duration_length.push(dur_len);
+            channels_length.push(channel_len);
+            hosts_length.push(host_len);
             pretty_durations.push(pretty_dur);
             lengths.push(len);
         }
@@ -54,6 +70,10 @@ impl Display {
             let duration_spacing = " "
                 .to_string()
                 .repeat(max_duration_len - duration_length[id]);
+            let channel_spacing = " "
+                .to_string()
+                .repeat(max_channel_len - channels_length[id]);
+            let host_spacing = " ".to_string().repeat(max_host_len - hosts_length[id]);
 
             let name = if history.is_viewed(v.uuid()) {
                 format!("{}{}{}", style::Bold, v.name(), style::Reset,)
@@ -67,11 +87,16 @@ impl Display {
             };
 
             let aligned = format!(
-                "{}{}: {} {}{}[{}] {}{}{}",
+                "{}{}: {} {}{}{} {}{} {}{}[{}] {}{}{}",
                 id + 1,
                 colon_spacing,
                 name,
                 spacing,
+                color::Fg(color::Green),
+                v.channel_display_name(),
+                channel_spacing,
+                v.host(),
+                host_spacing,
                 color::Fg(color::Yellow),
                 pretty_durations[id],
                 duration_spacing,
