@@ -1,5 +1,5 @@
 [general]
-nsfw: "tag"
+nsfw= "tag"
 colors = "enable"
 
 

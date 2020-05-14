@@ -13,13 +13,13 @@ use std::path::PathBuf;
 use std::process::exit;
 use std::{error, io};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct TorrentConf {
     pub client: String,
     pub args: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct PlayerConf {
     pub client: String,
     pub args: Vec<String>,
@@ -98,7 +98,7 @@ impl NsfwBehavior {
 }
 
 /// Config for the cli interface
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Config {
     player: PlayerConf,
     instance: String,
@@ -469,7 +469,7 @@ impl Default for Config {
                 args: Vec::new(),
                 use_raw_urls: false,
             },
-            instance: "video.ploud.fr".to_string(),
+            instance: "https://video.ploud.fr".to_string(),
             torrent: None,
             nsfw: NsfwBehavior::Tag,
             listed_instances: HashSet::new(),
@@ -556,6 +556,14 @@ mod config {
         assert_eq!(*config.player_args(), vec!["test", "-a"]);
         assert_eq!(config.use_torrent(), true);
         assert_eq!(config.colors(), true);
+    }
+
+    #[test]
+    fn default_config_example() {
+        let path = PathBuf::from("src/cli/default_config.toml");
+        let (config, errors) = Config::from_config_file(&path);
+        assert_eq!(errors.len(), 0);
+        assert_eq!(config, Config::default());
     }
 
     #[test]
