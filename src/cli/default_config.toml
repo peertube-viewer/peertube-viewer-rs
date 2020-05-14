@@ -1,5 +1,7 @@
 [general]
 nsfw: "tag"
+colors = "enable"
+
 
 [player]
 command = "mpv"

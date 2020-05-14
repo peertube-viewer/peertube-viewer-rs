@@ -2,7 +2,7 @@ use peertube_api::{Resolution, Video};
 
 use super::{config::NsfwBehavior, history::History};
 use chrono::{DateTime, Duration, FixedOffset, Utc};
-use std::{error::Error, time::SystemTime};
+use std::{error::Error, fmt, time::SystemTime};
 use termion::{color, style};
 
 use std::rc::Rc;
@@ -12,14 +12,40 @@ const DEFAULT_COLS: usize = 20;
 pub struct Display {
     cols: usize,
     nsfw: NsfwBehavior,
+    colors: bool,
+}
+
+#[derive(Debug)]
+enum MaybeColor<T: color::Color> {
+    No,
+    Fg(color::Fg<T>),
+    Bg(color::Bg<T>),
+}
+
+impl<T: color::Color> fmt::Display for MaybeColor<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            MaybeColor::No => write!(f, ""),
+            MaybeColor::Fg(c) => write!(f, "{}", c),
+            MaybeColor::Bg(c) => write!(f, "{}", c),
+        }
+    }
 }
 
 impl Display {
-    pub fn new(nsfw: NsfwBehavior) -> Display {
+    pub fn new(nsfw: NsfwBehavior, colors: bool) -> Display {
         let cols = termion::terminal_size()
             .map(|(c, _r)| c as usize)
             .unwrap_or(DEFAULT_COLS);
-        Display { cols, nsfw }
+        Display { cols, nsfw, colors }
+    }
+
+    fn fg_color<C: color::Color>(&self, c: C) -> MaybeColor<C> {
+        if self.colors {
+            MaybeColor::Fg(color::Fg(c))
+        } else {
+            MaybeColor::No
+        }
     }
 
     pub fn search_results(&self, videos: &[Rc<Video>], history: &History) {
@@ -82,9 +108,9 @@ impl Display {
             } else {
                 format!(
                     "{}{}{}",
-                    color::Fg(color::Blue),
+                    self.fg_color(color::Blue),
                     v.name(),
-                    color::Fg(color::Reset),
+                    self.fg_color(color::Reset),
                 )
             };
 
@@ -94,28 +120,28 @@ impl Display {
                 colon_spacing,
                 name,
                 spacing,
-                color::Fg(color::Green),
+                self.fg_color(color::Green),
                 v.channel_display_name(),
                 channel_spacing,
-                color::Fg(color::Cyan),
+                self.fg_color(color::Cyan),
                 v.host(),
                 host_spacing,
-                color::Fg(color::Yellow),
+                self.fg_color(color::Yellow),
                 pretty_durations[id],
                 duration_spacing,
-                color::Fg(color::Green),
+                self.fg_color(color::Green),
                 views_str,
                 view_spacing,
                 pretty_date(v.published()),
-                color::Fg(color::Reset),
+                self.fg_color(color::Reset),
             );
 
             let tagged = if v.nsfw() && self.nsfw == NsfwBehavior::Tag {
                 format!(
                     "{} {}nsfw{}",
                     aligned,
-                    color::Fg(color::Red),
-                    color::Fg(color::Reset)
+                    self.fg_color(color::Red),
+                    self.fg_color(color::Reset)
                 )
             } else {
                 aligned
@@ -170,20 +196,20 @@ impl Display {
     pub fn err<T: Error>(&self, err: &T) {
         println!(
             "{}{}{}{}{}",
-            color::Fg(color::Red),
+            self.fg_color(color::Red),
             style::Bold,
             err,
             style::Reset,
-            color::Fg(color::Reset)
+            self.fg_color(color::Reset)
         );
         if let Some(e) = err.source() {
             println!(
                 "{}{}{}{}{}",
-                color::Fg(color::Red),
+                self.fg_color(color::Red),
                 style::Bold,
                 e,
                 style::Reset,
-                color::Fg(color::Reset)
+                self.fg_color(color::Reset)
             );
         }
     }
@@ -216,7 +242,7 @@ impl Display {
         println!("host     : {}", video.host());
         println!("url      : {}", video.watch_url());
         if video.nsfw() {
-            println!("{}nsfw{}", color::Fg(color::Red), style::Reset,);
+            println!("{}nsfw{}", self.fg_color(color::Red), style::Reset,);
         }
         self.line('=');
     }
