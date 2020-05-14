@@ -110,6 +110,8 @@ pub struct Config {
 
     select_quality: bool,
 
+    colors: bool,
+
     max_hist_lines: usize,
 }
 
@@ -218,24 +220,29 @@ impl Config {
         };
 
         /* ---Nsfw configuration --- */
-        temp.nsfw = if let Some(Value::Table(t)) = config.get("general") {
+        if let Some(Value::Table(t)) = config.get("general") {
             if let Some(Value::String(s)) = t.get("nsfw") {
                 if s == "block" {
-                    NsfwBehavior::Block
+                    temp.nsfw = NsfwBehavior::Block;
                 } else if s == "let" {
-                    NsfwBehavior::Let
+                    temp.nsfw = NsfwBehavior::Let;
                 } else if s == "tag" {
-                    NsfwBehavior::Tag
+                    temp.nsfw = NsfwBehavior::Tag;
                 } else {
                     load_errors.push(ConfigLoadError::IncorrectTag("nsfw".to_string()));
-                    NsfwBehavior::Tag
                 }
-            } else {
-                NsfwBehavior::Tag
             }
-        } else {
-            NsfwBehavior::Tag
-        };
+
+            if let Some(Value::String(s)) = t.get("colors") {
+                if s == "enable" {
+                    temp.colors = true;
+                } else if s == "disable" {
+                    temp.colors = false;
+                } else {
+                    load_errors.push(ConfigLoadError::IncorrectTag("colors".to_string()));
+                }
+            }
+        }
 
         /* ---Blacklist configuration --- */
         let (list, is_whitelist) = if let Some(Value::Table(t)) = config.get("instances") {
@@ -344,6 +351,12 @@ impl Config {
 
         self.select_quality = args.is_present("SELECTQUALITY");
 
+        if args.is_present("color") {
+            self.colors = true;
+        } else if args.is_present("no-color") {
+            self.colors = false;
+        }
+
         load_errors
     }
 
@@ -383,6 +396,10 @@ impl Config {
 
     pub fn select_quality(&self) -> bool {
         self.select_quality
+    }
+
+    pub fn colors(&self) -> bool {
+        self.colors
     }
 
     pub fn is_blacklisted(&self, instance: &str) -> bool {
@@ -457,6 +474,7 @@ impl Default for Config {
             nsfw: NsfwBehavior::Tag,
             listed_instances: HashSet::new(),
             is_whitelist: false,
+            colors: true,
             select_quality: false,
             max_hist_lines: 2000,
         }
@@ -518,6 +536,7 @@ mod config {
         assert_eq!(config.use_raw_url(), false);
         assert_eq!(config.select_quality(), false);
         assert_eq!(config.use_torrent(), false);
+        assert_eq!(config.colors(), false);
 
         let yml = load_yaml!("clap_app.yml");
         let app = App::from_yaml(yml);
@@ -528,6 +547,7 @@ mod config {
                 "args-downloader",
                 "--torrent-downloader-args=test",
                 "--use-torrent",
+                "--color",
             ])
             .unwrap();
         errors = config.update_with_args(matches);
@@ -535,6 +555,7 @@ mod config {
         assert_eq!(config.player(), "args-downloader");
         assert_eq!(*config.player_args(), vec!["test", "-a"]);
         assert_eq!(config.use_torrent(), true);
+        assert_eq!(config.colors(), true);
     }
 
     #[test]

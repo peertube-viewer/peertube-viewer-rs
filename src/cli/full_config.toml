@@ -4,6 +4,9 @@
 # default is tag
 nsfw = "block"
 
+# enable or disable, defaults to enable
+colors = "disable"
+
 [player]
 command = "mpv"
 args = ["--volume=30"]

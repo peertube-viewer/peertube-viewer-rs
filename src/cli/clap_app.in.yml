@@ -77,6 +77,15 @@ args:
         conflicts_with: let-nsfw
         help: Block nsfw search results
 
+    - no-color:
+        long: no-color
+        conflicts_with: color
+        help: remove coloring of output
+
+    - color:
+        long: color
+        help: force coloring of output if it is disabled in the config file
+
     - initial-query:
         takes_value: true
         multiple: true 

@@ -288,6 +288,10 @@ impl Video {
     pub fn nsfw(&self) -> bool {
         self.nsfw
     }
+
+    pub fn channel_display_name(&self) -> &str {
+        &self.channel.display_name
+    }
 }
 
 fn floor_default(i: Option<i64>) -> u64 {
