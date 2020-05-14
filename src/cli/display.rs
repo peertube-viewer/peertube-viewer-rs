@@ -87,7 +87,7 @@ impl Display {
             };
 
             let aligned = format!(
-                "{}{}: {} {}{}{} {}{} {}{}[{}] {}{}{}",
+                "{}{}: {} {}{}{} {}{}{} {}{}[{}] {}{}{}",
                 id + 1,
                 colon_spacing,
                 name,
@@ -95,6 +95,7 @@ impl Display {
                 color::Fg(color::Green),
                 v.channel_display_name(),
                 channel_spacing,
+                color::Fg(color::Cyan),
                 v.host(),
                 host_spacing,
                 color::Fg(color::Yellow),
