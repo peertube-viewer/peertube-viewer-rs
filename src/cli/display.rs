@@ -54,45 +54,35 @@ impl Display {
             let duration_spacing = " "
                 .to_string()
                 .repeat(max_duration_len - duration_length[id]);
-            if history.is_viewed(v.uuid()) {
-                println!(
-                    "{}{}{}: {} {}[{}] {}{}{} {}{}{}",
-                    style::Bold,
-                    id + 1,
-                    colon_spacing,
-                    v.name(),
-                    spacing,
-                    pretty_durations[id],
-                    duration_spacing,
-                    pretty_date(v.published()),
-                    style::Reset,
+
+            let aligned = format!(
+                "{}{}: {} {}[{}] {}{}",
+                id + 1,
+                colon_spacing,
+                v.name(),
+                spacing,
+                pretty_durations[id],
+                duration_spacing,
+                pretty_date(v.published())
+            );
+
+            let bold = if history.is_viewed(v.uuid()) {
+                format!("{}{}{}", style::Bold, aligned, style::Reset)
+            } else {
+                aligned
+            };
+
+            let tagged = if v.nsfw() && self.nsfw == NsfwBehavior::Tag {
+                format!(
+                    "{} {}nsfw{}",
+                    bold,
                     color::Fg(color::Red),
-                    if v.nsfw() && self.nsfw == NsfwBehavior::Tag {
-                        "nsfw"
-                    } else {
-                        ""
-                    },
                     color::Fg(color::Reset)
                 )
             } else {
-                println!(
-                    "{}{}: {} {}[{}] {}{} {}{}{}",
-                    id + 1,
-                    colon_spacing,
-                    v.name(),
-                    spacing,
-                    pretty_durations[id],
-                    duration_spacing,
-                    pretty_date(v.published()),
-                    color::Fg(color::Red),
-                    if v.nsfw() && self.nsfw == NsfwBehavior::Tag {
-                        "nsfw"
-                    } else {
-                        ""
-                    },
-                    color::Fg(color::Reset)
-                )
-            }
+                bold
+            };
+            println!("{}", tagged);
         }
     }
 
