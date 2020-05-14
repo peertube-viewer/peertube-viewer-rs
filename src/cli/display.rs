@@ -74,6 +74,8 @@ impl Display {
                 .to_string()
                 .repeat(max_channel_len - channels_length[id]);
             let host_spacing = " ".to_string().repeat(max_host_len - hosts_length[id]);
+            let views_str = display_count(*v.views());
+            let view_spacing = " ".to_string().repeat(4 - views_str.chars().count());
 
             let name = if history.is_viewed(v.uuid()) {
                 format!("{}{}{}", style::Bold, v.name(), style::Reset,)
@@ -87,7 +89,7 @@ impl Display {
             };
 
             let aligned = format!(
-                "{}{}: {} {}{}{} {}{}{} {}{}[{}] {}{}{}",
+                "{}{}: {} {}{}{} {}{}{} {}{}[{}] {}{}{} {}{}{}",
                 id + 1,
                 colon_spacing,
                 name,
@@ -101,6 +103,9 @@ impl Display {
                 color::Fg(color::Yellow),
                 pretty_durations[id],
                 duration_spacing,
+                color::Fg(color::Green),
+                views_str,
+                view_spacing,
                 pretty_date(v.published()),
                 color::Fg(color::Reset),
             );
@@ -244,6 +249,17 @@ fn pretty_size(mut s: u64) -> String {
     format!("{}{}B", s, PREFIXES[id])
 }
 
+fn display_count(mut c: u64) -> String {
+    const PREFIXES: [&str; 5] = ["", "K", "M", "G", "E"];
+    let mut id = 0;
+    while c >= 1000 && id < 5 {
+        c /= 1000;
+        id += 1;
+    }
+
+    format!("{}{}", c, PREFIXES[id])
+}
+
 fn pretty_date(d: &Option<DateTime<FixedOffset>>) -> String {
     let now: DateTime<Utc> = SystemTime::now().into();
     d.map(|t| pretty_duration_since(now.naive_local().signed_duration_since(t.naive_local())))
@@ -309,6 +325,20 @@ mod helpers {
         assert_eq!(display_length(99), 2);
         assert_eq!(display_length(100), 3);
         assert_eq!(display_length(101), 3);
+    }
+
+    #[test]
+    fn count() {
+        assert_eq!(display_count(0), "0");
+        assert_eq!(display_count(10), "10");
+        assert_eq!(display_count(999), "999");
+        assert_eq!(display_count(1000), "1K");
+        assert_eq!(display_count(1001), "1K");
+        assert_eq!(display_count(1999), "1K");
+        assert_eq!(display_count(2000), "2K");
+        assert_eq!(display_count(2001), "2K");
+        assert_eq!(display_count(999999), "999K");
+        assert_eq!(display_count(1000000), "1M");
     }
 
     #[test]
