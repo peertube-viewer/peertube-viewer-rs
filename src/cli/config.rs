@@ -258,13 +258,10 @@ impl Config {
             (HashSet::new(), false)
         };
 
-        match config.get("instances") {
-            Some(Value::Table(t)) => {
-                if let Some(Value::String(s)) = t.get("main") {
-                    temp.instance = correct_instance(s);
-                }
+        if let Some(Value::Table(t)) = config.get("instances") {
+            if let Some(Value::String(s)) = t.get("main") {
+                temp.instance = correct_instance(s);
             }
-            _ => {}
         }
 
         temp.listed_instances = list;
@@ -334,8 +331,9 @@ impl Config {
         }
 
         /* ---Player configuration --- */
-        args.value_of("player")
-            .map(|c| self.player.client = c.to_string());
+        if let Some(c) = args.value_of("player") {
+            self.player.client = c.to_string();
+        }
         args.values_of("player-args").map(|v| {
             v.map(|s| self.player.args.push(s.to_string()))
                 .any(|_| false)

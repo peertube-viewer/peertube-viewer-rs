@@ -19,7 +19,6 @@ pub struct Display {
 enum MaybeColor<T: color::Color> {
     No,
     Fg(color::Fg<T>),
-    Bg(color::Bg<T>),
 }
 
 impl<T: color::Color> fmt::Display for MaybeColor<T> {
@@ -27,7 +26,6 @@ impl<T: color::Color> fmt::Display for MaybeColor<T> {
         match self {
             MaybeColor::No => write!(f, ""),
             MaybeColor::Fg(c) => write!(f, "{}", c),
-            MaybeColor::Bg(c) => write!(f, "{}", c),
         }
     }
 }
