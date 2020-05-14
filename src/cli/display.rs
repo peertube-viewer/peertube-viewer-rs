@@ -55,32 +55,39 @@ impl Display {
                 .to_string()
                 .repeat(max_duration_len - duration_length[id]);
 
+            let name = if history.is_viewed(v.uuid()) {
+                format!("{}{}{}", style::Bold, v.name(), style::Reset,)
+            } else {
+                format!(
+                    "{}{}{}",
+                    color::Fg(color::Blue),
+                    v.name(),
+                    color::Fg(color::Reset),
+                )
+            };
+
             let aligned = format!(
-                "{}{}: {} {}[{}] {}{}",
+                "{}{}: {} {}{}[{}] {}{}{}",
                 id + 1,
                 colon_spacing,
-                v.name(),
+                name,
                 spacing,
+                color::Fg(color::Yellow),
                 pretty_durations[id],
                 duration_spacing,
-                pretty_date(v.published())
+                pretty_date(v.published()),
+                color::Fg(color::Reset),
             );
-
-            let bold = if history.is_viewed(v.uuid()) {
-                format!("{}{}{}", style::Bold, aligned, style::Reset)
-            } else {
-                aligned
-            };
 
             let tagged = if v.nsfw() && self.nsfw == NsfwBehavior::Tag {
                 format!(
                     "{} {}nsfw{}",
-                    bold,
+                    aligned,
                     color::Fg(color::Red),
                     color::Fg(color::Reset)
                 )
             } else {
-                bold
+                aligned
             };
             println!("{}", tagged);
         }
