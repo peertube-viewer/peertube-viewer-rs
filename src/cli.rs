@@ -41,10 +41,16 @@ pub struct Cli {
 impl Cli {
     /// Loads an instance of the cli
     pub fn init() -> Result<Cli, Error> {
-        let (config, mut initial_query, load_error) = Config::new();
+        let (config, mut initial_query, load_errors) = Config::new();
         let display = Display::new(config.nsfw());
 
-        if let Some(err) = load_error {
+        let mut err_iter = load_errors.into_iter();
+        if let Some(err) = err_iter.next() {
+            display.err(&err);
+        }
+
+        for err in err_iter {
+            display.message("");
             display.err(&err);
         }
 
