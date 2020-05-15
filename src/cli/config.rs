@@ -208,7 +208,6 @@ impl Config {
             } else {
                 ("mpv".to_string(), Vec::new(), false)
             };
-
         temp.player = PlayerConf {
             client: player_cmd,
             args: player_args,
@@ -368,9 +367,14 @@ impl Config {
             v.map(|s| self.player.args.push(s.to_string()))
                 .any(|_| false)
         });
-        self.player.use_raw_urls = args.is_present("USERAWURL");
 
-        self.select_quality = args.is_present("SELECTQUALITY");
+        if args.is_present("USERAWURL") {
+            self.player.use_raw_urls = true;
+        }
+
+        if args.is_present("SELECTQUALITY") {
+            self.select_quality = true;
+        }
 
         if args.is_present("color") {
             self.colors = true;
@@ -517,7 +521,7 @@ mod config {
         assert_eq!(*config.player_args(), vec!["--volume=30"]);
         assert_eq!(config.instance(), "https://skeptikon.fr");
         assert_eq!(config.is_blacklisted("peertube.social"), true);
-        assert_eq!(config.use_raw_url(), false);
+        assert_eq!(config.use_raw_url(), true);
         assert_eq!(config.select_quality(), false);
 
         let yml = load_yaml!("clap_app.yml");
@@ -554,7 +558,7 @@ mod config {
         assert_eq!(*config.player_args(), vec!["--volume=30"]);
         assert_eq!(config.instance(), "https://skeptikon.fr");
         assert_eq!(config.is_blacklisted("peertube.social"), true);
-        assert_eq!(config.use_raw_url(), false);
+        assert_eq!(config.use_raw_url(), true);
         assert_eq!(config.select_quality(), false);
         assert_eq!(config.use_torrent(), false);
         assert_eq!(config.colors(), false);
