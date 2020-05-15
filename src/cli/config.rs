@@ -26,6 +26,10 @@ struct PlayerConf {
     pub use_raw_urls: bool,
 }
 
+const NSFW_ALLOWED: [&'static str; 3] = ["tag", "block", "let"];
+
+const COLORS_ALLOWED: [&'static str; 2] = ["enable", "disable"];
+
 #[derive(Debug)]
 pub enum ConfigLoadError {
     UnreadableFile(io::Error, PathBuf),
@@ -33,7 +37,11 @@ pub enum ConfigLoadError {
     UseTorrentAndNoInfo,
     NotATable,
     NotAString,
-    IncorrectTag(String),
+    IncorrectTag {
+        name: &'static str,
+        provided: String,
+        allowed: &'static [&'static str],
+    },
 }
 
 impl Display for ConfigLoadError {
@@ -50,10 +58,13 @@ impl Display for ConfigLoadError {
                 "The config was not parsable as TOML:\n{}\nUsing default config",
                 e
             ),
-            ConfigLoadError::IncorrectTag(name) => write!(
+            ConfigLoadError::IncorrectTag{name,provided,allowed} => write!(
                 f,
-                "Option {} didn't have a correct tag\nUsing default tag",
-               name 
+                "\"{}\" is not a valid tag for {}\nValid tags are: {:?}\nUsing default: \"{}\"",
+                provided,
+                name ,
+                allowed,
+                allowed[0],
             ),
             ConfigLoadError::NotATable => write!(
                 f,
@@ -76,7 +87,11 @@ impl error::Error for ConfigLoadError {
         match self {
             ConfigLoadError::UnreadableFile(e, _) => Some(e),
             ConfigLoadError::TomlError(e) => Some(e),
-            ConfigLoadError::IncorrectTag(_)
+            ConfigLoadError::IncorrectTag {
+                name: _,
+                provided: _,
+                allowed: _,
+            }
             | ConfigLoadError::UseTorrentAndNoInfo
             | ConfigLoadError::NotATable
             | ConfigLoadError::NotAString => None,
@@ -229,7 +244,11 @@ impl Config {
                 } else if s == "tag" {
                     temp.nsfw = NsfwBehavior::Tag;
                 } else {
-                    load_errors.push(ConfigLoadError::IncorrectTag("nsfw".to_string()));
+                    load_errors.push(ConfigLoadError::IncorrectTag {
+                        name: "nsfw",
+                        provided: s.to_string(),
+                        allowed: &NSFW_ALLOWED,
+                    });
                 }
             }
 
@@ -239,7 +258,11 @@ impl Config {
                 } else if s == "disable" {
                     temp.colors = false;
                 } else {
-                    load_errors.push(ConfigLoadError::IncorrectTag("colors".to_string()));
+                    load_errors.push(ConfigLoadError::IncorrectTag {
+                        name: "colors",
+                        provided: s.to_string(),
+                        allowed: &COLORS_ALLOWED,
+                    });
                 }
             }
         }
