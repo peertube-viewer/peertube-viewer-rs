@@ -264,6 +264,10 @@ impl Config {
                     });
                 }
             }
+
+            if let Some(Value::Boolean(true)) = t.get("select-quality") {
+                temp.select_quality = true;
+            }
         }
 
         /* ---Blacklist configuration --- */
@@ -522,7 +526,7 @@ mod config {
         assert_eq!(config.instance(), "https://skeptikon.fr");
         assert_eq!(config.is_blacklisted("peertube.social"), true);
         assert_eq!(config.use_raw_url(), true);
-        assert_eq!(config.select_quality(), false);
+        assert_eq!(config.select_quality(), true);
 
         let yml = load_yaml!("clap_app.yml");
         let app = App::from_yaml(yml);
@@ -559,7 +563,7 @@ mod config {
         assert_eq!(config.instance(), "https://skeptikon.fr");
         assert_eq!(config.is_blacklisted("peertube.social"), true);
         assert_eq!(config.use_raw_url(), true);
-        assert_eq!(config.select_quality(), false);
+        assert_eq!(config.select_quality(), true);
         assert_eq!(config.use_torrent(), false);
         assert_eq!(config.colors(), false);
 

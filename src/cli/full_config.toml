@@ -7,6 +7,8 @@ nsfw = "block"
 # enable or disable, defaults to enable
 colors = "disable"
 
+# can be true or false
+select-quality = true
 
 [player]
 command = "mpv"
