@@ -1,10 +1,11 @@
 [general]
 nsfw= "tag"
 colors = "enable"
-
+select-quality = false
 
 [player]
 command = "mpv"
+use-raw-urls = false
 
 [instances]
 main = "video.ploud.fr"
