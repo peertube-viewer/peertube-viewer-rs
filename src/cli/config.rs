@@ -26,9 +26,9 @@ struct PlayerConf {
     pub use_raw_urls: bool,
 }
 
-const NSFW_ALLOWED: [&'static str; 3] = ["tag", "block", "let"];
+const NSFW_ALLOWED: [&str; 3] = ["tag", "block", "let"];
 
-const COLORS_ALLOWED: [&'static str; 2] = ["enable", "disable"];
+const COLORS_ALLOWED: [&str; 2] = ["enable", "disable"];
 
 #[derive(Debug)]
 pub enum ConfigLoadError {
