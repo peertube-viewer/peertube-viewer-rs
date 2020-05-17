@@ -1,0 +1,11 @@
+[peertube-viewer-rs]
+title = "peertube-viewer-rs documentation"
+description = "peertube-viewer-rs documentation"
+authors = ["Sosthène Guédon"]
+
+[output.html]
+git-repository-url = "https://gitlab.com/SostheneGuedon/peertube-viewer-rs"
+
+[[output.html.additional-resources]]
+output-dir="img"
+src="screenshots/*"

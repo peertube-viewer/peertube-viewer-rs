@@ -2,3 +2,4 @@
 **/*.rs.bk
 /completions/
 src/cli/clap_app.yml
+docs/book
