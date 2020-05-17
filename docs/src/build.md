@@ -5,6 +5,6 @@ Building from source is rather easy, a [rust toolchain](https://www.rust-lang.or
 
 For a debug build (faster to compile), run `cargo build`.
 
-For a release build, run `cargo build --frozen --locked`.
+For a release build, run `cargo build --locked`.
 
 Once compiled, the executable is located at `target/release/peertube-viewer-rs`. Completion for a variety of shells is also available in `completions/`.
