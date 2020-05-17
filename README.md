@@ -8,7 +8,7 @@ a command line program to view browse peertube, inspired by the youtube-viewer u
 Compiling
 ---
 
-Compiling requires a rust toolchain to be installed
+Compiling requires a [rust toolchain](https://www.rust-lang.org/tools/install)to be installed, newer that `v1.41.0`.
 
 ```bash
 cargo build --locked --release
@@ -23,13 +23,16 @@ Usage
 Here is an example of basic usage :
 
 The user wants to use the peertube instance video.ploud.fr. They search for videos about mastodon then they select the first search result. Additional information about the video is displayed and the video is launched. If no player has been chosen as argument and no player is selected in the config file, it will default to `mpv` to play the video. When the video is ended, the user can search other videos, play another search result or quit with :q.
-![Screenshot of basic usage](docs/screenshot.png?raw=true "Exemple usage")
+![Screenshot of basic usage](docs/src/screenshots/screenshot.png?raw=true "Exemple usage")
+
+For a more detailed usage description, checkout [the documentation](https://sostheneguedon.gitlab.io/peertube-viewer-rs/peertube-viewer-rs.html)
 
 To see all available options see:
 ```bash
 peertube-viewer-rs -h
 ```
 or read the manpage
+
 
 Contributing
 ===

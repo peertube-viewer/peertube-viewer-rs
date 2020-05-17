@@ -26,6 +26,10 @@ struct PlayerConf {
     pub use_raw_urls: bool,
 }
 
+const NSFW_ALLOWED: [&str; 3] = ["tag", "block", "let"];
+
+const COLORS_ALLOWED: [&str; 2] = ["enable", "disable"];
+
 #[derive(Debug)]
 pub enum ConfigLoadError {
     UnreadableFile(io::Error, PathBuf),
@@ -33,7 +37,11 @@ pub enum ConfigLoadError {
     UseTorrentAndNoInfo,
     NotATable,
     NotAString,
-    IncorrectTag(String),
+    IncorrectTag {
+        name: &'static str,
+        provided: String,
+        allowed: &'static [&'static str],
+    },
 }
 
 impl Display for ConfigLoadError {
@@ -50,10 +58,13 @@ impl Display for ConfigLoadError {
                 "The config was not parsable as TOML:\n{}\nUsing default config",
                 e
             ),
-            ConfigLoadError::IncorrectTag(name) => write!(
+            ConfigLoadError::IncorrectTag{name,provided,allowed} => write!(
                 f,
-                "Option {} didn't have a correct tag\nUsing default tag",
-               name 
+                "\"{}\" is not a valid tag for {}\nValid tags are: {:?}\nUsing default: \"{}\"",
+                provided,
+                name ,
+                allowed,
+                allowed[0],
             ),
             ConfigLoadError::NotATable => write!(
                 f,
@@ -73,7 +84,18 @@ impl Display for ConfigLoadError {
 
 impl error::Error for ConfigLoadError {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        None
+        match self {
+            ConfigLoadError::UnreadableFile(e, _) => Some(e),
+            ConfigLoadError::TomlError(e) => Some(e),
+            ConfigLoadError::IncorrectTag {
+                name: _,
+                provided: _,
+                allowed: _,
+            }
+            | ConfigLoadError::UseTorrentAndNoInfo
+            | ConfigLoadError::NotATable
+            | ConfigLoadError::NotAString => None,
+        }
     }
 }
 
@@ -186,7 +208,6 @@ impl Config {
             } else {
                 ("mpv".to_string(), Vec::new(), false)
             };
-
         temp.player = PlayerConf {
             client: player_cmd,
             args: player_args,
@@ -222,7 +243,11 @@ impl Config {
                 } else if s == "tag" {
                     temp.nsfw = NsfwBehavior::Tag;
                 } else {
-                    load_errors.push(ConfigLoadError::IncorrectTag("nsfw".to_string()));
+                    load_errors.push(ConfigLoadError::IncorrectTag {
+                        name: "nsfw",
+                        provided: s.to_string(),
+                        allowed: &NSFW_ALLOWED,
+                    });
                 }
             }
 
@@ -232,8 +257,16 @@ impl Config {
                 } else if s == "disable" {
                     temp.colors = false;
                 } else {
-                    load_errors.push(ConfigLoadError::IncorrectTag("colors".to_string()));
+                    load_errors.push(ConfigLoadError::IncorrectTag {
+                        name: "colors",
+                        provided: s.to_string(),
+                        allowed: &COLORS_ALLOWED,
+                    });
                 }
+            }
+
+            if let Some(Value::Boolean(true)) = t.get("select-quality") {
+                temp.select_quality = true;
             }
         }
 
@@ -338,9 +371,14 @@ impl Config {
             v.map(|s| self.player.args.push(s.to_string()))
                 .any(|_| false)
         });
-        self.player.use_raw_urls = args.is_present("USERAWURL");
 
-        self.select_quality = args.is_present("SELECTQUALITY");
+        if args.is_present("USERAWURL") {
+            self.player.use_raw_urls = true;
+        }
+
+        if args.is_present("SELECTQUALITY") {
+            self.select_quality = true;
+        }
 
         if args.is_present("color") {
             self.colors = true;
@@ -487,8 +525,8 @@ mod config {
         assert_eq!(*config.player_args(), vec!["--volume=30"]);
         assert_eq!(config.instance(), "https://skeptikon.fr");
         assert_eq!(config.is_blacklisted("peertube.social"), true);
-        assert_eq!(config.use_raw_url(), false);
-        assert_eq!(config.select_quality(), false);
+        assert_eq!(config.use_raw_url(), true);
+        assert_eq!(config.select_quality(), true);
 
         let yml = load_yaml!("clap_app.yml");
         let app = App::from_yaml(yml);
@@ -524,8 +562,8 @@ mod config {
         assert_eq!(*config.player_args(), vec!["--volume=30"]);
         assert_eq!(config.instance(), "https://skeptikon.fr");
         assert_eq!(config.is_blacklisted("peertube.social"), true);
-        assert_eq!(config.use_raw_url(), false);
-        assert_eq!(config.select_quality(), false);
+        assert_eq!(config.use_raw_url(), true);
+        assert_eq!(config.select_quality(), true);
         assert_eq!(config.use_torrent(), false);
         assert_eq!(config.colors(), false);
 

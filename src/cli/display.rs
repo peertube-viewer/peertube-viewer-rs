@@ -200,16 +200,6 @@ impl Display {
             style::Reset,
             self.fg_color(color::Reset)
         );
-        if let Some(e) = err.source() {
-            println!(
-                "{}{}{}{}{}",
-                self.fg_color(color::Red),
-                style::Bold,
-                e,
-                style::Reset,
-                self.fg_color(color::Reset)
-            );
-        }
     }
 
     pub fn message(&self, msg: &str) {

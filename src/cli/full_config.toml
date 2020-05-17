@@ -7,10 +7,15 @@ nsfw = "block"
 # enable or disable, defaults to enable
 colors = "disable"
 
+# can be true or false
+select-quality = true
+
 [player]
 command = "mpv"
 args = ["--volume=30"]
-use-raw-url = false
+
+# can be true or false
+use-raw-urls = true
 
 [instances]
 main = "skeptikon.fr"
