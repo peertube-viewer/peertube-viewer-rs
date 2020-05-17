@@ -8,7 +8,7 @@ a command line program to view browse peertube, inspired by the youtube-viewer u
 Compiling
 ---
 
-Compiling requires a rust toolchain to be installed
+Compiling requires a [rust toolchain](https://www.rust-lang.org/tools/install)to be installed, newer that `v1.41.0`.
 
 ```bash
 cargo build --locked --release
