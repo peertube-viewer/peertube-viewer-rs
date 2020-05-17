@@ -3,9 +3,10 @@
 
 [peertube-viewer-rs](peertube-viewer-rs.md)
 
-- [cli interface](cli/index.md)
+- [Cli interface](cli/index.md)
     - [usage](cli/usage.md)
     - [command line arguments](cli/args.md)
 
-- [configuration](config.md)
-- [building from source](build.md)
+- [Configuration](config.md)
+- [Building from source](build.md)
+- [changelog](changelog.md)
