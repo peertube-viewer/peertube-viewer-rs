@@ -8,3 +8,4 @@
     - [command line arguments](cli/args.md)
 
 - [configuration](config.md)
+- [building from source](build.md)
