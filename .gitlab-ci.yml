@@ -10,6 +10,8 @@ rust-latest:
       - target/
   image: rust:latest
   script:
+    - rustup component add rustfmt
+    - rustup component add clippy
     - cargo build --verbose
     - cargo test --verbose
     - cargo clippy --workspace --verbose -- --deny warnings
