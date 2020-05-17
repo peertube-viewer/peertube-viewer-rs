@@ -1,9 +1,9 @@
 stages:
-  - build
+  - test
   - deploy
 
 rust-latest:
-  stage: build
+  stage: test
   cache:
     key: latest
     paths:
@@ -12,9 +12,11 @@ rust-latest:
   script:
     - cargo build --verbose
     - cargo test --verbose
+    - cargo clippy --workspace --verbose -- --deny warnings
+    - cargo fmt --all --verbose -- --check
 
 rust-oldest:
-  stage: build
+  stage: test
   image: rust:1.41.0
   script:
     - cargo build --verbose
@@ -25,7 +27,8 @@ rust-oldest:
       - target/
 
 rust-nightly:
-  stage: build
+  allow_failure: true
+  stage: test
   image: rustlang/rust:nightly
   script:
     - cargo build --verbose
@@ -34,6 +37,8 @@ rust-nightly:
     key: nightly
     paths:
       - target/
+  only:
+    - dev
 
 pages:
   stage: deploy
@@ -44,3 +49,6 @@ pages:
   artifacts:
     paths:
     - public/
+  only:
+    - master
+    - dev
