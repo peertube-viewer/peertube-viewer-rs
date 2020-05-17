@@ -1,5 +1,6 @@
 stages:
   - build
+  - deploy
 
 rust-latest:
   stage: build
@@ -24,3 +25,13 @@ rust-nightly:
 cache:
   paths:
     - target/
+
+pages:
+  stage: deploy
+  script:
+  - wget https://github.com/rust-lang/mdBook/releases/download/v0.3.7/mdbook-v0.3.7-x86_64-unknown-linux-gnu.tar.gz
+  - tar xvzf mdbook-v0.3.7-x86_64-unknown-linux-gnu.tar.gz
+  - ./mdbook build docs/
+  artifacts:
+    paths:
+    - docs/book
