@@ -4,6 +4,10 @@ stages:
 
 rust-latest:
   stage: build
+  cache:
+    key: latest
+    paths:
+      - target/
   image: rust:latest
   script:
     - cargo build --verbose
@@ -15,6 +19,10 @@ rust-oldest:
   script:
     - cargo build --verbose
     - cargo test --verbose
+  cache:
+    key: oldest
+    paths:
+      - target/
 
 rust-nightly:
   stage: build
@@ -22,6 +30,10 @@ rust-nightly:
   script:
     - cargo build --verbose
     - cargo test --verbose
+  cache:
+    key: nightly
+    paths:
+      - target/
 
 pages:
   stage: deploy
