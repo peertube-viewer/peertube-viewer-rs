@@ -1,5 +1,6 @@
 stages:
   - test
+  - build
   - deploy
 
 rust-latest:
@@ -41,6 +42,24 @@ rust-nightly:
       - target/
   only:
     - dev
+
+release-linux:
+  stage: build
+  image: rust:latest
+  script:
+    - cargo build --release --frozen --verbose
+    - cp target/release/peertube-viewer-rs peertube-viewer-rs
+    - mkdir linux-build
+    - tar -czf linux-build/peertube-viewer-rs-"$(git describe --tags)".tar.gz completions/* peertube-viewer-rs peertube-viewer-rs.1
+  cache:
+    key: release-linux
+    paths:
+      - target/
+  artifacts:
+    paths:
+      - linux-build/
+  only:
+    - tags
 
 pages:
   stage: deploy
