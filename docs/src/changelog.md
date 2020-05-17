@@ -1,6 +1,10 @@
 Changelog
 =========
 
+v1.2.1
+------
+Small bug fixes in the configuration
+
 v1.2.0
 ------
 UI improvements:
