@@ -180,7 +180,7 @@ impl Video {
         &self.uuid
     }
     pub fn short_desc(&self) -> Option<&str> {
-        self.short_desc.as_ref().map(|s| s.as_str())
+        self.short_desc.as_deref()
     }
     pub fn published(&self) -> Option<&DateTime<FixedOffset>> {
         self.published.as_ref()
