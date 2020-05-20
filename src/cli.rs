@@ -341,7 +341,7 @@ impl Cli {
             video.watch_url()
         };
         self.display.info(&video).await;
-        self.history.add_video(video.uuid().clone());
+        self.history.add_video(video.uuid().to_string());
 
         Command::new(self.config.player())
             .args(self.config.player_args())

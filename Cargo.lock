@@ -152,17 +152,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "derive-getters"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf5e3757f36260ee98609aa4360701bad80d1319c6d90641797b0d8acf097631"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "dirs"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -722,7 +711,6 @@ name = "peertube-api"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "derive-getters",
  "peertube-ser",
  "reqwest",
  "serde",

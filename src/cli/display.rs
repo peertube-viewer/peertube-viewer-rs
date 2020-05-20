@@ -60,7 +60,7 @@ impl Display {
             let len = v.name().chars().count();
             let channel_len = v.channel_display_name().chars().count();
             let host_len = v.host().chars().count();
-            let pretty_dur = pretty_duration(*v.duration());
+            let pretty_dur = pretty_duration(v.duration());
             let dur_len = pretty_dur.chars().count();
             if dur_len > max_duration_len {
                 max_duration_len = dur_len;
@@ -98,7 +98,7 @@ impl Display {
                 .to_string()
                 .repeat(max_channel_len - channels_length[id]);
             let host_spacing = " ".to_string().repeat(max_host_len - hosts_length[id]);
-            let views_str = display_count(*v.views());
+            let views_str = display_count(v.views());
             let view_spacing = " ".to_string().repeat(4 - views_str.chars().count());
 
             let name = if history.is_viewed(v.uuid()) {
@@ -220,7 +220,7 @@ impl Display {
         }
         self.print_centered("INFORMATIONS");
         self.line('=');
-        println!("duration : {}", pretty_duration(*video.duration()));
+        println!("duration : {}", pretty_duration(video.duration()));
         println!("views    : {}", video.views());
         println!("likes    : {}", video.likes());
         println!("dislikes : {}", video.dislikes());
@@ -274,13 +274,13 @@ fn display_count(mut c: u64) -> String {
     format!("{}{}", c, PREFIXES[id])
 }
 
-fn pretty_date(d: &Option<DateTime<FixedOffset>>) -> String {
+fn pretty_date(d: Option<&DateTime<FixedOffset>>) -> String {
     let now: DateTime<Utc> = SystemTime::now().into();
     d.map(|t| pretty_duration_since(now.naive_local().signed_duration_since(t.naive_local())))
         .unwrap_or_default()
 }
 
-fn full_date(d: &Option<DateTime<FixedOffset>>) -> String {
+fn full_date(d: Option<&DateTime<FixedOffset>>) -> String {
     d.map(|t| t.format("%a %b %Y").to_string())
         .unwrap_or_default()
 }

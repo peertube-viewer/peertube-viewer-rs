@@ -1,5 +1,4 @@
 use chrono::{DateTime, FixedOffset};
-use derive_getters::Getters;
 use tokio::sync::Mutex;
 
 #[cfg(not(feature = "send"))]
@@ -11,7 +10,7 @@ use crate::error;
 use crate::instance::Instance;
 use peertube_ser::{search, video};
 
-#[derive(Clone, Debug, Getters)]
+#[derive(Clone, Debug)]
 struct File {
     magnet_uri: String,
     resoltion_id: i64,
@@ -23,7 +22,35 @@ struct File {
     download_url: String,
 }
 
-#[derive(Clone, Debug, Getters)]
+#[allow(unused)]
+impl File {
+    fn magnet_uri(&self) -> &str {
+        &self.magnet_uri
+    }
+    fn resoltion_id(&self) -> &i64 {
+        &self.resoltion_id
+    }
+    fn resolution(&self) -> &str {
+        &self.resolution
+    }
+    fn size(&self) -> &u64 {
+        &self.size
+    }
+    fn torrent_url(&self) -> &str {
+        &self.torrent_url
+    }
+    fn torrent_download_url(&self) -> &str {
+        &self.torrent_download_url
+    }
+    fn webseed_url(&self) -> &str {
+        &self.webseed_url
+    }
+    fn download_url(&self) -> &str {
+        &self.download_url
+    }
+}
+
+#[derive(Clone, Debug)]
 struct Channel {
     pub id: i64,
     pub name: String,
@@ -32,7 +59,26 @@ struct Channel {
     pub host: String,
 }
 
-#[derive(Clone, Debug, Getters)]
+#[allow(unused)]
+impl Channel {
+    fn id(&self) -> &i64 {
+        &self.id
+    }
+    fn name(&self) -> &str {
+        &self.name
+    }
+    fn display_name(&self) -> &str {
+        &self.display_name
+    }
+    fn url(&self) -> &str {
+        &self.url
+    }
+    fn host(&self) -> &str {
+        &self.host
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Resolution {
     id: i64,
     label: String,
@@ -46,6 +92,19 @@ impl Resolution {
             label: f.resolution.clone(),
             size: f.size,
         }
+    }
+}
+
+#[allow(unused)]
+impl Resolution {
+    pub fn id(&self) -> &i64 {
+        &self.id
+    }
+    pub fn label(&self) -> &str {
+        &self.label
+    }
+    pub fn size(&self) -> &u64 {
+        &self.size
     }
 }
 
@@ -98,28 +157,68 @@ impl Description {
 }
 
 /// Handle to a video
-#[derive(Getters)]
 pub struct Video {
-    #[getter(skip)]
     instance: FeaturedRc<Instance>,
     name: String,
     uuid: String,
     duration: u64,
     views: u64,
     likes: u64,
-    #[getter(skip)]
     nsfw: bool,
     dislikes: u64,
     published: Option<DateTime<FixedOffset>>,
     short_desc: Option<String>,
-    #[getter(skip)]
     description: Mutex<Description>,
-    #[getter(skip)]
     files: Mutex<Option<Vec<File>>>,
-    #[getter(skip)]
     channel: Channel,
-    #[getter(skip)]
     account: Channel,
+}
+
+#[allow(unused)]
+impl Video {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+    pub fn uuid(&self) -> &str {
+        &self.uuid
+    }
+    pub fn short_desc(&self) -> Option<&str> {
+        self.short_desc.as_ref().map(|s| s.as_str())
+    }
+    pub fn published(&self) -> Option<&DateTime<FixedOffset>> {
+        self.published.as_ref()
+    }
+    pub fn duration(&self) -> u64 {
+        self.duration
+    }
+    pub fn views(&self) -> u64 {
+        self.views
+    }
+    pub fn likes(&self) -> u64 {
+        self.likes
+    }
+    pub fn nsfw(&self) -> bool {
+        self.nsfw
+    }
+    pub fn dislikes(&self) -> u64 {
+        self.dislikes
+    }
+
+    pub fn host(&self) -> &str {
+        &self.account.host
+    }
+
+    pub fn channel_display_name(&self) -> &str {
+        &self.channel.display_name
+    }
+
+    pub fn channel_display(&self) -> &str {
+        &self.channel.display_name
+    }
+
+    pub fn account_display(&self) -> &str {
+        &self.account.display_name
+    }
 }
 
 impl Video {
@@ -253,14 +352,6 @@ impl Video {
         Ok(resolutions)
     }
 
-    pub fn channel_display(&self) -> &str {
-        &self.channel.display_name
-    }
-
-    pub fn account_display(&self) -> &str {
-        &self.account.display_name
-    }
-
     /// Get a url for a given resolution
     pub async fn resolution_url(&self, id: usize) -> String {
         let guard = self.files.lock().await;
@@ -279,18 +370,6 @@ impl Video {
         } else {
             panic!("Resolution hasn't been fetched");
         }
-    }
-
-    pub fn host(&self) -> &str {
-        &self.account.host
-    }
-
-    pub fn nsfw(&self) -> bool {
-        self.nsfw
-    }
-
-    pub fn channel_display_name(&self) -> &str {
-        &self.channel.display_name
     }
 }
 
