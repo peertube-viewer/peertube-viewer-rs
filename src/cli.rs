@@ -222,7 +222,7 @@ impl Cli {
                         .collect()
                 }
             }
-            self.display.search_results(&results_rc, &self.history);
+            self.display.video_list(&results_rc, &self.history);
 
             let choice;
 

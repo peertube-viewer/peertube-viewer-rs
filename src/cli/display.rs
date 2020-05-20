@@ -46,7 +46,7 @@ impl Display {
         }
     }
 
-    pub fn search_results(&self, videos: &[Rc<Video>], history: &History) {
+    pub fn video_list(&self, videos: &[Rc<Video>], history: &History) {
         let mut lengths = Vec::new();
         let mut duration_length = Vec::new();
         let mut pretty_durations = Vec::new();
