@@ -86,6 +86,40 @@ impl Editor {
         }
     }
 
+    pub async fn autoload_readline<T: PreloadAbleList>(
+        &mut self,
+        prompt: String,
+        limit: Option<usize>,
+        list: &mut T,
+    ) -> rustyline::Result<Action> {
+        let mut handle = self.helped_readline(prompt, limit);
+        loop {
+            match handle.next().await {
+                Message::Over(res) => {
+                    let s = res?;
+                    match s.parse::<usize>() {
+                        Ok(id) if id > 0 && id <= list.len() => {
+                            return Ok(Action::Id(id));
+                        }
+                        Err(_) | Ok(_) => {
+                            return Ok(Action::Query(s));
+                        }
+                    }
+                }
+
+                Message::Number(id) => {
+                    list.preload_id(id);
+                }
+                Message::CommandNext => {
+                    list.preload_next();
+                }
+                Message::CommandPrev => {
+                    list.preload_prev();
+                }
+            }
+        }
+    }
+
     pub fn load_history(&mut self, path: &PathBuf) -> rustyline::Result<()> {
         let mut ed = self.rl.lock().unwrap();
         ed.load_history(path)
@@ -100,4 +134,20 @@ impl Editor {
         let mut ed = self.rl.lock().unwrap();
         ed.add_history_entry(entry)
     }
+}
+
+pub trait PreloadAbleList {
+    fn preload_next(&mut self) {}
+    fn preload_prev(&mut self) {}
+    fn len(&self) -> usize;
+
+    #[allow(unused)]
+    fn preload_id(&mut self, id: usize) {}
+}
+
+pub enum Action {
+    Next,
+    Prev,
+    Id(usize),
+    Query(String),
 }
