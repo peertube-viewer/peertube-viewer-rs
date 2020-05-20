@@ -1,7 +1,7 @@
 use chrono::{DateTime, FixedOffset};
 use tokio::sync::Mutex;
 
-use std::sync::Arc;
+use std::rc::Rc;
 
 use crate::error;
 use crate::instance::Instance;
@@ -155,7 +155,7 @@ impl Description {
 
 /// Handle to a video
 pub struct Video {
-    instance: Arc<Instance>,
+    instance: Rc<Instance>,
     name: String,
     uuid: String,
     duration: u64,
@@ -219,7 +219,7 @@ impl Video {
 }
 
 impl Video {
-    pub fn maybe_from(i: &Arc<Instance>, v: search::Video) -> Option<Video> {
+    pub fn maybe_from(i: &Rc<Instance>, v: search::Video) -> Option<Video> {
         if let (Some(name), Some(uuid)) = (v.name, v.uuid) {
             Some(Video {
                 instance: i.clone(),
@@ -244,7 +244,7 @@ impl Video {
             None
         }
     }
-    pub fn from(i: &Arc<Instance>, mut v: video::Video) -> Video {
+    pub fn from(i: &Rc<Instance>, mut v: video::Video) -> Video {
         Video {
             instance: i.clone(),
             name: v.name,

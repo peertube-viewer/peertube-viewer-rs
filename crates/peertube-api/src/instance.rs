@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::rc::Rc;
 
 use reqwest::Client;
 
@@ -18,8 +18,8 @@ pub struct Instance {
 }
 
 impl Instance {
-    pub fn new(host: String, include_nsfw: bool) -> Arc<Instance> {
-        Arc::new(Instance {
+    pub fn new(host: String, include_nsfw: bool) -> Rc<Instance> {
+        Rc::new(Instance {
             client: Client::new(),
             host,
             include_nsfw: nsfw_string(include_nsfw),
@@ -28,7 +28,7 @@ impl Instance {
 
     /// Perform a search for the given query
     pub async fn search_videos(
-        self: &Arc<Instance>,
+        self: &Rc<Instance>,
         query: &str,
         nb: usize,
         skip: usize,
@@ -61,7 +61,7 @@ impl Instance {
     }
 
     /// Load a single video from its uuid
-    pub async fn single_video(self: &Arc<Instance>, uuid: &str) -> error::Result<Video> {
+    pub async fn single_video(self: &Rc<Instance>, uuid: &str) -> error::Result<Video> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/videos/");
         url.push_str(uuid);
@@ -73,7 +73,7 @@ impl Instance {
 
     /// Fetch a video description
     pub async fn video_description(
-        self: &Arc<Instance>,
+        self: &Rc<Instance>,
         uuid: &str,
     ) -> error::Result<Option<String>> {
         let mut url = self.host.clone();
@@ -87,7 +87,7 @@ impl Instance {
     }
 
     /// Fetch the files for a given video uuid
-    pub async fn video_complete(self: &Arc<Instance>, uuid: &str) -> error::Result<Vec<File>> {
+    pub async fn video_complete(self: &Rc<Instance>, uuid: &str) -> error::Result<Vec<File>> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/videos/");
         url.push_str(uuid);
