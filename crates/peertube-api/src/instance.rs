@@ -6,6 +6,7 @@ use peertube_ser::search::Search;
 use peertube_ser::video::{Description, File, Video as FullVideo};
 
 use crate::error;
+use crate::search::VideoSearch;
 use crate::video::Video;
 
 /// Connexion to an instance
@@ -58,6 +59,10 @@ impl Instance {
         }
 
         Ok(res)
+    }
+
+    pub async fn search(self: &Rc<Instance>, query: &str, skip: usize) -> VideoSearch {
+        VideoSearch::new(self.clone(), query, skip)
     }
 
     /// Load a single video from its uuid

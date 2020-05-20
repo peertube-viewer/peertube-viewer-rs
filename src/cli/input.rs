@@ -10,6 +10,8 @@ use tokio::sync::mpsc::UnboundedReceiver;
 use std::path::PathBuf;
 use tokio::task::{spawn_blocking, JoinHandle};
 
+use peertube_api::PreloadableList;
+
 use futures::{
     future::{Fuse, FutureExt}, // for `.fuse()`
     pin_mut,
@@ -86,7 +88,7 @@ impl Editor {
         }
     }
 
-    pub async fn autoload_readline<T: PreloadAbleList>(
+    pub async fn autoload_readline<T: PreloadableList>(
         &mut self,
         prompt: String,
         limit: Option<usize>,
@@ -134,15 +136,6 @@ impl Editor {
         let mut ed = self.rl.lock().unwrap();
         ed.add_history_entry(entry)
     }
-}
-
-pub trait PreloadAbleList {
-    fn preload_next(&mut self) {}
-    fn preload_prev(&mut self) {}
-    fn len(&self) -> usize;
-
-    #[allow(unused)]
-    fn preload_id(&mut self, id: usize) {}
 }
 
 pub enum Action {
