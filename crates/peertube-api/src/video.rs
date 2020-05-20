@@ -1,10 +1,7 @@
 use chrono::{DateTime, FixedOffset};
 use tokio::sync::Mutex;
 
-#[cfg(not(feature = "send"))]
-use std::rc::Rc as FeaturedRc;
-#[cfg(feature = "send")]
-use std::sync::Arc as FeaturedRc;
+use std::sync::Arc;
 
 use crate::error;
 use crate::instance::Instance;
@@ -158,7 +155,7 @@ impl Description {
 
 /// Handle to a video
 pub struct Video {
-    instance: FeaturedRc<Instance>,
+    instance: Arc<Instance>,
     name: String,
     uuid: String,
     duration: u64,
@@ -222,7 +219,7 @@ impl Video {
 }
 
 impl Video {
-    pub fn maybe_from(i: &FeaturedRc<Instance>, v: search::Video) -> Option<Video> {
+    pub fn maybe_from(i: &Arc<Instance>, v: search::Video) -> Option<Video> {
         if let (Some(name), Some(uuid)) = (v.name, v.uuid) {
             Some(Video {
                 instance: i.clone(),
@@ -247,7 +244,7 @@ impl Video {
             None
         }
     }
-    pub fn from(i: &FeaturedRc<Instance>, mut v: video::Video) -> Video {
+    pub fn from(i: &Arc<Instance>, mut v: video::Video) -> Video {
         Video {
             instance: i.clone(),
             name: v.name,

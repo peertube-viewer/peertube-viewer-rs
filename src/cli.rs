@@ -18,6 +18,7 @@ use peertube_api::Instance;
 use std::fs::create_dir;
 use std::path::PathBuf;
 use std::rc::Rc;
+use std::sync::Arc;
 
 use dirs::cache_dir;
 use tokio::process::Command;
@@ -33,7 +34,7 @@ pub struct Cli {
     rl: Editor,
     cache: Option<PathBuf>,
     display: Display,
-    instance: Rc<Instance>,
+    instance: Arc<Instance>,
     initial_query: Option<String>,
     is_single_url: bool,
 }

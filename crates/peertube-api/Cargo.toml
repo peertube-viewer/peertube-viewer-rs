@@ -4,10 +4,6 @@ version = "0.1.0"
 authors = ["Sosthène Guédon <sosthene.gued@gmail.com>"]
 edition = "2018"
 
-[features]
-default = []
-send = []
-
 [dependencies]
 peertube-ser = {version = "*", path = "../peertube-ser"}
 
