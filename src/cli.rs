@@ -3,8 +3,8 @@ mod display;
 mod history;
 mod input;
 
-use config::Config;
 pub use config::ConfigLoadError;
+use config::{Blacklist, Config};
 use display::Display;
 use history::History;
 use input::{Action, Editor};
@@ -162,7 +162,8 @@ impl Cli {
                     _ => unreachable!(),
                 };
             }
-            self.display.video_list(search.current(), &self.history);
+            self.display
+                .video_list(search.current(), &self.history, &self.config);
 
             search.preload_res(self.config.select_quality() || self.config.use_raw_url());
             let choice;
