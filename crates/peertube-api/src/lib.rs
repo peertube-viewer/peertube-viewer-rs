@@ -6,7 +6,19 @@ extern crate tokio;
 
 pub mod error;
 mod instance;
+mod search;
 mod video;
 
 pub use instance::Instance;
+pub use search::VideoSearch;
 pub use video::{Resolution, Video};
+
+pub trait PreloadableList {
+    fn preload_next(&mut self) {}
+    fn preload_prev(&mut self) {}
+
+    fn current_len(&self) -> usize;
+
+    #[allow(unused)]
+    fn preload_id(&mut self, id: usize) {}
+}

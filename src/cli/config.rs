@@ -13,6 +13,10 @@ use std::path::PathBuf;
 use std::process::exit;
 use std::{error, io};
 
+pub trait Blacklist {
+    fn is_blacklisted(&self, instance: &str) -> bool;
+}
+
 #[derive(Debug, PartialEq)]
 struct TorrentConf {
     pub client: String,
@@ -431,14 +435,6 @@ impl Config {
         self.colors
     }
 
-    pub fn is_blacklisted(&self, instance: &str) -> bool {
-        if self.is_whitelist {
-            !self.listed_instances.contains(instance)
-        } else {
-            self.listed_instances.contains(instance)
-        }
-    }
-
     pub fn nsfw(&self) -> NsfwBehavior {
         self.nsfw
     }
@@ -458,6 +454,16 @@ fn correct_instance(s: &str) -> String {
     }
 
     s
+}
+
+impl Blacklist for Config {
+    fn is_blacklisted(&self, instance: &str) -> bool {
+        if self.is_whitelist {
+            !self.listed_instances.contains(instance)
+        } else {
+            self.listed_instances.contains(instance)
+        }
+    }
 }
 
 fn concat(mut v: Values) -> String {

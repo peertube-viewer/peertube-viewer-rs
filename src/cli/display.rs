@@ -1,8 +1,11 @@
 use peertube_api::{Resolution, Video};
 
-use super::{config::NsfwBehavior, history::History};
+use super::{
+    config::{Blacklist, NsfwBehavior},
+    history::History,
+};
 use chrono::{DateTime, Duration, FixedOffset, Utc};
-use std::{error::Error, fmt, time::SystemTime};
+use std::{fmt, time::SystemTime};
 use termion::{color, style};
 
 use std::rc::Rc;
@@ -46,7 +49,7 @@ impl Display {
         }
     }
 
-    pub fn search_results(&self, videos: &[Rc<Video>], history: &History) {
+    pub fn video_list(&self, videos: &[Rc<Video>], history: &History, blacklist: &impl Blacklist) {
         let mut lengths = Vec::new();
         let mut duration_length = Vec::new();
         let mut pretty_durations = Vec::new();
@@ -112,39 +115,50 @@ impl Display {
                 )
             };
 
-            let aligned = format!(
-                "{}{}: {} {}{}{} {}{}{} {}{}[{}] {}{}{} {}{}{}",
-                id + 1,
-                colon_spacing,
-                name,
-                spacing,
-                self.fg_color(color::Green),
-                v.channel_display_name(),
-                channel_spacing,
-                self.fg_color(color::Cyan),
-                v.host(),
-                host_spacing,
-                self.fg_color(color::Yellow),
-                pretty_durations[id],
-                duration_spacing,
-                self.fg_color(color::Green),
-                views_str,
-                view_spacing,
-                pretty_date(v.published()),
-                self.fg_color(color::Reset),
-            );
+            if !blacklist.is_blacklisted(v.host()) {
+                let aligned = format!(
+                    "{}{}: {} {}{}{} {}{}{} {}{}[{}] {}{}{} {}{}{}",
+                    id + 1,
+                    colon_spacing,
+                    name,
+                    spacing,
+                    self.fg_color(color::Green),
+                    v.channel_display_name(),
+                    channel_spacing,
+                    self.fg_color(color::Cyan),
+                    v.host(),
+                    host_spacing,
+                    self.fg_color(color::Yellow),
+                    pretty_durations[id],
+                    duration_spacing,
+                    self.fg_color(color::Green),
+                    views_str,
+                    view_spacing,
+                    pretty_date(v.published()),
+                    self.fg_color(color::Reset),
+                );
 
-            let tagged = if v.nsfw() && self.nsfw == NsfwBehavior::Tag {
-                format!(
-                    "{} {}nsfw{}",
-                    aligned,
-                    self.fg_color(color::Red),
-                    self.fg_color(color::Reset)
-                )
+                let tagged = if v.nsfw() && self.nsfw == NsfwBehavior::Tag {
+                    format!(
+                        "{} {}nsfw{}",
+                        aligned,
+                        self.fg_color(color::Red),
+                        self.fg_color(color::Reset)
+                    )
+                } else {
+                    aligned
+                };
+                println!("{}", tagged);
             } else {
-                aligned
-            };
-            println!("{}", tagged);
+                println!(
+                    "{}{}: {}blocked video from: {}{}",
+                    id + 1,
+                    colon_spacing,
+                    self.fg_color(color::Red),
+                    v.host(),
+                    self.fg_color(color::Reset)
+                );
+            }
         }
     }
 
@@ -191,7 +205,7 @@ impl Display {
         self.line('=');
     }
 
-    pub fn err<T: Error>(&self, err: &T) {
+    pub fn err<T: fmt::Display>(&self, err: &T) {
         println!(
             "{}{}{}{}{}",
             self.fg_color(color::Red),
