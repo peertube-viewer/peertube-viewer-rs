@@ -57,6 +57,10 @@ impl VideoSearch {
         Ok(&self.loaded[self.current])
     }
 
+    pub fn preload_res(&mut self, should: bool) {
+        self.preload_res = should;
+    }
+
     pub fn current(&self) -> &Vec<Rc<Video>> {
         &self.loaded[self.current]
     }

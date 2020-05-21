@@ -164,6 +164,7 @@ impl Cli {
             }
             self.display.video_list(search.current(), &self.history);
 
+            search.preload_res(self.config.select_quality() || self.config.use_raw_url());
             let choice;
             match self
                 .rl
