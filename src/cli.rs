@@ -181,8 +181,6 @@ impl Cli {
             };
 
             video = search.current()[choice - 1].clone();
-            self.history.add_video(video.uuid().to_string());
-
             self.play_vid(&video).await?;
         }
         Ok(())
@@ -190,6 +188,18 @@ impl Cli {
 
     async fn play_vid(&mut self, video: &peertube_api::Video) -> Result<(), Error> {
         // Resolution selection
+        self.display.info(&video).await;
+        if self.config.is_blacklisted(video.host()) {
+            self.display
+                .err(&"This video is from a blacklisted instance.");
+            let confirm = self
+                .rl
+                .readline("Play it anyway ? [y/N]: ".to_string())
+                .await?;
+            if confirm != "y" && confirm != "Y" {
+                return Ok(());
+            }
+        }
         let video_url = if self.config.select_quality() {
             let resolutions = video.resolutions().await?;
             let nb_resolutions = resolutions.len();
@@ -227,7 +237,6 @@ impl Cli {
         } else {
             video.watch_url()
         };
-        self.display.info(&video).await;
         self.history.add_video(video.uuid().to_string());
 
         Command::new(self.config.player())

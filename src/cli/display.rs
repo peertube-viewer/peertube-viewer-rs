@@ -5,7 +5,7 @@ use super::{
     history::History,
 };
 use chrono::{DateTime, Duration, FixedOffset, Utc};
-use std::{error::Error, fmt, time::SystemTime};
+use std::{fmt, time::SystemTime};
 use termion::{color, style};
 
 use std::rc::Rc;
@@ -205,7 +205,7 @@ impl Display {
         self.line('=');
     }
 
-    pub fn err<T: Error>(&self, err: &T) {
+    pub fn err<T: fmt::Display>(&self, err: &T) {
         println!(
             "{}{}{}{}{}",
             self.fg_color(color::Red),
