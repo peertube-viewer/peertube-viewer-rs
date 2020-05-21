@@ -1,5 +1,3 @@
-use reqwest::Client;
-
 use tokio::task::{spawn_local, JoinHandle};
 
 use std::rc::Rc;
@@ -23,7 +21,7 @@ pub struct VideoSearch {
 impl VideoSearch {
     pub fn new(instance: Rc<Instance>, query: &str, step: usize) -> VideoSearch {
         VideoSearch {
-            instance: instance,
+            instance,
             loaded: Vec::new(),
             loading: None,
             preload_res: false,
@@ -35,8 +33,8 @@ impl VideoSearch {
 }
 
 impl VideoSearch {
-    pub async fn next(&mut self) -> error::Result<&Vec<Rc<Video>>> {
-        if self.loaded.len() != 0 {
+    pub async fn next_videos(&mut self) -> error::Result<&Vec<Rc<Video>>> {
+        if !self.loaded.is_empty() {
             self.current += 1;
         }
         if self.loaded.len() <= self.current {
@@ -96,7 +94,7 @@ impl PreloadableList for VideoSearch {
         }
     }
 
-    fn len(&self) -> usize {
+    fn current_len(&self) -> usize {
         self.current().len()
     }
 }

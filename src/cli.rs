@@ -7,13 +7,13 @@ use config::Config;
 pub use config::ConfigLoadError;
 use display::Display;
 use history::History;
-use input::{Action, Editor, Message};
+use input::{Action, Editor};
 
 use crate::error::Error;
 
 use rustyline::error::ReadlineError;
 
-use peertube_api::{Instance, VideoSearch};
+use peertube_api::Instance;
 
 use std::fs::create_dir;
 use std::path::PathBuf;
@@ -22,14 +22,13 @@ use std::rc::Rc;
 use dirs::cache_dir;
 use tokio::process::Command;
 use tokio::runtime;
-use tokio::task::{spawn_local, JoinHandle, LocalSet};
+use tokio::task::LocalSet;
 
 const SEARCH_TOTAL: usize = 20;
 
 pub struct Cli {
     config: Config,
     history: History,
-    query_offset: usize,
     rl: Editor,
     cache: Option<PathBuf>,
     display: Display,
@@ -118,7 +117,6 @@ impl Cli {
             config,
             history,
             rl,
-            query_offset: 0,
             cache,
             display,
             instance,
@@ -142,10 +140,11 @@ impl Cli {
                 .await?;
             return Ok(());
         }
+        self.rl.add_history_entry(&query_str);
         let mut search = self.instance.search(&query_str, SEARCH_TOTAL);
         let mut query = Action::Query(query_str);
 
-        search.next().await?;
+        search.next_videos().await?;
 
         // Main loop
         loop {
@@ -154,10 +153,11 @@ impl Cli {
                 match &query {
                     Action::Query(s) => {
                         search = self.instance.search(&s, SEARCH_TOTAL);
-                        search.next().await?
+                        self.rl.add_history_entry(&s);
+                        search.next_videos().await?
                     }
                     Action::Quit => break,
-                    Action::Next => search.next().await?,
+                    Action::Next => search.next_videos().await?,
                     Action::Prev => search.prev(),
                     _ => unreachable!(),
                 };
@@ -172,7 +172,7 @@ impl Cli {
                 .await?
             {
                 Action::Id(id) => choice = id,
-                res @ _ => {
+                res => {
                     query = res;
                     changed_query = true;
                     continue;
@@ -276,22 +276,6 @@ impl Drop for Cli {
             let mut cmd_hist_file = cache.clone();
             cmd_hist_file.push("cmd_history");
             self.rl.save_history(&cmd_hist_file).unwrap_or(());
-        }
-    }
-}
-
-enum SearchResults {
-    None,
-    Loading(JoinHandle<Result<Vec<peertube_api::Video>, peertube_api::error::Error>>),
-    Loaded(Vec<Rc<peertube_api::Video>>),
-}
-
-impl SearchResults {
-    pub fn is_none(&self) -> bool {
-        if let SearchResults::None = self {
-            true
-        } else {
-            false
         }
     }
 }

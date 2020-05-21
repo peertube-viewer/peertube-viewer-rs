@@ -93,7 +93,7 @@ impl Editor {
         prompt: String,
         list: &mut T,
     ) -> rustyline::Result<Action> {
-        let mut handle = self.helped_readline(prompt, Some(list.len()));
+        let mut handle = self.helped_readline(prompt, Some(list.current_len()));
         loop {
             match handle.next().await {
                 Message::Over(res) => {
@@ -106,7 +106,7 @@ impl Editor {
                         return Ok(Action::Quit);
                     }
                     match s.parse::<usize>() {
-                        Ok(id) if id > 0 && id <= list.len() => {
+                        Ok(id) if id > 0 && id <= list.current_len() => {
                             return Ok(Action::Id(id));
                         }
                         Err(_) | Ok(_) => {
