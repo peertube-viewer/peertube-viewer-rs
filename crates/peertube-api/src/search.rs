@@ -12,6 +12,7 @@ use crate::Video;
 pub struct VideoSearch {
     instance: Rc<Instance>,
 
+    preload_res: bool,
     loaded: Vec<Vec<Rc<Video>>>,
     loading: Option<JoinHandle<Result<Vec<Video>, Error>>>,
     query: String,
@@ -25,6 +26,7 @@ impl VideoSearch {
             instance: instance,
             loaded: Vec::new(),
             loading: None,
+            preload_res: false,
             query: query.to_owned(),
             current: 0,
             step,
@@ -75,6 +77,18 @@ impl PreloadableList for VideoSearch {
             self.loading = Some(spawn_local(async move {
                 inst_cloned.search_videos(&quer_cloned, nb, skip).await
             }));
+        }
+    }
+
+    fn preload_id(&mut self, id: usize) {
+        let video_cloned = self.current()[id].clone();
+        spawn_local(async move { video_cloned.load_description().await });
+        if self.preload_res {
+            let cl2 = self.current()[id].clone();
+            #[allow(unused_must_use)]
+            spawn_local(async move {
+                cl2.load_resolutions().await;
+            });
         }
     }
 

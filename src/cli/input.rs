@@ -116,7 +116,7 @@ impl Editor {
                 }
 
                 Message::Number(id) => {
-                    list.preload_id(id);
+                    list.preload_id(id - 1);
                 }
                 Message::CommandNext => {
                     list.preload_next();
