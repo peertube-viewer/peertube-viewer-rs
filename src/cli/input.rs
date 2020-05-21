@@ -91,14 +91,20 @@ impl Editor {
     pub async fn autoload_readline<T: PreloadableList>(
         &mut self,
         prompt: String,
-        limit: Option<usize>,
         list: &mut T,
     ) -> rustyline::Result<Action> {
-        let mut handle = self.helped_readline(prompt, limit);
+        let mut handle = self.helped_readline(prompt, Some(list.len()));
         loop {
             match handle.next().await {
                 Message::Over(res) => {
                     let s = res?;
+                    if s == ":n" {
+                        return Ok(Action::Next);
+                    } else if s == ":p" {
+                        return Ok(Action::Prev);
+                    } else if s == ":q" {
+                        return Ok(Action::Quit);
+                    }
                     match s.parse::<usize>() {
                         Ok(id) if id > 0 && id <= list.len() => {
                             return Ok(Action::Id(id));
@@ -138,9 +144,11 @@ impl Editor {
     }
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum Action {
     Next,
     Prev,
+    Quit,
     Id(usize),
     Query(String),
 }

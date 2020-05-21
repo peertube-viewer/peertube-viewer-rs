@@ -34,15 +34,17 @@ impl VideoSearch {
 
 impl VideoSearch {
     pub async fn next(&mut self) -> error::Result<&Vec<Rc<Video>>> {
-        self.current += 1;
-        if !self.loaded.len() > self.current {
+        if self.loaded.len() != 0 {
+            self.current += 1;
+        }
+        if self.loaded.len() <= self.current {
             if let Some(handle) = self.loading.take() {
                 self.loaded
                     .push(handle.await.unwrap()?.into_iter().map(Rc::new).collect())
             } else {
                 self.loaded.push(
                     self.instance
-                        .search_videos(&self.query, self.step, (self.current - 1) * self.step)
+                        .search_videos(&self.query, self.step, self.current * self.step)
                         .await?
                         .into_iter()
                         .map(Rc::new)
@@ -57,7 +59,7 @@ impl VideoSearch {
         &self.loaded[self.current]
     }
 
-    pub async fn prev(&mut self) -> &Vec<Rc<Video>> {
+    pub fn prev(&mut self) -> &Vec<Rc<Video>> {
         self.current -= 1;
         &self.loaded[self.current]
     }

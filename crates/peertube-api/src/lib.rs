@@ -7,9 +7,10 @@ extern crate tokio;
 pub mod error;
 mod instance;
 mod search;
-
 mod video;
+
 pub use instance::Instance;
+pub use search::VideoSearch;
 pub use video::{Resolution, Video};
 
 use tokio::task::JoinHandle;

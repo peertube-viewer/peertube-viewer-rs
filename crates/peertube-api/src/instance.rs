@@ -61,7 +61,7 @@ impl Instance {
         Ok(res)
     }
 
-    pub async fn search(self: &Rc<Instance>, query: &str, skip: usize) -> VideoSearch {
+    pub fn search(self: &Rc<Instance>, query: &str, skip: usize) -> VideoSearch {
         VideoSearch::new(self.clone(), query, skip)
     }
 

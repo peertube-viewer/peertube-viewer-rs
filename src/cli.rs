@@ -7,13 +7,13 @@ use config::Config;
 pub use config::ConfigLoadError;
 use display::Display;
 use history::History;
-use input::{Editor, Message};
+use input::{Action, Editor, Message};
 
 use crate::error::Error;
 
 use rustyline::error::ReadlineError;
 
-use peertube_api::Instance;
+use peertube_api::{Instance, VideoSearch};
 
 use std::fs::create_dir;
 use std::path::PathBuf;
@@ -130,171 +130,56 @@ impl Cli {
     /// Main loop for he cli interface
     async fn main_loop(&mut self) -> Result<(), Error> {
         // Check if the initital query is a video url
-        let mut query = match self.initial_query.take() {
+        let query_str = match self.initial_query.take() {
             Some(q) => q,
             None => self.rl.readline(">> ".to_string()).await?,
         };
 
-        let mut old_query = query.clone();
-
-        let mut changed_query = true;
-
-        let mut results_rc = Vec::new();
-        let mut next_results = SearchResults::None;
-        let mut prev_results = SearchResults::None;
+        let mut changed_query = false;
 
         if self.is_single_url {
-            self.play_vid(&self.instance.single_video(&query).await?)
+            self.play_vid(&self.instance.single_video(&query_str).await?)
                 .await?;
             return Ok(());
         }
+        let mut search = self.instance.search(&query_str, SEARCH_TOTAL);
+        let mut query = Action::Query(query_str);
+
+        search.next().await?;
 
         // Main loop
         loop {
             let video;
             if changed_query {
-                let mut should_search = true;
-                changed_query = false;
-                if query == ":q" {
-                    break;
-                } else if query == ":n" {
-                    self.query_offset += SEARCH_TOTAL;
-                    query = old_query.clone();
-
-                    if let SearchResults::Loading(f) = next_results {
-                        prev_results = SearchResults::Loaded(results_rc);
-                        results_rc = f
-                            .await
-                            .unwrap()?
-                            .into_iter()
-                            .filter(|v| !self.config.is_blacklisted(v.host()))
-                            .map(Rc::new)
-                            .collect();
-                        next_results = SearchResults::None;
-                        should_search = false;
-                    } else if let SearchResults::Loaded(res) = next_results {
-                        prev_results = SearchResults::Loaded(results_rc);
-                        next_results = SearchResults::None;
-                        results_rc = res;
-                        should_search = false;
+                match &query {
+                    Action::Query(s) => {
+                        search = self.instance.search(&s, SEARCH_TOTAL);
+                        search.next().await?
                     }
-                } else if query == ":p" {
-                    let is_start = self.query_offset == 0;
-                    if is_start {
-                        should_search = false;
-                    } else {
-                        self.query_offset = self.query_offset.saturating_sub(SEARCH_TOTAL);
-                        query = old_query.clone();
-
-                        if let SearchResults::Loading(f) = prev_results {
-                            next_results = SearchResults::Loaded(results_rc);
-                            results_rc = f
-                                .await
-                                .unwrap()?
-                                .into_iter()
-                                .filter(|v| !self.config.is_blacklisted(v.host()))
-                                .map(Rc::new)
-                                .collect();
-                            prev_results = SearchResults::None;
-                            should_search = false;
-                        } else if let SearchResults::Loaded(res) = prev_results {
-                            next_results = SearchResults::Loaded(results_rc);
-                            prev_results = SearchResults::None;
-                            results_rc = res;
-                            should_search = false;
-                        }
-                    }
-                } else {
-                    old_query = query.clone();
-                    self.query_offset = 0;
-                    next_results = SearchResults::None;
-                    prev_results = SearchResults::None;
-                    self.rl.add_history_entry(&query);
-                }
-                if should_search {
-                    results_rc = self
-                        .instance
-                        .search_videos(&query, SEARCH_TOTAL, self.query_offset)
-                        .await?
-                        .into_iter()
-                        .filter(|v| !self.config.is_blacklisted(v.host()))
-                        .map(Rc::new)
-                        .collect()
-                }
+                    Action::Quit => break,
+                    Action::Next => search.next().await?,
+                    Action::Prev => search.prev(),
+                    _ => unreachable!(),
+                };
             }
-            self.display.video_list(&results_rc, &self.history);
+            self.display.video_list(search.current(), &self.history);
 
             let choice;
-
-            // Getting the choice among the search results
-            // If the user doesn't input a number, it is a new query
-            // Get what the user is typing and load
-            // the corresponding video in the background
-            let mut handle = self
+            match self
                 .rl
-                .helped_readline(">> ".to_string(), Some(results_rc.len()));
-            loop {
-                match handle.next().await {
-                    Message::Over(res) => {
-                        let s = res?;
-                        match s.parse::<usize>() {
-                            Ok(id) if id > 0 && id <= results_rc.len() => {
-                                choice = id;
-                                break;
-                            }
-                            Err(_) | Ok(_) => {
-                                query = s;
-                                choice = 0;
-                                changed_query = true;
-                                break;
-                            }
-                        }
-                    }
-
-                    Message::Number(id) => {
-                        let video_cloned = results_rc[id - 1].clone();
-                        spawn_local(async move { video_cloned.load_description().await });
-                        if self.config.select_quality() || self.config.use_raw_url() {
-                            let cl2 = results_rc[id - 1].clone();
-                            #[allow(unused_must_use)]
-                            spawn_local(async move {
-                                cl2.load_resolutions().await;
-                            });
-                        }
-                    }
-                    Message::CommandNext if next_results.is_none() => {
-                        let instance_cloned = self.instance.clone();
-                        let query_cloned = query.clone();
-                        let offset = self.query_offset;
-                        next_results = SearchResults::Loading(spawn_local(async move {
-                            instance_cloned
-                                .search_videos(&query_cloned, SEARCH_TOTAL, offset + SEARCH_TOTAL)
-                                .await
-                        }));
-                    }
-                    Message::CommandPrev if self.query_offset != 0 && prev_results.is_none() => {
-                        let instance_cloned = self.instance.clone();
-                        let query_cloned = query.clone();
-                        let offset = self.query_offset;
-                        prev_results = SearchResults::Loading(spawn_local(async move {
-                            instance_cloned
-                                .search_videos(
-                                    &query_cloned,
-                                    SEARCH_TOTAL,
-                                    offset.saturating_sub(SEARCH_TOTAL),
-                                )
-                                .await
-                        }));
-                    }
-                    _ => {}
+                .autoload_readline(">> ".to_string(), &mut search)
+                .await?
+            {
+                Action::Id(id) => choice = id,
+                res @ _ => {
+                    query = res;
+                    changed_query = true;
+                    continue;
                 }
-            }
+            };
 
-            if changed_query {
-                continue;
-            }
-
-            video = results_rc[choice - 1].clone();
+            video = search.current()[choice - 1].clone();
+            self.history.add_video(video.uuid().to_string());
 
             self.play_vid(&video).await?;
         }
