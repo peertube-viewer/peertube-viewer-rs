@@ -67,7 +67,7 @@ impl VideoSearch {
 
 impl PreloadableList for VideoSearch {
     fn preload_next(&mut self) {
-        if self.loaded.len() < self.current && self.loading.is_none() {
+        if self.loaded.len() <= self.current + 1 && self.loading.is_none() {
             let inst_cloned = self.instance.clone();
             let quer_cloned = self.query.clone();
             let nb = self.step;
