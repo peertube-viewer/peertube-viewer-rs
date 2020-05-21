@@ -7,6 +7,7 @@ use peertube_ser::video::{Description, File, Video as FullVideo};
 
 use crate::error;
 use crate::search::VideoSearch;
+use crate::trending::TrendingList;
 use crate::video::Video;
 
 /// Connexion to an instance
@@ -63,6 +64,43 @@ impl Instance {
 
     pub fn search(self: &Rc<Instance>, query: &str, skip: usize) -> VideoSearch {
         VideoSearch::new(self.clone(), query, skip)
+    }
+
+    /// Perform a search for the given query
+    pub async fn trending_videos(
+        self: &Rc<Instance>,
+        nb: usize,
+        skip: usize,
+    ) -> error::Result<Vec<Video>> {
+        let mut url = self.host.clone();
+        url.push_str("/api/v1/videos");
+        let mut search_res: Search = serde_json::from_str(
+            &*self
+                .client
+                .get(&url)
+                .query(&[
+                    ("sort", "-trending"),
+                    ("count", &nb.to_string()),
+                    ("start", &skip.to_string()),
+                    ("nsfw", self.include_nsfw),
+                ])
+                .send()
+                .await?
+                .text()
+                .await?,
+        )?;
+        let mut res = Vec::new();
+        for video in search_res.data.drain(..) {
+            if let Some(v) = Video::maybe_from(self, video) {
+                res.push(v);
+            }
+        }
+
+        Ok(res)
+    }
+
+    pub fn trending(self: &Rc<Instance>, skip: usize) -> TrendingList {
+        TrendingList::new(self.clone(), skip)
     }
 
     /// Load a single video from its uuid

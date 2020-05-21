@@ -7,10 +7,12 @@ extern crate tokio;
 pub mod error;
 mod instance;
 mod search;
+mod trending;
 mod video;
 
 pub use instance::Instance;
 pub use search::VideoSearch;
+pub use trending::TrendingList;
 pub use video::{Resolution, Video};
 
 pub trait PreloadableList {
