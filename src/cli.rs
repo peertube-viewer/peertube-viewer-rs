@@ -4,7 +4,7 @@ mod history;
 mod input;
 
 pub use config::ConfigLoadError;
-use config::{Blacklist, Config};
+use config::{Blacklist, Config, InitialInfo};
 use display::Display;
 use history::History;
 use input::{Action, Editor};
@@ -33,14 +33,14 @@ pub struct Cli {
     cache: Option<PathBuf>,
     display: Display,
     instance: Rc<Instance>,
-    initial_query: Option<String>,
+    initial_info: InitialInfo,
     is_single_url: bool,
 }
 
 impl Cli {
     /// Loads an instance of the cli
     pub fn init() -> Result<Cli, Error> {
-        let (config, mut initial_query, load_errors) = Config::new();
+        let (config, mut initial_info, load_errors) = Config::new();
         let display = Display::new(config.nsfw(), config.colors());
 
         let mut err_iter = load_errors.into_iter();
@@ -75,7 +75,7 @@ impl Cli {
 
         // If the initial query is a url, connect to the corresponding instance
         let mut is_single_url = false;
-        let instance_domain = match initial_query.as_ref() {
+        let instance_domain = match initial_info.initial_query.as_ref() {
             Some(s) if s.starts_with("http://") || s.starts_with("https://") => {
                 match s.split('/').nth(2) {
                     Some(domain) => {
@@ -84,11 +84,14 @@ impl Cli {
                         match s.split('/').nth(5) {
                             Some(uuid) => {
                                 is_single_url = true;
-                                initial_query =
+                                initial_info.initial_query =
                                     Some(uuid.split(' ').next().expect("Unreachable").to_string());
                             }
 
-                            None => initial_query = s.splitn(2, ' ').nth(1).map(|s| s.to_string()),
+                            None => {
+                                initial_info.initial_query =
+                                    s.splitn(2, ' ').nth(1).map(|s| s.to_string())
+                            }
                         }
                         instance_temp
                     }
@@ -120,33 +123,41 @@ impl Cli {
             cache,
             display,
             instance,
-            initial_query,
+            initial_info,
             is_single_url,
         })
     }
 
     /// Main loop for he cli interface
     async fn main_loop(&mut self) -> Result<(), Error> {
-        // Check if the initital query is a video url
-        let query_str = match self.initial_query.take() {
-            Some(q) => q,
-            None => self.rl.readline(">> ".to_string()).await?,
-        };
+        let mut mode;
+        let mut query;
+        if !self.initial_info.start_trending {
+            // Check if the initital query is a video url
+            let query_str = match self.initial_info.initial_query.take() {
+                Some(q) => q,
+                None => self.rl.readline(">> ".to_string()).await?,
+            };
+
+            if self.is_single_url {
+                self.play_vid(&self.instance.single_video(&query_str).await?)
+                    .await?;
+                return Ok(());
+            }
+            self.rl.add_history_entry(&query_str);
+            let mut search_tmp = self.instance.search(&query_str, SEARCH_TOTAL);
+            search_tmp.next_videos().await?;
+
+            mode = Mode::Search(search_tmp);
+            query = Action::Query(query_str);
+        } else {
+            let mut trending_tmp = self.instance.trending(SEARCH_TOTAL);
+            trending_tmp.next_videos().await?;
+            mode = Mode::Trending(trending_tmp);
+            query = Action::Query(":trending".to_string());
+        }
 
         let mut changed_query = false;
-
-        if self.is_single_url {
-            self.play_vid(&self.instance.single_video(&query_str).await?)
-                .await?;
-            return Ok(());
-        }
-        self.rl.add_history_entry(&query_str);
-        let mut search_tmp = self.instance.search(&query_str, SEARCH_TOTAL);
-        search_tmp.next_videos().await?;
-
-        let mut mode = Mode::Search(search_tmp);
-        let mut query = Action::Query(query_str);
-
         // Main loop
         loop {
             let video;
