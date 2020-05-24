@@ -164,10 +164,17 @@ impl Cli {
             if changed_query {
                 match &query {
                     Action::Query(s) => {
-                        let mut search = self.instance.search(&s, SEARCH_TOTAL);
-                        self.rl.add_history_entry(&s);
-                        search.next_videos().await?;
-                        mode = Mode::Search(search);
+                        if s == ":trending" {
+                            let mut trending_tmp = self.instance.trending(SEARCH_TOTAL);
+                            trending_tmp.next_videos().await?;
+                            mode = Mode::Trending(trending_tmp);
+                            query = Action::Query(":trending".to_string());
+                        } else {
+                            let mut search_tmp = self.instance.search(&s, SEARCH_TOTAL);
+                            search_tmp.next_videos().await?;
+                            self.rl.add_history_entry(&s);
+                            mode = Mode::Search(search_tmp);
+                        }
                     }
                     Action::Quit => break,
                     Action::Next => match &mut mode {
