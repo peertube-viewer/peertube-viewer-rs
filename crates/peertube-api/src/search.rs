@@ -102,7 +102,7 @@ impl PreloadableList for VideoSearch {
     }
 
     fn offset(&self) -> usize {
-        self.current*self.step
+        self.current * self.step
     }
 
     fn expected_total(&self) -> Option<usize> {

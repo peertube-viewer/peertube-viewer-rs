@@ -199,6 +199,12 @@ impl Cli {
                 Mode::Search(search) => {
                     self.display
                         .video_list(search.current(), &self.history, &self.config);
+                    self.display.mode_info(
+                        "Search",
+                        search.expected_total(),
+                        search.offset(),
+                        search.current_len(),
+                    );
 
                     search.preload_res(self.config.select_quality() || self.config.use_raw_url());
                     let choice;
@@ -216,6 +222,12 @@ impl Cli {
                 Mode::Trending(trending) => {
                     self.display
                         .video_list(trending.current(), &self.history, &self.config);
+                    self.display.mode_info(
+                        "Trending",
+                        trending.expected_total(),
+                        trending.offset(),
+                        trending.current_len(),
+                    );
 
                     trending.preload_res(self.config.select_quality() || self.config.use_raw_url());
                     let choice;
