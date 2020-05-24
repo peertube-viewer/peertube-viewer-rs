@@ -131,8 +131,7 @@ impl Cli {
     /// Main loop for he cli interface
     async fn main_loop(&mut self) -> Result<(), Error> {
         let mut mode;
-        let mut query;
-        if !self.initial_info.start_trending {
+        let mut query = if !self.initial_info.start_trending {
             // Check if the initital query is a video url
             let query_str = match self.initial_info.initial_query.take() {
                 Some(q) => q,
@@ -149,13 +148,13 @@ impl Cli {
             search_tmp.next_videos().await?;
 
             mode = Mode::Search(search_tmp);
-            query = Action::Query(query_str);
+            Action::Query(query_str)
         } else {
             let mut trending_tmp = self.instance.trending(SEARCH_TOTAL);
             trending_tmp.next_videos().await?;
             mode = Mode::Trending(trending_tmp);
-            query = Action::Query(":trending".to_string());
-        }
+            Action::Query(":trending".to_string())
+        };
 
         let mut changed_query = false;
         // Main loop
