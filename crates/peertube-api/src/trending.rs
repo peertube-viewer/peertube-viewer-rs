@@ -57,10 +57,6 @@ impl TrendingList {
         self.preload_res = should;
     }
 
-    pub fn current(&self) -> &Vec<Rc<Video>> {
-        &self.loaded[self.current]
-    }
-
     pub fn prev(&mut self) -> &Vec<Rc<Video>> {
         self.current -= 1;
         &self.loaded[self.current]
@@ -68,6 +64,8 @@ impl TrendingList {
 }
 
 impl PreloadableList for TrendingList {
+    type Current = Vec<Rc<Video>>;
+
     fn preload_next(&mut self) {
         if self.loaded.len() <= self.current + 1 && self.loading.is_none() {
             let inst_cloned = self.instance.clone();
@@ -89,6 +87,10 @@ impl PreloadableList for TrendingList {
                 cl2.load_resolutions().await;
             });
         }
+    }
+
+    fn current(&self) -> &Vec<Rc<Video>> {
+        &self.loaded[self.current]
     }
 
     fn current_len(&self) -> usize {

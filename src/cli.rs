@@ -13,7 +13,7 @@ use crate::error::Error;
 
 use rustyline::error::ReadlineError;
 
-use peertube_api::Instance;
+use peertube_api::{Instance, PreloadableList, TrendingList, VideoSearch};
 
 use std::fs::create_dir;
 use std::path::PathBuf;
@@ -141,10 +141,11 @@ impl Cli {
             return Ok(());
         }
         self.rl.add_history_entry(&query_str);
-        let mut search = self.instance.search(&query_str, SEARCH_TOTAL);
-        let mut query = Action::Query(query_str);
+        let mut search_tmp = self.instance.search(&query_str, SEARCH_TOTAL);
+        search_tmp.next_videos().await?;
 
-        search.next_videos().await?;
+        let mut mode = Mode::Search(search_tmp);
+        let mut query = Action::Query(query_str);
 
         // Main loop
         loop {
@@ -152,35 +153,72 @@ impl Cli {
             if changed_query {
                 match &query {
                     Action::Query(s) => {
-                        search = self.instance.search(&s, SEARCH_TOTAL);
+                        let mut search = self.instance.search(&s, SEARCH_TOTAL);
                         self.rl.add_history_entry(&s);
-                        search.next_videos().await?
+                        search.next_videos().await?;
+                        mode = Mode::Search(search);
                     }
                     Action::Quit => break,
-                    Action::Next => search.next_videos().await?,
-                    Action::Prev => search.prev(),
+                    Action::Next => match &mut mode {
+                        Mode::Search(search) => {
+                            search.next_videos().await?;
+                        }
+                        Mode::Trending(trending) => {
+                            trending.next_videos().await?;
+                        }
+                    },
+                    Action::Prev => match &mut mode {
+                        Mode::Search(search) => {
+                            search.prev();
+                        }
+                        Mode::Trending(trending) => {
+                            trending.prev();
+                        }
+                    },
                     _ => unreachable!(),
                 };
             }
-            self.display
-                .video_list(search.current(), &self.history, &self.config);
+            match &mut mode {
+                Mode::Search(search) => {
+                    self.display
+                        .video_list(search.current(), &self.history, &self.config);
 
-            search.preload_res(self.config.select_quality() || self.config.use_raw_url());
-            let choice;
-            match self
-                .rl
-                .autoload_readline(">> ".to_string(), &mut search)
-                .await?
-            {
-                Action::Id(id) => choice = id,
-                res => {
-                    query = res;
-                    changed_query = true;
-                    continue;
+                    search.preload_res(self.config.select_quality() || self.config.use_raw_url());
+                    let choice;
+                    match self.rl.autoload_readline(">> ".to_string(), search).await? {
+                        Action::Id(id) => choice = id,
+                        res => {
+                            query = res;
+                            changed_query = true;
+                            continue;
+                        }
+                    };
+
+                    video = search.current()[choice - 1].clone();
                 }
-            };
+                Mode::Trending(trending) => {
+                    self.display
+                        .video_list(trending.current(), &self.history, &self.config);
 
-            video = search.current()[choice - 1].clone();
+                    trending.preload_res(self.config.select_quality() || self.config.use_raw_url());
+                    let choice;
+                    match self
+                        .rl
+                        .autoload_readline(">> ".to_string(), trending)
+                        .await?
+                    {
+                        Action::Id(id) => choice = id,
+                        res => {
+                            query = res;
+                            changed_query = true;
+                            continue;
+                        }
+                    };
+
+                    video = trending.current()[choice - 1].clone();
+                }
+            }
+            changed_query = false;
             self.play_vid(&video).await?;
         }
         Ok(())
@@ -273,6 +311,11 @@ impl Cli {
                 err => self.display.err(&err),
             });
     }
+}
+
+enum Mode {
+    Search(VideoSearch),
+    Trending(TrendingList),
 }
 
 impl Drop for Cli {

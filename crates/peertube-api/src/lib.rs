@@ -16,10 +16,13 @@ pub use trending::TrendingList;
 pub use video::{Resolution, Video};
 
 pub trait PreloadableList {
+    type Current;
+
     fn preload_next(&mut self) {}
     fn preload_prev(&mut self) {}
 
     fn current_len(&self) -> usize;
+    fn current(&self) -> &Self::Current;
 
     #[allow(unused)]
     fn preload_id(&mut self, id: usize) {}
