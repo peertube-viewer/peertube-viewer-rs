@@ -152,6 +152,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "directories"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "551a778172a450d7fc12e629ca3b0428d00f6afa9a43da1b630d54604e97371c"
+dependencies = [
+ "cfg-if",
+ "dirs-sys",
+]
+
+[[package]]
 name = "dirs"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -732,7 +742,7 @@ version = "1.2.1"
 dependencies = [
  "chrono",
  "clap",
- "dirs",
+ "directories",
  "futures",
  "peertube-api",
  "rustyline",

@@ -1,5 +1,5 @@
 use clap::{App, ArgMatches, Values};
-use dirs::config_dir;
+use directories::ProjectDirs;
 use toml::{
     de::Error as TomlError,
     value::{Table, Value},
@@ -156,9 +156,9 @@ impl Config {
         let (mut config, mut load_errors) = if let Some(c) = cli_args.value_of("config-file") {
             Config::from_config_file(&PathBuf::from(c))
         } else {
-            match config_dir() {
-                Some(mut d) => {
-                    d.push("peertube-viewer-rs");
+            match ProjectDirs::from("", "peertube-viewer-rs", "peertube-viewer-rs") {
+                Some(dirs) => {
+                    let mut d = dirs.config_dir().to_owned();
                     d.push("config.toml");
                     Config::from_config_file(&d)
                 }

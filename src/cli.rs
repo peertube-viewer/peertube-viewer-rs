@@ -16,10 +16,9 @@ use rustyline::error::ReadlineError;
 use peertube_api::Instance;
 
 use std::fs::create_dir;
-use std::path::PathBuf;
 use std::rc::Rc;
 
-use dirs::cache_dir;
+use directories::ProjectDirs;
 use tokio::process::Command;
 use tokio::runtime;
 use tokio::task::LocalSet;
@@ -29,8 +28,8 @@ const SEARCH_TOTAL: usize = 20;
 pub struct Cli {
     config: Config,
     history: History,
+    dirs: Option<ProjectDirs>,
     rl: Editor,
-    cache: Option<PathBuf>,
     display: Display,
     instance: Rc<Instance>,
     initial_query: Option<String>,
@@ -55,18 +54,18 @@ impl Cli {
 
         let mut history = History::new();
 
-        let mut cache = cache_dir();
-
+        let dirs = ProjectDirs::from("", "peertube-viewer-rs", "peertube-viewer-rs");
         let mut rl = Editor::new();
 
         // Loads the history if available
-        if let Some(cache) = cache.as_mut() {
-            cache.push("peertube-viewer-rs");
+        if let Some(d) = dirs.as_ref() {
+            let cache = d.cache_dir();
+
             create_dir(&cache).unwrap_or(());
 
-            let mut view_hist_file = cache.clone();
+            let mut view_hist_file = cache.to_owned();
             view_hist_file.push("history");
-            let mut cmd_hist_file = cache.clone();
+            let mut cmd_hist_file = cache.to_owned();
             cmd_hist_file.push("cmd_history");
 
             history.load_file(&view_hist_file).unwrap_or(()); // unwrap_or to ignore the unused_must_use warnings
@@ -117,7 +116,7 @@ impl Cli {
             config,
             history,
             rl,
-            cache,
+            dirs,
             display,
             instance,
             initial_query,
@@ -277,13 +276,13 @@ impl Cli {
 
 impl Drop for Cli {
     fn drop(&mut self) {
-        if let Some(cache) = self.cache.as_ref() {
-            let mut view_hist_file = cache.clone();
+        if let Some(d) = self.dirs.as_ref() {
+            let mut view_hist_file = d.cache_dir().to_owned();
             view_hist_file.push("history");
             self.history
                 .save(&view_hist_file, self.config.max_hist_lines())
                 .unwrap_or(());
-            let mut cmd_hist_file = cache.clone();
+            let mut cmd_hist_file = d.cache_dir().to_owned();
             cmd_hist_file.push("cmd_history");
             self.rl.save_history(&cmd_hist_file).unwrap_or(());
         }
