@@ -7,7 +7,7 @@ The config file for **peertube-viewer-rs** can be placed
 | -------  | -------------------------------------                                                               |
 | Linux    | `$XDG_CONFIG_HOME/peertube-viewer-rs/config.toml` or `$HOME`/.config/peertube-viewer-rs/config.toml |
 | macOS    | `$HOME`/Library/Preferences/peertube-viewer-rs/config.toml                                          |
-| Windows  | `{FOLDERID_RoamingAppData}/peertube-viewer-rs/config.toml`                                          |
+| Windows  | `{FOLDERID_RoamingAppData}\peertube-viewer-rs\config.toml`                                          |
 
 Syntax
 ------

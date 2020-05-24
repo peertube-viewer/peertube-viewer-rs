@@ -1,5 +1,5 @@
 use clap::{App, ArgMatches, Values};
-use dirs::config_dir;
+use directories::ProjectDirs;
 use toml::{
     de::Error as TomlError,
     value::{Table, Value},
@@ -12,6 +12,10 @@ use std::fs::read_to_string;
 use std::path::PathBuf;
 use std::process::exit;
 use std::{error, io};
+
+pub trait Blacklist {
+    fn is_blacklisted(&self, instance: &str) -> bool;
+}
 
 #[derive(Debug, PartialEq)]
 struct TorrentConf {
@@ -112,6 +116,12 @@ impl NsfwBehavior {
     }
 }
 
+#[derive(PartialEq, Eq, Debug, Clone)]
+pub struct InitialInfo {
+    pub initial_query: Option<String>,
+    pub start_trending: bool,
+}
+
 /// Config for the cli interface
 #[derive(Debug, PartialEq)]
 pub struct Config {
@@ -131,7 +141,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> (Config, Option<String>, Vec<ConfigLoadError>) {
+    pub fn new() -> (Config, InitialInfo, Vec<ConfigLoadError>) {
         let yml = load_yaml!("clap_app.yml");
         let app = App::from_yaml(yml);
         let cli_args = app.get_matches();
@@ -146,15 +156,18 @@ impl Config {
             exit(0);
         }
 
-        let initial_query = cli_args.values_of("initial-query").map(concat);
+        let initial_info = InitialInfo {
+            initial_query: cli_args.values_of("initial-query").map(concat),
+            start_trending: cli_args.is_present("trending"),
+        };
 
         // Parse config as an String with default to empty string
         let (mut config, mut load_errors) = if let Some(c) = cli_args.value_of("config-file") {
             Config::from_config_file(&PathBuf::from(c))
         } else {
-            match config_dir() {
-                Some(mut d) => {
-                    d.push("peertube-viewer-rs");
+            match ProjectDirs::from("", "peertube-viewer-rs", "peertube-viewer-rs") {
+                Some(dirs) => {
+                    let mut d = dirs.config_dir().to_owned();
                     d.push("config.toml");
                     Config::from_config_file(&d)
                 }
@@ -164,7 +177,7 @@ impl Config {
 
         load_errors.append(&mut config.update_with_args(cli_args));
 
-        (config, initial_query, load_errors)
+        (config, initial_info, load_errors)
     }
 
     fn from_config_file(path: &PathBuf) -> (Config, Vec<ConfigLoadError>) {
@@ -431,14 +444,6 @@ impl Config {
         self.colors
     }
 
-    pub fn is_blacklisted(&self, instance: &str) -> bool {
-        if self.is_whitelist {
-            !self.listed_instances.contains(instance)
-        } else {
-            self.listed_instances.contains(instance)
-        }
-    }
-
     pub fn nsfw(&self) -> NsfwBehavior {
         self.nsfw
     }
@@ -458,6 +463,16 @@ fn correct_instance(s: &str) -> String {
     }
 
     s
+}
+
+impl Blacklist for Config {
+    fn is_blacklisted(&self, instance: &str) -> bool {
+        if self.is_whitelist {
+            !self.listed_instances.contains(instance)
+        } else {
+            self.listed_instances.contains(instance)
+        }
+    }
 }
 
 fn concat(mut v: Values) -> String {

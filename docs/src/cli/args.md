@@ -6,14 +6,14 @@ This section documents all the command line arguments available.
 Options
 -------
 
-- `-c, --config <config-file>                                  `       Sets a custom config file location.
+- `-c, --config <config-file>`       Sets a custom config file location.
 The default is `$XDG_CONFIG_HOME/peertube-viewer-rs/config.toml` or `$HOME/.config/peertube-viewer-rs/config.toml`
 
-- `-i, --instance <instance>                                   `       instance to be browsed (default is [video.ploud.fr](https://video.ploud.fr))
-- `-p, --player <player>                                       `       player to play the videos with
-- `    --player-args <player-args>...                          `       arguments to be passed to the player
-- `    --torrent-downloader <torrent-downloader>               `       choose the torrent software to download the videos with
-- `    --torrent-downloader-args <torrent-downloader-arguments>`       arguments to be passed to the torrent downloader
+- `-i, --instance <instance>`       instance to be browsed (default is [video.ploud.fr](https://video.ploud.fr))
+- `-p, --player <player>`       player to play the videos with
+- `--player-args <player-args>...`       arguments to be passed to the player
+- `--torrent-downloader <torrent-downloader>`       choose the torrent software to download the videos with
+- `--torrent-downloader-args <torrent-downloader-arguments>`       arguments to be passed to the torrent downloader
 
 The videos are played with the command: `player <player-args> <url>`.
 This is the same with the torrent when `--use-torrent is specified`.
@@ -21,28 +21,32 @@ This is the same with the torrent when `--use-torrent is specified`.
 flags
 -----
 
--   `    --print-default-config     `    prints the default confing to stdout and exit
-This is useful to get started on a config file. See [configuration](../config.md) for more details
-
--   `    --print-full-example-config`    print an example of all possible config options and exit
-
--   `-s, --select-quality           `    When playing a video with this option, the user will be prompted to chose the video quality
+-   `-s, --select-quality`    When playing a video with this option, the user will be prompted to chose the video quality
 ![quality prompt](../screenshots/select_quality.png)
 
--   `    --use-torrent              `    will download the video via the torrent downloader instead of playing it.
+-   `-t, --trending`    will start browsing trendings videos. If an initial query is passed with it, it will be ignored
+
+-   `--tag-nsfw`    Tag nsfw results. This is the default behavior. This flag is only useful to override the config file
+-   `--block-nsfw`    Block nsfw search results
+-   `--let-nsfw`    Don't tag nsfw results
+
+-   `--print-default-config`    prints the default confing to stdout and exit
+This is useful to get started on a config file. See [configuration](../config.md) for more details
+
+-   `--print-full-example-config`    print an example of all possible config options and exit
+
+
+-   `--use-torrent`    will download the video via the torrent downloader instead of playing it.
 This requires a torrent downloader to be set (either via the corresponding option or in the configuration file)
 
--   `    --use-raw-url              `    the url to the video file will be passed to the player instead of the url to the web interface to watch it. It may be necessary for players without native support for peertube such as vlc. Some players (ex : mpv) may be able to show the video title in their interface if this option isn't used.
+-   `--use-raw-url`    the url to the video file will be passed to the player instead of the url to the web interface to watch it. It may be necessary for players without native support for peertube such as vlc. Some players (ex : mpv) may be able to show the video title in their interface if this option isn't used.
 
--   `    --tag-nsfw                 `    Tag nsfw results. This is the default behavior. This flag is only useful to override the config file
--   `    --block-nsfw               `    Block nsfw search results
--   `    --let-nsfw                 `    Don't tag nsfw results
 
--   `    --color                    `    force coloring of output if it is disabled in the config file
--   `    --no-color                 `    remove coloring of output
+-   `--color`    force coloring of output if it is disabled in the config file
+-   `--no-color`    remove coloring of output
 
--   `-h, --help                     `    Prints help information
--   `-V, --version                  `    Prints version information
+-   `-h, --help`    Prints help information
+-   `-V, --version`    Prints version information
 
 
 Initial query

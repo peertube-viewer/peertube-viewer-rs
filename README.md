@@ -1,9 +1,12 @@
 peertube-viewer-rs
 ===
 
-a command line program to view browse peertube, inspired by the youtube-viewer utility
+A command line program to view browse [peertube](https://joinpeertube.org), inspired by the youtube-viewer utility
 
+Documentation
+---
 
+This readme provides a quick overview of peertube-viewer-rs, to learn how to use it, see the documentation [the documentation](https://sostheneguedon.gitlab.io/peertube-viewer-rs/peertube-viewer-rs.html).
 
 Compiling
 ---
@@ -16,7 +19,8 @@ cargo build --locked --release
 
 The executable can then be found in `target/release/peertube-viewer-rs`, while autocompletion for a few shells will be found in in the `completions` directory.
 
-
+**peertube-viewer-rs** hasn't been tested on any platform other than linux.
+Don't hesitate to open issues for bugs on other platforms.
 
 Usage
 ---
@@ -37,7 +41,8 @@ or read the manpage
 Contributing
 ===
 
-If you have a feature idea and want to implement it you are welcome.
-If you want to contribute, do not hesitate to take a look at the feature that will be added in [TODO.md](TODO.md)
+If you have a feature idea submit an issue to discuss it.
+If you want to contribute, merge requests are welcome.
+If you want to contribute, do not hesitate to take a look at the features that will be added in [TODO.md](TODO.md)
 The master branch is the latest released version, while the development happens on the dev branch.
 

@@ -1,13 +1,12 @@
 use std::collections::HashSet;
-use std::rc::Rc;
 
 use std::fs::File;
 use std::io::{BufRead, BufReader, Error};
 use std::path::PathBuf;
 
 pub struct History {
-    videos: HashSet<Rc<String>>,
-    order: Vec<Rc<String>>, //Avoids duplication of keys
+    videos: HashSet<String>,
+    order: Vec<String>,
 }
 
 impl History {
@@ -26,10 +25,8 @@ impl History {
         for line in buf_reader.lines() {
             let line_unwrapped = line?;
             if !self.videos.contains(&line_unwrapped) {
-                let to_hash = Rc::new(line_unwrapped);
-                let to_order = to_hash.clone();
-                self.videos.insert(to_hash);
-                reversed.push(to_order);
+                self.videos.insert(line_unwrapped.clone());
+                reversed.push(line_unwrapped);
             }
         }
         self.order = reversed.into_iter().rev().collect();
@@ -38,15 +35,12 @@ impl History {
 
     pub fn add_video(&mut self, uuid: String) {
         if !self.videos.contains(&uuid) {
-            let to_hash = Rc::new(uuid);
-            let to_order = to_hash.clone();
-            self.videos.insert(to_hash);
-            self.order.push(to_order);
+            self.videos.insert(uuid.clone());
+            self.order.push(uuid);
         }
     }
 
-    #[allow(clippy::ptr_arg)]
-    pub fn is_viewed(&self, uuid: &String) -> bool {
+    pub fn is_viewed(&self, uuid: &str) -> bool {
         self.videos.contains(uuid)
     }
 

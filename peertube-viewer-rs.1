@@ -1,6 +1,6 @@
 .\" Manpage for peertube-viewer-rs
 
-.TH man  "2020" "1.2.1" "peertube-viewer-rs manpage"
+.TH man  "2020" "1.3.0" "peertube-viewer-rs manpage"
 
 .SH NAME
 peertube-viewer a simple peertube cli browser
@@ -16,6 +16,8 @@ Allows you to search videos from a peertube instance with a similar interface to
 
 .B search history 
 
+.B trending videos
+
 .B instance selection
 
 .B instance blacklist and whitelist
@@ -25,30 +27,36 @@ Allows you to search videos from a peertube instance with a similar interface to
 
 .SH OPTIONS
 
-.B --instance
+.B -i, --instance
 overrides the instance set in the config file.
 
-.B --[player/torrent-downloader]
+.B -c, --config
+sets the path to the config file
+
+.B -p, --[player/torrent-downloader]
 overrides the player/torrent client set in the config file.
 
 .B --[player/torrent-downloader]-args
 overrides the player/torrent downloader arguments set in the config file.
 
+.SH FLAGS
+
+.B -t, --trending
+Browse trending
+
 .B --use-raw-url
 Will pass the url to the seed file instead of the web url to the player.
 This might be neccessary for some players(vlc) but some(mpv) don't need it and will even extract some information from it to display in their GUI.
 
-.B --select-quality, -s
+.B -s, --select-quality
 Will prompt you to chose the video quality when playing a video
 
-.B --help ,-h
+.B -h, --help
 Display basic help.
 
 .B --use-torrent
 Use the provided torrent downloader instead of the video player
 
-.B --config, -c 
-Use a specified config file
 
 .B --[no-]color
 specify whether colors should be used
@@ -60,7 +68,7 @@ Specify the behavior for nsfw videos (block them, add a nsfw tag in the search r
 A config file can be put in `$XDG_CONFIG_HOME/peertube-viewer-rs/config.toml` or `/home/sos/.config/peertube-viewer-rs/config.toml`.
 The expected format is TOML and an example of all configuration options can be obtained with the --print-full-example-config flag
 
-.SH Online documentation
+.SH ONLINE DOCUMENTATION
 https://sostheneguedon.gitlab.io/peertube-viewer-rs/peertube-viewer-rs.html
 
 .SH REPORTING BUGS

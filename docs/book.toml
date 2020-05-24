@@ -5,6 +5,7 @@ authors = ["Sosthène Guédon"]
 
 [output.html]
 git-repository-url = "https://gitlab.com/SostheneGuedon/peertube-viewer-rs"
+git-repository-icon = "fa-gitlab"
 
 [[output.html.additional-resources]]
 output-dir="img"
