@@ -32,6 +32,8 @@ This is useful to get started on a config file. See [configuration](../config.md
 -   `    --use-torrent              `    will download the video via the torrent downloader instead of playing it.
 This requires a torrent downloader to be set (either via the corresponding option or in the configuration file)
 
+-   `-t, --trending                 `    will download the video via the torrent downloader instead of playing it.
+
 -   `    --use-raw-url              `    the url to the video file will be passed to the player instead of the url to the web interface to watch it. It may be necessary for players without native support for peertube such as vlc. Some players (ex : mpv) may be able to show the video title in their interface if this option isn't used.
 
 -   `    --tag-nsfw                 `    Tag nsfw results. This is the default behavior. This flag is only useful to override the config file
