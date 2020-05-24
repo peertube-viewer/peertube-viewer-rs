@@ -12,10 +12,11 @@ pub struct VideoSearch {
 
     preload_res: bool,
     loaded: Vec<Vec<Rc<Video>>>,
-    loading: Option<JoinHandle<Result<Vec<Video>, Error>>>,
+    loading: Option<JoinHandle<Result<(Vec<Video>, Option<usize>), Error>>>,
     query: String,
     current: usize,
     step: usize,
+    total: Option<usize>,
 }
 
 impl VideoSearch {
@@ -28,6 +29,7 @@ impl VideoSearch {
             query: query.to_owned(),
             current: 0,
             step,
+            total: None,
         }
     }
 }
@@ -38,19 +40,18 @@ impl VideoSearch {
             self.current += 1;
         }
         if self.loaded.len() <= self.current {
+            let temp;
             if let Some(handle) = self.loading.take() {
-                self.loaded
-                    .push(handle.await.unwrap()?.into_iter().map(Rc::new).collect())
+                temp = handle.await.unwrap()?;
             } else {
-                self.loaded.push(
-                    self.instance
-                        .search_videos(&self.query, self.step, self.current * self.step)
-                        .await?
-                        .into_iter()
-                        .map(Rc::new)
-                        .collect(),
-                );
+                temp = self
+                    .instance
+                    .search_videos(&self.query, self.step, self.current * self.step)
+                    .await?;
             }
+            let (videos, new_total) = temp;
+            self.loaded.push(videos.into_iter().map(Rc::new).collect());
+            self.total = new_total.or(self.total);
         }
         Ok(&self.loaded[self.current])
     }
@@ -98,5 +99,13 @@ impl PreloadableList for VideoSearch {
 
     fn current_len(&self) -> usize {
         self.current().len()
+    }
+
+    fn offset(&self) -> usize {
+        self.current*self.step
+    }
+
+    fn expected_total(&self) -> Option<usize> {
+        self.total.clone()
     }
 }

@@ -34,7 +34,7 @@ impl Instance {
         query: &str,
         nb: usize,
         skip: usize,
-    ) -> error::Result<Vec<Video>> {
+    ) -> error::Result<(Vec<Video>, Option<usize>)> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/search/videos");
         let mut search_res: Search = serde_json::from_str(
@@ -59,7 +59,12 @@ impl Instance {
             }
         }
 
-        Ok(res)
+        let total = match search_res.total {
+            Some(c) if c > 0 => Some(c as usize),
+            _ => None,
+        };
+
+        Ok((res, total))
     }
 
     pub fn search(self: &Rc<Instance>, query: &str, skip: usize) -> VideoSearch {
@@ -71,7 +76,7 @@ impl Instance {
         self: &Rc<Instance>,
         nb: usize,
         skip: usize,
-    ) -> error::Result<Vec<Video>> {
+    ) -> error::Result<(Vec<Video>, Option<usize>)> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/videos");
         let mut search_res: Search = serde_json::from_str(
@@ -96,7 +101,12 @@ impl Instance {
             }
         }
 
-        Ok(res)
+        let total = match search_res.total {
+            Some(c) if c > 0 => Some(c as usize),
+            _ => None,
+        };
+
+        Ok((res, total))
     }
 
     pub fn trending(self: &Rc<Instance>, skip: usize) -> TrendingList {

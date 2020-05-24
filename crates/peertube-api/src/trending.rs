@@ -12,9 +12,10 @@ pub struct TrendingList {
 
     preload_res: bool,
     loaded: Vec<Vec<Rc<Video>>>,
-    loading: Option<JoinHandle<Result<Vec<Video>, Error>>>,
+    loading: Option<JoinHandle<Result<(Vec<Video>, Option<usize>), Error>>>,
     current: usize,
     step: usize,
+    total: Option<usize>,
 }
 
 impl TrendingList {
@@ -26,6 +27,7 @@ impl TrendingList {
             preload_res: false,
             current: 0,
             step,
+            total: None,
         }
     }
 }
@@ -36,19 +38,18 @@ impl TrendingList {
             self.current += 1;
         }
         if self.loaded.len() <= self.current {
+            let temp;
             if let Some(handle) = self.loading.take() {
-                self.loaded
-                    .push(handle.await.unwrap()?.into_iter().map(Rc::new).collect())
+                temp = handle.await.unwrap()?;
             } else {
-                self.loaded.push(
-                    self.instance
-                        .trending_videos(self.step, self.current * self.step)
-                        .await?
-                        .into_iter()
-                        .map(Rc::new)
-                        .collect(),
-                );
+                temp = self
+                    .instance
+                    .trending_videos(self.step, self.current * self.step)
+                    .await?;
             }
+            let (videos, new_total) = temp;
+            self.loaded.push(videos.into_iter().map(Rc::new).collect());
+            self.total = new_total.or(self.total);
         }
         Ok(&self.loaded[self.current])
     }
@@ -95,5 +96,13 @@ impl PreloadableList for TrendingList {
 
     fn current_len(&self) -> usize {
         self.current().len()
+    }
+
+    fn offset(&self) -> usize {
+        self.current*self.step
+    }
+
+    fn expected_total(&self) -> Option<usize> {
+        self.total.clone()
     }
 }
