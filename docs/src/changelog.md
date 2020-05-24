@@ -1,6 +1,18 @@
 Changelog
 =========
 
+v1.3.0
+------
+Trending browsing.
+UI improvements:
+
+- A total result count is now displayed for the current search
+- Videos from blacklisted instances are now displayed as blocked (the title and other info isn't shown).
+Information can be obtained by  typing its ID.
+You will be prompted to check if you are sure you want to play it before playing the video.
+- video information is now displayed before the prompt for quality selection
+
+
 v1.2.1
 ------
 Small bug fixes in the configuration
