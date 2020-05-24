@@ -7,26 +7,24 @@ use crate::Instance;
 use crate::PreloadableList;
 use crate::Video;
 
-pub struct VideoSearch {
+pub struct TrendingList {
     instance: Rc<Instance>,
 
     preload_res: bool,
     loaded: Vec<Vec<Rc<Video>>>,
     loading: Option<JoinHandle<Result<(Vec<Video>, Option<usize>), Error>>>,
-    query: String,
     current: usize,
     step: usize,
     total: Option<usize>,
 }
 
-impl VideoSearch {
-    pub fn new(instance: Rc<Instance>, query: &str, step: usize) -> VideoSearch {
-        VideoSearch {
+impl TrendingList {
+    pub fn new(instance: Rc<Instance>, step: usize) -> TrendingList {
+        TrendingList {
             instance,
             loaded: Vec::new(),
             loading: None,
             preload_res: false,
-            query: query.to_owned(),
             current: 0,
             step,
             total: None,
@@ -34,7 +32,7 @@ impl VideoSearch {
     }
 }
 
-impl VideoSearch {
+impl TrendingList {
     pub async fn next_videos(&mut self) -> error::Result<&Vec<Rc<Video>>> {
         if !self.loaded.is_empty() {
             self.current += 1;
@@ -46,7 +44,7 @@ impl VideoSearch {
             } else {
                 temp = self
                     .instance
-                    .search_videos(&self.query, self.step, self.current * self.step)
+                    .trending_videos(self.step, self.current * self.step)
                     .await?;
             }
             let (videos, new_total) = temp;
@@ -66,17 +64,16 @@ impl VideoSearch {
     }
 }
 
-impl PreloadableList for VideoSearch {
+impl PreloadableList for TrendingList {
     type Current = Vec<Rc<Video>>;
 
     fn preload_next(&mut self) {
         if self.loaded.len() <= self.current + 1 && self.loading.is_none() {
             let inst_cloned = self.instance.clone();
-            let quer_cloned = self.query.clone();
             let nb = self.step;
             let skip = (self.current + 1) * self.step;
             self.loading = Some(spawn_local(async move {
-                inst_cloned.search_videos(&quer_cloned, nb, skip).await
+                inst_cloned.trending_videos(nb, skip).await
             }));
         }
     }

@@ -25,5 +25,6 @@ At any moment you can quit with `:q`
 Here is a list of all the command that can be ran during a session:
 
 - `:q` quit (`ctrl-D` and `ctrl-C` have the same effect)
-- `:n` get more results for the same search
+- `:n` get more results for the same search or get more trending results when browsing trending
 - `:p` go back to the previous results (the opposite of `:n`)
+- `:trending` start browsing trending results

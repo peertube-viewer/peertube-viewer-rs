@@ -116,6 +116,12 @@ impl NsfwBehavior {
     }
 }
 
+#[derive(PartialEq, Eq, Debug, Clone)]
+pub struct InitialInfo {
+    pub initial_query: Option<String>,
+    pub start_trending: bool,
+}
+
 /// Config for the cli interface
 #[derive(Debug, PartialEq)]
 pub struct Config {
@@ -135,7 +141,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> (Config, Option<String>, Vec<ConfigLoadError>) {
+    pub fn new() -> (Config, InitialInfo, Vec<ConfigLoadError>) {
         let yml = load_yaml!("clap_app.yml");
         let app = App::from_yaml(yml);
         let cli_args = app.get_matches();
@@ -150,7 +156,10 @@ impl Config {
             exit(0);
         }
 
-        let initial_query = cli_args.values_of("initial-query").map(concat);
+        let initial_info = InitialInfo {
+            initial_query: cli_args.values_of("initial-query").map(concat),
+            start_trending: cli_args.is_present("trending"),
+        };
 
         // Parse config as an String with default to empty string
         let (mut config, mut load_errors) = if let Some(c) = cli_args.value_of("config-file") {
@@ -168,7 +177,7 @@ impl Config {
 
         load_errors.append(&mut config.update_with_args(cli_args));
 
-        (config, initial_query, load_errors)
+        (config, initial_info, load_errors)
     }
 
     fn from_config_file(path: &PathBuf) -> (Config, Vec<ConfigLoadError>) {

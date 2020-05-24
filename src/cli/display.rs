@@ -220,6 +220,31 @@ impl Display {
         println!("{}", msg);
     }
 
+    pub fn mode_info(&self, mode: &str, total: Option<usize>, offset: usize, current_len: usize) {
+        if let Some(total) = total {
+            println!(
+                "{}{}{} results {} to {} out of {}{}",
+                style::Bold,
+                style::Underline,
+                mode,
+                offset,
+                offset + current_len,
+                total,
+                style::Reset
+            );
+        } else {
+            println!(
+                "{}{}{} results {} to {}{}",
+                style::Bold,
+                style::Underline,
+                mode,
+                offset,
+                offset + current_len,
+                style::Reset
+            );
+        }
+    }
+
     pub async fn info(&self, video: &Video) {
         self.line('=');
         self.print_centered(video.name());

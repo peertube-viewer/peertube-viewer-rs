@@ -27,6 +27,11 @@ args:
         conflicts_with: USERAWURL
         help: will download the video via the torrent downloader instead of playing it
 
+    - trending:
+        long: trending
+        short: trending
+        help: will start browsing trending videos
+
     - player-args:
         long: player-args 
         takes_value: true 
