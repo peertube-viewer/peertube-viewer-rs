@@ -12,10 +12,10 @@ fn main() {
     create_dir("./completions").unwrap_or(());
     let yml_in = read_to_string("src/cli/clap_app.in.yml").unwrap();
 
-    let yml_out = dbg!(yml_in.replace(
+    let yml_out = yml_in.replace(
         "version:",
         &format!("version: {}", env!("CARGO_PKG_VERSION")),
-    ));
+    );
 
     write("src/cli/clap_app.yml", &yml_out).unwrap();
 
