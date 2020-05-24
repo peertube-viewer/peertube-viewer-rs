@@ -7,12 +7,13 @@ use crate::Instance;
 use crate::PreloadableList;
 use crate::Video;
 
+type Loading = JoinHandle<Result<(Vec<Video>, Option<usize>), Error>>;
 pub struct TrendingList {
     instance: Rc<Instance>,
 
     preload_res: bool,
     loaded: Vec<Vec<Rc<Video>>>,
-    loading: Option<JoinHandle<Result<(Vec<Video>, Option<usize>), Error>>>,
+    loading: Option<Loading>,
     current: usize,
     step: usize,
     total: Option<usize>,
@@ -103,6 +104,6 @@ impl PreloadableList for TrendingList {
     }
 
     fn expected_total(&self) -> Option<usize> {
-        self.total.clone()
+        self.total
     }
 }

@@ -7,12 +7,13 @@ use crate::Instance;
 use crate::PreloadableList;
 use crate::Video;
 
+type Loading = JoinHandle<Result<(Vec<Video>, Option<usize>), Error>>;
 pub struct VideoSearch {
     instance: Rc<Instance>,
 
     preload_res: bool,
     loaded: Vec<Vec<Rc<Video>>>,
-    loading: Option<JoinHandle<Result<(Vec<Video>, Option<usize>), Error>>>,
+    loading: Option<Loading>,
     query: String,
     current: usize,
     step: usize,
@@ -106,6 +107,6 @@ impl PreloadableList for VideoSearch {
     }
 
     fn expected_total(&self) -> Option<usize> {
-        self.total.clone()
+        self.total
     }
 }
