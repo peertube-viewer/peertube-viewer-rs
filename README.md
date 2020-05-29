@@ -37,6 +37,11 @@ peertube-viewer-rs -h
 ```
 or read the manpage
 
+BUGS
+====
+
+Don't hesitate to report bug or to request new features in the [issue tracker](https://gitlab.com/SostheneGuedon/peertube-viewer-rs/-/issues)
+
 
 Contributing
 ===
