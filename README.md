@@ -43,6 +43,6 @@ Contributing
 
 If you have a feature idea submit an issue to discuss it.
 If you want to contribute, merge requests are welcome.
-If you want to contribute, do not hesitate to take a look at the features that will be added in [TODO.md](TODO.md)
+If you want to contribute, do not hesitate to take a look at the features that will be added in the [issue tracker](Ahttps://gitlab.com/SostheneGuedon/peertube-viewer-rs/-/issues?label_name%5B%5D=Feature)
 The master branch is the latest released version, while the development happens on the dev branch.
 
