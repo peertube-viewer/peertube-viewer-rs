@@ -22,6 +22,10 @@ args:
         long: select-quality 
         help: "When playing a video with this option, the user will be prompted to chose the video quality\n Note: this implies --use-raw-url"
 
+    - local:
+        long: local
+        help: "Only browse video hosted on the instance you are connected to"
+
     - torrent:
         long: use-torrent
         conflicts_with: use-raw-urls
@@ -37,6 +41,7 @@ args:
         takes_value: true 
         multiple: true 
         help: arguments to be passed to the player
+
 
     - player:
         short: p 

@@ -25,6 +25,7 @@ flags
 ![quality prompt](../screenshots/select_quality.png)
 
 -   `-t, --trending`    will start browsing trendings videos. If an initial query is passed with it, it will be ignored
+-   `--local`  Only browse videos hosted on the instance you are connected to
 
 -   `--tag-nsfw`    Tag nsfw results. This is the default behavior. This flag is only useful to override the config file
 -   `--block-nsfw`    Block nsfw search results
