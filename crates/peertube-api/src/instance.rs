@@ -17,14 +17,16 @@ pub struct Instance {
     client: Client,
     host: String,
     include_nsfw: &'static str,
+    local: bool,
 }
 
 impl Instance {
-    pub fn new(host: String, include_nsfw: bool) -> Rc<Instance> {
+    pub fn new(host: String, include_nsfw: bool, local: bool) -> Rc<Instance> {
         Rc::new(Instance {
             client: Client::new(),
             host,
             include_nsfw: nsfw_string(include_nsfw),
+            local,
         })
     }
 
@@ -37,21 +39,19 @@ impl Instance {
     ) -> error::Result<(Vec<Video>, Option<usize>)> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/search/videos");
-        let mut search_res: Search = serde_json::from_str(
-            &*self
-                .client
-                .get(&url)
-                .query(&[
-                    ("search", query),
-                    ("count", &nb.to_string()),
-                    ("start", &skip.to_string()),
-                    ("nsfw", self.include_nsfw),
-                ])
-                .send()
-                .await?
-                .text()
-                .await?,
-        )?;
+
+        let mut query = self.client.get(&url).query(&[
+            ("search", query),
+            ("count", &nb.to_string()),
+            ("start", &skip.to_string()),
+            ("nsfw", self.include_nsfw),
+        ]);
+
+        if self.local {
+            query = query.query(&[("filter", "local")]);
+        }
+
+        let mut search_res: Search = serde_json::from_str(&query.send().await?.text().await?)?;
         let mut res = Vec::new();
         for video in search_res.data.drain(..) {
             if let Some(v) = Video::maybe_from(self, video) {
@@ -79,21 +79,19 @@ impl Instance {
     ) -> error::Result<(Vec<Video>, Option<usize>)> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/videos");
-        let mut search_res: Search = serde_json::from_str(
-            &*self
-                .client
-                .get(&url)
-                .query(&[
-                    ("sort", "-trending"),
-                    ("count", &nb.to_string()),
-                    ("start", &skip.to_string()),
-                    ("nsfw", self.include_nsfw),
-                ])
-                .send()
-                .await?
-                .text()
-                .await?,
-        )?;
+
+        let mut query = self.client.get(&url).query(&[
+            ("sort", "-trending"),
+            ("count", &nb.to_string()),
+            ("start", &skip.to_string()),
+            ("nsfw", self.include_nsfw),
+        ]);
+
+        if self.local {
+            query = query.query(&[("filter", "local")]);
+        }
+
+        let mut search_res: Search = serde_json::from_str(&query.send().await?.text().await?)?;
         let mut res = Vec::new();
         for video in search_res.data.drain(..) {
             if let Some(v) = Video::maybe_from(self, video) {

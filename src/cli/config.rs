@@ -132,10 +132,9 @@ pub struct Config {
     is_whitelist: bool,
 
     nsfw: NsfwBehavior,
-
     select_quality: bool,
-
     colors: bool,
+    local: bool,
 
     max_hist_lines: usize,
 }
@@ -329,6 +328,8 @@ impl Config {
             self.nsfw = NsfwBehavior::Tag
         }
 
+        self.local = args.is_present("local");
+
         if let Some(i) = args.value_of("instance") {
             self.instance = correct_instance(i);
         }
@@ -440,6 +441,10 @@ impl Config {
         self.select_quality
     }
 
+    pub fn local(&self) -> bool {
+        self.local
+    }
+
     pub fn colors(&self) -> bool {
         self.colors
     }
@@ -448,6 +453,28 @@ impl Config {
         self.nsfw
     }
 }
+
+impl Default for Config {
+    fn default() -> Config {
+        Config {
+            player: PlayerConf {
+                client: "mpv".to_string(),
+                args: Vec::new(),
+                use_raw_urls: false,
+            },
+            instance: "https://video.ploud.fr".to_string(),
+            torrent: None,
+            nsfw: NsfwBehavior::Tag,
+            listed_instances: HashSet::new(),
+            is_whitelist: false,
+            colors: true,
+            select_quality: false,
+            local: false,
+            max_hist_lines: 2000,
+        }
+    }
+}
+
 fn correct_instance(s: &str) -> String {
     let mut s = if s.starts_with("https://") {
         s.to_string()
@@ -503,26 +530,6 @@ fn get_string_array(t: &Table, name: &str, load_errors: &mut Vec<ConfigLoadError
                 .collect()
         })
         .unwrap_or_default()
-}
-
-impl Default for Config {
-    fn default() -> Config {
-        Config {
-            player: PlayerConf {
-                client: "mpv".to_string(),
-                args: Vec::new(),
-                use_raw_urls: false,
-            },
-            instance: "https://video.ploud.fr".to_string(),
-            torrent: None,
-            nsfw: NsfwBehavior::Tag,
-            listed_instances: HashSet::new(),
-            is_whitelist: false,
-            colors: true,
-            select_quality: false,
-            max_hist_lines: 2000,
-        }
-    }
 }
 
 #[cfg(test)]

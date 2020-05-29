@@ -109,6 +109,7 @@ impl Cli {
                 instance_domain
             },
             !config.nsfw().is_block(),
+            config.local(),
         );
 
         if !is_single_url {
