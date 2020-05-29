@@ -142,12 +142,20 @@ impl Cli {
                     .await?;
                 return Ok(());
             }
-            self.rl.add_history_entry(&query_str);
-            let mut search_tmp = self.instance.search(&query_str, SEARCH_TOTAL);
-            search_tmp.next_videos().await?;
+            if query_str == ":trending" {
+                let mut trend_tmp = self.instance.trending(SEARCH_TOTAL);
+                trend_tmp.next_videos().await?;
 
-            mode = Mode::Search(search_tmp);
-            Action::Query(query_str)
+                mode = Mode::Trending(trend_tmp);
+                Action::Query(query_str)
+            } else {
+                self.rl.add_history_entry(&query_str);
+                let mut search_tmp = self.instance.search(&query_str, SEARCH_TOTAL);
+                search_tmp.next_videos().await?;
+
+                mode = Mode::Search(search_tmp);
+                Action::Query(query_str)
+            }
         } else {
             let mut trending_tmp = self.instance.trending(SEARCH_TOTAL);
             trending_tmp.next_videos().await?;
