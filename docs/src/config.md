@@ -13,7 +13,7 @@ Syntax
 ------
 
 The config file is written in [TOML](https://github.com/toml-lang/toml)
-An example of config file with all configuration option showed can be obtained with `peertube-viewer-rs --print-full-example-config`
+An example of config file with all configuration option showed is available [lower](#full-configuration) or can be obtained with `peertube-viewer-rs --print-full-example-config`
 
 Format
 ------
@@ -124,5 +124,13 @@ Both can't be present at the same time.
 When blacklist is present, no video from the instances listed will be shown.
 When whitelist is present, only videos from the instances listed will be shown.
 
+---
 
+Full configuration
+-------------------
 
+This is an example of all configuration options that can be set
+
+``` TOML
+{{#include ../../src/cli/full_config.toml}}
+```
