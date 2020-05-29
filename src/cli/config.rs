@@ -146,12 +146,12 @@ impl Config {
         let app = App::from_yaml(yml);
         let cli_args = app.get_matches();
 
-        if cli_args.is_present("PRINTDEFAULTCONFIG") {
+        if cli_args.is_present("print-default-config") {
             print!("{}", include_str!("default_config.toml"));
             exit(0);
         }
 
-        if cli_args.is_present("PRINTFULLCONFIG") {
+        if cli_args.is_present("print-full-config") {
             print!("{}", include_str!("full_config.toml"));
             exit(0);
         }
@@ -339,7 +339,7 @@ impl Config {
             .values_of("torrent-downloader-arguments")
             .map(|v| v.map(|s| s.to_string()).collect::<Vec<String>>());
 
-        let use_torrent = args.is_present("TORRENT");
+        let use_torrent = args.is_present("torrent");
         if self.torrent.is_none() && use_torrent && !args.is_present("torrent-downloader") {
             load_errors.push(ConfigLoadError::UseTorrentAndNoInfo);
         }
@@ -385,11 +385,11 @@ impl Config {
                 .any(|_| false)
         });
 
-        if args.is_present("USERAWURL") {
+        if args.is_present("use-raw-urls") {
             self.player.use_raw_urls = true;
         }
 
-        if args.is_present("SELECTQUALITY") {
+        if args.is_present("select-quality") {
             self.select_quality = true;
         }
 

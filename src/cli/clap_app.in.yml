@@ -4,27 +4,27 @@ author: Sosthène Guédon <sosthene.gued@gmail.com>
 about: Peertube cli client
 
 args:
-    - USERAWURL:
+    - use-raw-urls:
         long: use-raw-url
         help: "the raw url to the video will be passed to the player instead of the url to web interface to watch it. It may be neccessary for players without native support for peertube such as vlc. Some players (ex : mpv) may be able to show the video title in their interface if this option isn't used"
 
-    - PRINTDEFAULTCONFIG:
+    - print-default-config:
         long: print-default-config
-        conflicts_with: PRINTFULLCONFIG
+        conflicts_with: print-full-config
         help: print the default confing to stdout and exit
 
-    - PRINTFULLCONFIG: 
+    - print-full-config: 
         long: print-full-example-config
         help: "print an example of all possible config options and exit"
 
-    - SELECTQUALITY:
+    - select-quality:
         short: -s  
         long: select-quality 
         help: "When playing a video with this option, the user will be prompted to chose the video quality\n Note: this implies --use-raw-url"
 
-    - TORRENT:
+    - torrent:
         long: use-torrent
-        conflicts_with: USERAWURL
+        conflicts_with: use-raw-urls
         help: will download the video via the torrent downloader instead of playing it
 
     - trending:
