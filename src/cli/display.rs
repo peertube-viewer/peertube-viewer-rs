@@ -99,14 +99,12 @@ impl Display {
             let mut tmp_str = Vec::new();
             let mut tmp_align = Vec::new();
             for item in &self.video_layout {
-                if !item.is_align() {
-                    let dsp = item.display(v, self.colors);
+                if !item.is_align() && !item.is_color() {
+                    let dsp = item.display(v);
                     let s: &str = &dsp;
-                    if item.length_matters() {
-                        align_off += UnicodeWidthStr::width(s);
-                    }
+                    align_off += UnicodeWidthStr::width(s);
                     tmp_str.push(dsp);
-                } else {
+                } else if item.is_align() {
                     if alignements_total[align_id] < align_off {
                         alignements_total[align_id] = align_off;
                     }
@@ -142,6 +140,8 @@ impl Display {
                                 .next()
                                 .expect("Internal error: align smaller than expected");
                         buffer.push_str(&" ".to_string().repeat(spacing));
+                    } else if item.is_color() {
+                        buffer.push_str(&item.display_as_color());
                     } else {
                         buffer.push_str(
                             &parts_it
@@ -379,15 +379,9 @@ enum VideoLayoutItem {
 }
 
 impl VideoLayoutItem {
-    fn display(&self, v: &Video, colors: bool) -> String {
+    fn display(&self, v: &Video) -> String {
         match self {
-            VideoLayoutItem::Color(c) => {
-                if colors {
-                    format!("{}", *c)
-                } else {
-                    String::new()
-                }
-            }
+            VideoLayoutItem::Color(c) => panic!("Internal Error: cannot display colors here"),
             VideoLayoutItem::Name => v.name().to_owned(),
             VideoLayoutItem::Channel => v.channel_display().to_owned(),
             VideoLayoutItem::Account => v.account_display().to_owned(),
@@ -410,6 +404,14 @@ impl VideoLayoutItem {
         }
     }
 
+    fn display_as_color(&self) -> String {
+        if let VideoLayoutItem::Color(c) = self {
+            format!("{}", c)
+        } else {
+            panic!("Internal error: display as color on other type");
+        }
+    }
+
     fn is_align(&self) -> bool {
         if let VideoLayoutItem::Alignement = self {
             true
@@ -418,20 +420,11 @@ impl VideoLayoutItem {
         }
     }
 
-    fn length_matters(&self) -> bool {
-        match self {
-            VideoLayoutItem::Name
-            | VideoLayoutItem::Channel
-            | VideoLayoutItem::Account
-            | VideoLayoutItem::Host
-            | VideoLayoutItem::Nsfw
-            | VideoLayoutItem::Views
-            | VideoLayoutItem::Likes
-            | VideoLayoutItem::Duration
-            | VideoLayoutItem::Alignement
-            | VideoLayoutItem::Published
-            | VideoLayoutItem::String(_) => true,
-            _ => false,
+    fn is_color(&self) -> bool {
+        if let VideoLayoutItem::Color(_) = self {
+            true
+        } else {
+            false
         }
     }
 }
