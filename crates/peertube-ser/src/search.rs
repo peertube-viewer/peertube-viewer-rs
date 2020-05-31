@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use super::common::Avatar;
+
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Channel {
@@ -9,14 +11,6 @@ pub struct Channel {
     pub url: String,
     pub host: String,
     pub Avatar: Option<Avatar>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
-pub struct Avatar {
-    pub path: String,
-    pub createdAt: Option<String>,
-    pub updatedAt: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -90,6 +84,6 @@ mod tests {
     fn deser() {
         let test_data = r##"{"total":0,"data":[{"id":0,"uuid":"string","createdAt":"string","publishedAt":"string","updatedAt":"string","originallyPublishedAt":"string","category":{"id":0,"label":"string"},"licence":{"id":0,"label":"string"},"language":{"id":"string","label":"string"},"privacy":{"id":1,"label":"string"},"description":"string","duration":0,"isLocal":true,"name":"string","thumbnailPath":"string","previewPath":"string","embedPath":"string","views":0,"likes":0,"dislikes":0,"nsfw":true,"waitTranscoding":true,"state":{"id":1,"label":"string"},"scheduledUpdate":{"privacy":1,"updateAt":"2020-04-22"},"blacklisted":true,"blacklistedReason":"string","account":{"id":0,"name":"string","displayName":"string","url":"string","host":"string","avatar":{"path":"string","createdAt":"string","updatedAt":"string"}},"channel":{"id":0,"name":"string","displayName":"string","url":"string","host":"string","avatar":{"path":"string","createdAt":"string","updatedAt":"string"}},"userHistory":{"currentTime":0}}]}"##;
 
-        let _: Search = from_str(test_data).unwrap();
+        let _: Videos = from_str(test_data).unwrap();
     }
 }
