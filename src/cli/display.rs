@@ -232,7 +232,7 @@ impl Display {
                             .next()
                             .expect("Internal error: align smaller than expected");
                     buffer.push_str(&" ".to_string().repeat(spacing));
-                } else if item.is_style()  {
+                } else if item.is_style() {
                     if self.colors {
                         buffer.push_str(&item.display_as_style());
                     }
