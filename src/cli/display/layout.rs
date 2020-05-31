@@ -1,8 +1,13 @@
-use peertube_api::Video;
+use peertube_api::{channels::Channel, Video};
 use std::fmt;
 use termion::{color, style};
 
 use super::helpers::*;
+
+pub trait InnerLayoutItem {
+    type Data;
+    fn display(&self, data: &Self::Data) -> String;
+}
 
 pub enum LayoutItem<I: InnerLayoutItem> {
     Style(Box<dyn fmt::Display>),
@@ -80,9 +85,24 @@ impl InnerLayoutItem for VideoLayoutItem {
     }
 }
 
-pub trait InnerLayoutItem {
-    type Data;
-    fn display(&self, data: &Self::Data) -> String;
+pub enum ChannelLayoutItem {
+    Name,
+    Host,
+    Followers,
+    String(String),
+}
+
+impl InnerLayoutItem for ChannelLayoutItem {
+    type Data = Channel;
+
+    fn display(&self, c: &Self::Data) -> String {
+        match self {
+            ChannelLayoutItem::Name => c.display_name().to_owned(),
+            ChannelLayoutItem::Host => c.host().to_owned(),
+            ChannelLayoutItem::Followers => display_count(c.followers()),
+            ChannelLayoutItem::String(s) => s.clone(),
+        }
+    }
 }
 
 pub fn default_video_layouts() -> (
@@ -149,4 +169,19 @@ pub fn default_video_layouts() -> (
     ];
 
     (video_layout, seen_video_layout)
+}
+
+pub fn default_channel_layouts() -> Vec<LayoutItem<ChannelLayoutItem>> {
+    vec![
+        LayoutItem::Style(Box::new(color::Fg(color::Blue))),
+        LayoutItem::Inner(ChannelLayoutItem::Name),
+        LayoutItem::Inner(ChannelLayoutItem::String(" ".to_string())),
+        LayoutItem::Alignement,
+        LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
+        LayoutItem::Inner(ChannelLayoutItem::Host),
+        LayoutItem::Alignement,
+        LayoutItem::Style(Box::new(color::Fg(color::Green))),
+        LayoutItem::Inner(ChannelLayoutItem::Followers),
+        LayoutItem::Inner(ChannelLayoutItem::String(" ".to_string())),
+    ]
 }

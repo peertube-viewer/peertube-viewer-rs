@@ -8,7 +8,7 @@ pub struct Channel {
     display_name: String,
     description: Option<String>,
     host: String,
-    following_count: u64,
+    followers: u64,
     created_at: DateTime<FixedOffset>,
     updated_at: DateTime<FixedOffset>,
 }
@@ -24,8 +24,8 @@ impl Channel {
     pub fn display_name(&self) -> &str {
         &self.display_name
     }
-    pub fn following_count(&self) -> u64 {
-        self.following_count
+    pub fn followers(&self) -> u64 {
+        self.followers
     }
     pub fn host(&self) -> &str {
         &self.host
@@ -46,8 +46,8 @@ impl Channel {
     pub fn maybe_from(c: channels::Channel) -> Option<Channel> {
         Some(Channel {
             id: if c.id > 0 { c.id as u64 } else { 0 },
-            following_count: if c.followingCount > 0 {
-                c.followingCount as u64
+            followers: if c.followersCount > 0 {
+                c.followersCount as u64
             } else {
                 0
             },
