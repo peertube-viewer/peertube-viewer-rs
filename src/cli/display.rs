@@ -43,6 +43,8 @@ impl Display {
         Display { cols, nsfw, colors }
     }
 
+    /// Abstract removing colors
+    /// This should always be used instead of termions colors for displaying output
     fn fg_color<C: color::Color>(&self, c: C) -> MaybeColor<C> {
         if self.colors {
             MaybeColor::Fg(color::Fg(c))
@@ -51,6 +53,7 @@ impl Display {
         }
     }
 
+    /// Display a list of video results
     pub fn video_list(&self, videos: &[Rc<Video>], history: &History, blacklist: &impl Blacklist) {
         let mut lengths = Vec::new();
         let mut duration_length = Vec::new();
@@ -92,6 +95,7 @@ impl Display {
         for (id, v) in videos.iter().enumerate() {
             debug_assert!(!(v.nsfw() && self.nsfw.is_block()));
 
+            // Create spacing for alignement
             let spacing = " ".to_string().repeat(max_len - lengths[id]);
             let colon_spacing = " "
                 .to_string()
