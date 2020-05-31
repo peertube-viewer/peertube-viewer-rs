@@ -130,10 +130,16 @@ impl Display {
             )
         ];
         for v in videos {
-            let mut align_off: usize = 0;
-            let mut align_id = 0;
             let mut tmp_str = Vec::new();
             let mut tmp_align = Vec::new();
+
+            if blacklist.is_blacklisted(v.host()) {
+                video_parts.push((tmp_str, tmp_align));
+                continue;
+            }
+
+            let mut align_off: usize = 0;
+            let mut align_id = 0;
             let mut layout_iter = if history.is_viewed(v.uuid()) {
                 self.seen_video_layout.iter()
             } else {
@@ -166,6 +172,16 @@ impl Display {
                     .repeat(display_length(videos.len()) - display_length(id + 1)),
             );
             buffer.push_str(": ");
+
+            if blacklist.is_blacklisted(videos[id].host()) {
+                buffer.push_str(&format!(
+                    "{}blocked video from: {}{}\n",
+                    self.fg_color(color::Red),
+                    videos[id].host(),
+                    self.fg_color(color::Reset)
+                ));
+                continue;
+            }
 
             let mut layout_align_it = alignements_total.iter();
             let mut layout_it = if history.is_viewed(videos[id].uuid()) {
