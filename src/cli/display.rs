@@ -140,7 +140,7 @@ impl Display {
 
             let mut align_off: usize = 0;
             let mut align_id = 0;
-            let mut layout_iter = if history.is_viewed(v.uuid()) {
+            let layout_iter = if history.is_viewed(v.uuid()) {
                 self.seen_video_layout.iter()
             } else {
                 self.video_layout.iter()
