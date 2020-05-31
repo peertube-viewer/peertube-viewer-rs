@@ -1,6 +1,12 @@
 Changelog
 =========
 
+dev
+---
+Changes implemented but not yet released:
+
+Fix alignement when dealing with most unicode characters.
+
 v1.3.1
 ------
 
