@@ -1,13 +1,11 @@
 use peertube_api::{Resolution, Video};
 
-use super::{
-    config::{Blacklist, NsfwBehavior},
-    history::History,
-};
+use super::{config::Blacklist, history::History};
 use chrono::{DateTime, Duration, FixedOffset, Utc};
 use std::{fmt, time::SystemTime};
 use termion::{color, style};
 
+use std::cmp;
 use std::rc::Rc;
 
 use unicode_width::UnicodeWidthStr;
@@ -16,9 +14,9 @@ const DEFAULT_COLS: usize = 20;
 
 pub struct Display {
     cols: usize,
-    nsfw: NsfwBehavior,
     colors: bool,
     video_layout: Vec<VideoLayoutItem>,
+    seen_video_layout: Vec<VideoLayoutItem>,
 }
 
 #[derive(Debug)]
@@ -37,44 +35,74 @@ impl<T: color::Color> fmt::Display for MaybeColor<T> {
 }
 
 impl Display {
-    pub fn new(nsfw: NsfwBehavior, colors: bool) -> Display {
+    pub fn new(colors: bool) -> Display {
         let cols = termion::terminal_size()
             .map(|(c, _r)| c as usize)
             .unwrap_or(DEFAULT_COLS);
 
         let video_layout = vec![
-            VideoLayoutItem::Color(Box::new(color::Fg(color::Blue))),
+            VideoLayoutItem::Style(Box::new(color::Fg(color::Blue))),
             VideoLayoutItem::Name,
             VideoLayoutItem::String(" ".to_string()),
             VideoLayoutItem::Alignement,
-            VideoLayoutItem::Color(Box::new(color::Fg(color::Green))),
+            VideoLayoutItem::Style(Box::new(color::Fg(color::Green))),
             VideoLayoutItem::Channel,
             VideoLayoutItem::String(" ".to_string()),
             VideoLayoutItem::Alignement,
-            VideoLayoutItem::Color(Box::new(color::Fg(color::Cyan))),
+            VideoLayoutItem::Style(Box::new(color::Fg(color::Cyan))),
             VideoLayoutItem::Host,
             VideoLayoutItem::Alignement,
-            VideoLayoutItem::Color(Box::new(color::Fg(color::Yellow))),
+            VideoLayoutItem::Style(Box::new(color::Fg(color::Yellow))),
             VideoLayoutItem::String(" [".to_string()),
             VideoLayoutItem::Duration,
             VideoLayoutItem::String("] ".to_string()),
             VideoLayoutItem::Alignement,
-            VideoLayoutItem::Color(Box::new(color::Fg(color::Green))),
+            VideoLayoutItem::Style(Box::new(color::Fg(color::Green))),
             VideoLayoutItem::Views,
             VideoLayoutItem::String(" ".to_string()),
             VideoLayoutItem::Alignement,
             VideoLayoutItem::Published,
             VideoLayoutItem::String(" ".to_string()),
             VideoLayoutItem::Alignement,
-            VideoLayoutItem::Color(Box::new(color::Fg(color::Red))),
+            VideoLayoutItem::Style(Box::new(color::Fg(color::Red))),
             VideoLayoutItem::Nsfw,
-            VideoLayoutItem::Color(Box::new(color::Fg(color::Reset))),
+            VideoLayoutItem::Style(Box::new(color::Fg(color::Reset))),
+        ];
+
+        let seen_video_layout = vec![
+            VideoLayoutItem::Style(Box::new(style::Bold)),
+            VideoLayoutItem::Name,
+            VideoLayoutItem::Style(Box::new(style::Reset)),
+            VideoLayoutItem::String(" ".to_string()),
+            VideoLayoutItem::Alignement,
+            VideoLayoutItem::Style(Box::new(color::Fg(color::Green))),
+            VideoLayoutItem::Channel,
+            VideoLayoutItem::String(" ".to_string()),
+            VideoLayoutItem::Alignement,
+            VideoLayoutItem::Style(Box::new(color::Fg(color::Cyan))),
+            VideoLayoutItem::Host,
+            VideoLayoutItem::Alignement,
+            VideoLayoutItem::Style(Box::new(color::Fg(color::Yellow))),
+            VideoLayoutItem::String(" [".to_string()),
+            VideoLayoutItem::Duration,
+            VideoLayoutItem::String("] ".to_string()),
+            VideoLayoutItem::Alignement,
+            VideoLayoutItem::Style(Box::new(color::Fg(color::Green))),
+            VideoLayoutItem::Views,
+            VideoLayoutItem::String(" ".to_string()),
+            VideoLayoutItem::Alignement,
+            VideoLayoutItem::Published,
+            VideoLayoutItem::String(" ".to_string()),
+            VideoLayoutItem::Alignement,
+            VideoLayoutItem::Style(Box::new(color::Fg(color::Red))),
+            VideoLayoutItem::Nsfw,
+            VideoLayoutItem::Style(Box::new(color::Fg(color::Reset))),
         ];
         Display {
             cols,
-            nsfw,
             colors,
             video_layout,
+            seen_video_layout,
         }
     }
 
@@ -91,15 +119,29 @@ impl Display {
     /// Display a list of video results
     pub fn video_list(&self, videos: &[Rc<Video>], history: &History, blacklist: &impl Blacklist) {
         let mut video_parts = Vec::new();
-        let mut alignements_total =
-            vec![0; self.video_layout.iter().filter(|i| i.is_align()).count()];
+        let mut alignements_total = vec![
+            0;
+            cmp::max(
+                self.seen_video_layout
+                    .iter()
+                    .filter(|i| i.is_align())
+                    .count(),
+                self.video_layout.iter().filter(|i| i.is_align()).count()
+            )
+        ];
         for v in videos {
             let mut align_off: usize = 0;
             let mut align_id = 0;
             let mut tmp_str = Vec::new();
             let mut tmp_align = Vec::new();
-            for item in &self.video_layout {
-                if !item.is_align() && !item.is_color() {
+            let mut layout_iter = if history.is_viewed(v.uuid()) {
+                self.seen_video_layout.iter()
+            } else {
+                self.video_layout.iter()
+            };
+
+            for item in layout_iter {
+                if !item.is_align() && !item.is_style() {
                     let dsp = item.display(v);
                     let s: &str = &dsp;
                     align_off += UnicodeWidthStr::width(s);
@@ -126,7 +168,11 @@ impl Display {
             buffer.push_str(": ");
 
             let mut layout_align_it = alignements_total.iter();
-            let mut layout_it = self.video_layout.iter();
+            let mut layout_it = if history.is_viewed(videos[id].uuid()) {
+                self.seen_video_layout.iter()
+            } else {
+                self.video_layout.iter()
+            };
             let mut parts_it = parts.0.iter();
             let mut parts_align_it = parts.1.iter();
 
@@ -140,8 +186,8 @@ impl Display {
                                 .next()
                                 .expect("Internal error: align smaller than expected");
                         buffer.push_str(&" ".to_string().repeat(spacing));
-                    } else if item.is_color() {
-                        buffer.push_str(&item.display_as_color());
+                    } else if item.is_style() {
+                        buffer.push_str(&item.display_as_style());
                     } else {
                         buffer.push_str(
                             &parts_it
@@ -364,7 +410,7 @@ fn display_length(mut i: usize) -> usize {
 }
 
 enum VideoLayoutItem {
-    Color(Box<dyn fmt::Display>),
+    Style(Box<dyn fmt::Display>),
     Name,
     Channel,
     Account,
@@ -381,7 +427,7 @@ enum VideoLayoutItem {
 impl VideoLayoutItem {
     fn display(&self, v: &Video) -> String {
         match self {
-            VideoLayoutItem::Color(c) => panic!("Internal Error: cannot display colors here"),
+            VideoLayoutItem::Style(_) => panic!("Internal Error: cannot display style here"),
             VideoLayoutItem::Name => v.name().to_owned(),
             VideoLayoutItem::Channel => v.channel_display().to_owned(),
             VideoLayoutItem::Account => v.account_display().to_owned(),
@@ -404,8 +450,8 @@ impl VideoLayoutItem {
         }
     }
 
-    fn display_as_color(&self) -> String {
-        if let VideoLayoutItem::Color(c) = self {
+    fn display_as_style(&self) -> String {
+        if let VideoLayoutItem::Style(c) = self {
             format!("{}", c)
         } else {
             panic!("Internal error: display as color on other type");
@@ -420,8 +466,8 @@ impl VideoLayoutItem {
         }
     }
 
-    fn is_color(&self) -> bool {
-        if let VideoLayoutItem::Color(_) = self {
+    fn is_style(&self) -> bool {
+        if let VideoLayoutItem::Style(_) = self {
             true
         } else {
             false
