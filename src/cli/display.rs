@@ -1,4 +1,4 @@
-use peertube_api::{Resolution, Video};
+use peertube_api::{channels::Channel, Resolution, Video};
 
 use super::{
     config::Blacklist,
@@ -11,7 +11,10 @@ use std::cmp;
 use std::rc::Rc;
 
 mod layout;
-use layout::{default_video_layouts, InnerLayoutItem, LayoutItem, VideoLayoutItem};
+use layout::{
+    default_channel_layouts, default_video_layouts, ChannelLayoutItem, InnerLayoutItem, LayoutItem,
+    VideoLayoutItem,
+};
 
 mod helpers;
 use helpers::*;
@@ -25,6 +28,7 @@ pub struct Display {
     colors: bool,
     video_layout: Vec<LayoutItem<VideoLayoutItem>>,
     seen_video_layout: Vec<LayoutItem<VideoLayoutItem>>,
+    channel_layout: Vec<LayoutItem<ChannelLayoutItem>>,
 }
 
 #[derive(Debug)]
@@ -55,6 +59,7 @@ impl Display {
             colors,
             video_layout,
             seen_video_layout,
+            channel_layout: default_channel_layouts(),
         }
     }
 
@@ -81,6 +86,16 @@ impl Display {
             blacklist,
             &self.video_layout,
             &self.seen_video_layout,
+        );
+    }
+
+    pub fn channel_list(&self, channels: &[Rc<Channel>], _: &History, _: &impl Blacklist<Video>) {
+        self.list(
+            channels,
+            &(),
+            &(),
+            &self.channel_layout,
+            &self.channel_layout,
         );
     }
 

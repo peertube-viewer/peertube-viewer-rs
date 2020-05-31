@@ -17,6 +17,12 @@ pub trait Blacklist<T: ?Sized> {
     fn is_blacklisted(&self, instance: &T) -> Option<String>;
 }
 
+impl<T: ?Sized> Blacklist<T> for () {
+    fn is_blacklisted(&self, _: &T) -> Option<String> {
+        None
+    }
+}
+
 #[derive(Debug, PartialEq)]
 struct TorrentConf {
     pub client: String,

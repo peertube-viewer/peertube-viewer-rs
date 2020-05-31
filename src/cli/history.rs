@@ -73,3 +73,9 @@ impl HistoryT<peertube_api::Video> for History {
         self.videos.contains(video.uuid())
     }
 }
+
+impl<T: ?Sized> HistoryT<T> for () {
+    fn is_viewed(&self, _: &T) -> bool {
+        false
+    }
+}
