@@ -184,7 +184,7 @@ impl Display {
             }
 
             let mut layout_align_it = alignements_total.iter();
-            let mut layout_it = if history.is_viewed(videos[id].uuid()) {
+            let layout_it = if history.is_viewed(videos[id].uuid()) {
                 self.seen_video_layout.iter()
             } else {
                 self.video_layout.iter()
@@ -192,27 +192,23 @@ impl Display {
             let mut parts_it = parts.0.iter();
             let mut parts_align_it = parts.1.iter();
 
-            loop {
-                if let Some(item) = layout_it.next() {
-                    if item.is_align() {
-                        let spacing = layout_align_it
+            for item in layout_it {
+                if item.is_align() {
+                    let spacing = layout_align_it
+                        .next()
+                        .expect("Internal error: align smaller than expected")
+                        - parts_align_it
                             .next()
-                            .expect("Internal error: align smaller than expected")
-                            - parts_align_it
-                                .next()
-                                .expect("Internal error: align smaller than expected");
-                        buffer.push_str(&" ".to_string().repeat(spacing));
-                    } else if item.is_style() {
-                        buffer.push_str(&item.display_as_style());
-                    } else {
-                        buffer.push_str(
-                            &parts_it
-                                .next()
-                                .expect("Internal Error: parts smaller than alignement"),
-                        );
-                    }
+                            .expect("Internal error: align smaller than expected");
+                    buffer.push_str(&" ".to_string().repeat(spacing));
+                } else if item.is_style() {
+                    buffer.push_str(&item.display_as_style());
                 } else {
-                    break;
+                    buffer.push_str(
+                        &parts_it
+                            .next()
+                            .expect("Internal Error: parts smaller than alignement"),
+                    );
                 }
             }
 
