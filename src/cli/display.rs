@@ -425,11 +425,9 @@ enum VideoLayoutItem {
     Style(Box<dyn fmt::Display>),
     Name,
     Channel,
-    Account,
     Host,
     Nsfw,
     Views,
-    Likes,
     Duration,
     Alignement,
     Published,
@@ -442,7 +440,6 @@ impl VideoLayoutItem {
             VideoLayoutItem::Style(_) => panic!("Internal Error: cannot display style here"),
             VideoLayoutItem::Name => v.name().to_owned(),
             VideoLayoutItem::Channel => v.channel_display().to_owned(),
-            VideoLayoutItem::Account => v.account_display().to_owned(),
             VideoLayoutItem::Host => v.host().to_owned(),
             VideoLayoutItem::Nsfw => {
                 if v.nsfw() {
@@ -452,7 +449,6 @@ impl VideoLayoutItem {
                 }
             }
             VideoLayoutItem::Views => display_count(v.views()),
-            VideoLayoutItem::Likes => display_count(v.likes()),
             VideoLayoutItem::Duration => pretty_duration(v.duration()),
             VideoLayoutItem::Published => pretty_date(v.published()),
             VideoLayoutItem::String(s) => s.clone(),
