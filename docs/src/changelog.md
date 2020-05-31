@@ -1,6 +1,14 @@
 Changelog
 =========
 
+v1.3.1
+------
+
+Fix trending not working on the first search
+
+Add `--local` filtering flag to only browse videos from the instance you are connected to
+
+
 v1.3.0
 ------
 Trending browsing.
