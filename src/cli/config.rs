@@ -514,13 +514,13 @@ impl Blacklist<peertube_api::Video> for Config {
     fn is_blacklisted(&self, video: &peertube_api::Video) -> Option<String> {
         if self.is_whitelist {
             if !self.listed_instances.contains(video.host()) {
-                Some(video.host().to_string())
+                Some(format!("Blocked video from: {}", video.host().to_string()))
             } else {
                 None
             }
         } else {
             if self.listed_instances.contains(video.host()) {
-                Some(video.host().to_string())
+                Some(format!("Blocked video from: {}", video.host().to_string()))
             } else {
                 None
             }
@@ -572,7 +572,7 @@ mod config {
         assert_eq!(config.player(), "mpv");
         assert_eq!(*config.player_args(), vec!["--volume=30"]);
         assert_eq!(config.instance(), "https://skeptikon.fr");
-        assert_eq!(config.is_blacklisted("peertube.social"), true);
+        assert!(config.is_blacklisted("peertube.social").is_some());
         assert_eq!(config.use_raw_url(), true);
         assert_eq!(config.select_quality(), true);
 
@@ -609,7 +609,7 @@ mod config {
         assert_eq!(config.player(), "mpv");
         assert_eq!(*config.player_args(), vec!["--volume=30"]);
         assert_eq!(config.instance(), "https://skeptikon.fr");
-        assert_eq!(config.is_blacklisted("peertube.social"), true);
+        assert!(config.is_blacklisted("peertube.social").is_some());
         assert_eq!(config.use_raw_url(), true);
         assert_eq!(config.select_quality(), true);
         assert_eq!(config.use_torrent(), false);

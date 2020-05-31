@@ -206,7 +206,7 @@ impl Display {
 
             if let Some(reason) = blacklist.is_blacklisted(&contents[id]) {
                 buffer.push_str(&format!(
-                    "{}blocked content from: {}{}\n",
+                    "{}{}{}\n",
                     self.fg_color(color::Red),
                     reason,
                     self.fg_color(color::Reset)
