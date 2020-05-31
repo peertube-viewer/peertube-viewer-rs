@@ -494,36 +494,20 @@ fn correct_instance(s: &str) -> String {
 
 impl Blacklist<str> for Config {
     fn is_blacklisted(&self, instance: &str) -> Option<String> {
-        if self.is_whitelist {
-            if !self.listed_instances.contains(instance) {
-                Some(instance.to_string())
-            } else {
-                None
-            }
+        if self.is_whitelist ^ self.listed_instances.contains(instance) {
+            Some(instance.to_string())
         } else {
-            if self.listed_instances.contains(instance) {
-                Some(instance.to_string())
-            } else {
-                None
-            }
+            None
         }
     }
 }
 
 impl Blacklist<peertube_api::Video> for Config {
     fn is_blacklisted(&self, video: &peertube_api::Video) -> Option<String> {
-        if self.is_whitelist {
-            if !self.listed_instances.contains(video.host()) {
-                Some(format!("Blocked video from: {}", video.host().to_string()))
-            } else {
-                None
-            }
+        if self.is_whitelist ^ self.listed_instances.contains(video.host()) {
+            Some(format!("Blocked video from: {}", video.host().to_string()))
         } else {
-            if self.listed_instances.contains(video.host()) {
-                Some(format!("Blocked video from: {}", video.host().to_string()))
-            } else {
-                None
-            }
+            None
         }
     }
 }
