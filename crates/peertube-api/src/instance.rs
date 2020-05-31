@@ -2,11 +2,13 @@ use std::rc::Rc;
 
 use reqwest::Client;
 
+use peertube_ser::channels::Channels;
 use peertube_ser::video::{Description, File, Video as FullVideo};
 use peertube_ser::Videos;
 
+use crate::channels::Channel;
 use crate::error;
-use crate::search::VideoSearch;
+use crate::search::{ChannelSearch, VideoSearch};
 use crate::trending::TrendingList;
 use crate::video::Video;
 
@@ -105,6 +107,45 @@ impl Instance {
         };
 
         Ok((res, total))
+    }
+    /// Perform a search for the given query
+    pub async fn search_channels(
+        self: &Rc<Instance>,
+        query: &str,
+        nb: usize,
+        skip: usize,
+    ) -> error::Result<(Vec<Channel>, Option<usize>)> {
+        let mut url = self.host.clone();
+        url.push_str("/api/v1/video-channels");
+
+        let mut query = self.client.get(&url).query(&[
+            ("search", query),
+            ("count", &nb.to_string()),
+            ("start", &skip.to_string()),
+        ]);
+
+        if self.local {
+            query = query.query(&[("filter", "local")]);
+        }
+
+        let mut search_res: Channels = serde_json::from_str(&query.send().await?.text().await?)?;
+        let mut res = Vec::new();
+        for video in search_res.data.drain(..) {
+            if let Some(v) = Channel::maybe_from(video) {
+                res.push(v);
+            }
+        }
+
+        let total = match search_res.total {
+            Some(c) if c > 0 => Some(c as usize),
+            _ => None,
+        };
+
+        Ok((res, total))
+    }
+
+    pub fn channels(self: &Rc<Instance>, query: &str, skip: usize) -> ChannelSearch {
+        ChannelSearch::new(self.clone(), query, skip)
     }
 
     pub fn trending(self: &Rc<Instance>, skip: usize) -> TrendingList {

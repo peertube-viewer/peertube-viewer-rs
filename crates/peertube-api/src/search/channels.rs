@@ -2,17 +2,16 @@ use tokio::task::{spawn_local, JoinHandle};
 
 use std::rc::Rc;
 
+use crate::channels::Channel;
 use crate::error::{self, Error};
 use crate::Instance;
 use crate::PreloadableList;
-use crate::Video;
 
-type Loading = JoinHandle<Result<(Vec<Video>, Option<usize>), Error>>;
-pub struct VideoSearch {
+type Loading = JoinHandle<Result<(Vec<Channel>, Option<usize>), Error>>;
+pub struct ChannelSearch {
     instance: Rc<Instance>,
 
-    preload_res: bool,
-    loaded: Vec<Vec<Rc<Video>>>,
+    loaded: Vec<Vec<Rc<Channel>>>,
     loading: Option<Loading>,
     query: String,
     current: usize,
@@ -20,13 +19,12 @@ pub struct VideoSearch {
     total: Option<usize>,
 }
 
-impl VideoSearch {
-    pub fn new(instance: Rc<Instance>, query: &str, step: usize) -> VideoSearch {
-        VideoSearch {
+impl ChannelSearch {
+    pub fn new(instance: Rc<Instance>, query: &str, step: usize) -> ChannelSearch {
+        ChannelSearch {
             instance,
             loaded: Vec::new(),
             loading: None,
-            preload_res: false,
             query: query.to_owned(),
             current: 0,
             step,
@@ -35,8 +33,8 @@ impl VideoSearch {
     }
 }
 
-impl VideoSearch {
-    pub async fn next_videos(&mut self) -> error::Result<&Vec<Rc<Video>>> {
+impl ChannelSearch {
+    pub async fn next_channels(&mut self) -> error::Result<&Vec<Rc<Channel>>> {
         if !self.loaded.is_empty() {
             self.current += 1;
         }
@@ -47,28 +45,25 @@ impl VideoSearch {
             } else {
                 temp = self
                     .instance
-                    .search_videos(&self.query, self.step, self.current * self.step)
+                    .search_channels(&self.query, self.step, self.current * self.step)
                     .await?;
             }
-            let (videos, new_total) = temp;
-            self.loaded.push(videos.into_iter().map(Rc::new).collect());
+            let (channels, new_total) = temp;
+            self.loaded
+                .push(channels.into_iter().map(Rc::new).collect());
             self.total = new_total.or(self.total);
         }
         Ok(&self.loaded[self.current])
     }
 
-    pub fn preload_res(&mut self, should: bool) {
-        self.preload_res = should;
-    }
-
-    pub fn prev(&mut self) -> &Vec<Rc<Video>> {
+    pub fn prev(&mut self) -> &Vec<Rc<Channel>> {
         self.current -= 1;
         &self.loaded[self.current]
     }
 }
 
-impl PreloadableList for VideoSearch {
-    type Current = Vec<Rc<Video>>;
+impl PreloadableList for ChannelSearch {
+    type Current = Vec<Rc<Channel>>;
 
     fn preload_next(&mut self) {
         if self.loaded.len() <= self.current + 1 && self.loading.is_none() {
@@ -77,24 +72,12 @@ impl PreloadableList for VideoSearch {
             let nb = self.step;
             let skip = (self.current + 1) * self.step;
             self.loading = Some(spawn_local(async move {
-                inst_cloned.search_videos(&quer_cloned, nb, skip).await
+                inst_cloned.search_channels(&quer_cloned, nb, skip).await
             }));
         }
     }
 
-    fn preload_id(&mut self, id: usize) {
-        let video_cloned = self.current()[id].clone();
-        spawn_local(async move { video_cloned.load_description().await });
-        if self.preload_res {
-            let cl2 = self.current()[id].clone();
-            #[allow(unused_must_use)]
-            spawn_local(async move {
-                cl2.load_resolutions().await;
-            });
-        }
-    }
-
-    fn current(&self) -> &Vec<Rc<Video>> {
+    fn current(&self) -> &Vec<Rc<Channel>> {
         &self.loaded[self.current]
     }
 
@@ -110,6 +93,3 @@ impl PreloadableList for VideoSearch {
         self.total
     }
 }
-
-mod channels;
-pub use channels::ChannelSearch;
