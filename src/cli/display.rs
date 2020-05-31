@@ -10,6 +10,8 @@ use termion::{color, style};
 
 use std::rc::Rc;
 
+use unicode_width::UnicodeWidthStr;
+
 const DEFAULT_COLS: usize = 20;
 
 pub struct Display {
@@ -60,9 +62,9 @@ impl Display {
         let mut channels_length = Vec::new();
         let mut hosts_length = Vec::new();
         for v in videos.iter() {
-            let len = v.name().chars().count();
-            let channel_len = v.channel_display_name().chars().count();
-            let host_len = v.host().chars().count();
+            let len = UnicodeWidthStr::width(v.name());
+            let channel_len = UnicodeWidthStr::width(v.channel_display_name());
+            let host_len = UnicodeWidthStr::width(v.host());
             let pretty_dur = pretty_duration(v.duration());
             let dur_len = pretty_dur.chars().count();
             if dur_len > max_duration_len {

@@ -749,6 +749,7 @@ dependencies = [
  "termion",
  "tokio",
  "toml",
+ "unicode-width",
 ]
 
 [[package]]
