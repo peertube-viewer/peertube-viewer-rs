@@ -18,6 +18,7 @@ pub struct Display {
     cols: usize,
     nsfw: NsfwBehavior,
     colors: bool,
+    video_layout: Vec<VideoLayoutItem>,
 }
 
 #[derive(Debug)]
@@ -40,7 +41,41 @@ impl Display {
         let cols = termion::terminal_size()
             .map(|(c, _r)| c as usize)
             .unwrap_or(DEFAULT_COLS);
-        Display { cols, nsfw, colors }
+
+        let video_layout = vec![
+            VideoLayoutItem::Color(Box::new(color::Fg(color::Blue))),
+            VideoLayoutItem::Name,
+            VideoLayoutItem::String(" ".to_string()),
+            VideoLayoutItem::Alignement,
+            VideoLayoutItem::Color(Box::new(color::Fg(color::Green))),
+            VideoLayoutItem::Channel,
+            VideoLayoutItem::String(" ".to_string()),
+            VideoLayoutItem::Alignement,
+            VideoLayoutItem::Color(Box::new(color::Fg(color::Cyan))),
+            VideoLayoutItem::Host,
+            VideoLayoutItem::Alignement,
+            VideoLayoutItem::Color(Box::new(color::Fg(color::Yellow))),
+            VideoLayoutItem::String(" [".to_string()),
+            VideoLayoutItem::Duration,
+            VideoLayoutItem::String("] ".to_string()),
+            VideoLayoutItem::Alignement,
+            VideoLayoutItem::Color(Box::new(color::Fg(color::Green))),
+            VideoLayoutItem::Views,
+            VideoLayoutItem::String(" ".to_string()),
+            VideoLayoutItem::Alignement,
+            VideoLayoutItem::Published,
+            VideoLayoutItem::String(" ".to_string()),
+            VideoLayoutItem::Alignement,
+            VideoLayoutItem::Color(Box::new(color::Fg(color::Red))),
+            VideoLayoutItem::Nsfw,
+            VideoLayoutItem::Color(Box::new(color::Fg(color::Reset))),
+        ];
+        Display {
+            cols,
+            nsfw,
+            colors,
+            video_layout,
+        }
     }
 
     /// Abstract removing colors
@@ -55,117 +90,74 @@ impl Display {
 
     /// Display a list of video results
     pub fn video_list(&self, videos: &[Rc<Video>], history: &History, blacklist: &impl Blacklist) {
-        let mut lengths = Vec::new();
-        let mut duration_length = Vec::new();
-        let mut pretty_durations = Vec::new();
-        let mut max_duration_len = 0;
-        let mut max_len = 0;
-        let mut max_channel_len = 0;
-        let mut max_host_len = 0;
-        let mut channels_length = Vec::new();
-        let mut hosts_length = Vec::new();
-        for v in videos.iter() {
-            let len = UnicodeWidthStr::width(v.name());
-            let channel_len = UnicodeWidthStr::width(v.channel_display_name());
-            let host_len = UnicodeWidthStr::width(v.host());
-            let pretty_dur = pretty_duration(v.duration());
-            let dur_len = pretty_dur.chars().count();
-            if dur_len > max_duration_len {
-                max_duration_len = dur_len;
-            }
-
-            if len > max_len {
-                max_len = len;
-            }
-
-            if channel_len > max_channel_len {
-                max_channel_len = channel_len;
-            }
-
-            if host_len > max_host_len {
-                max_host_len = host_len;
-            }
-            duration_length.push(dur_len);
-            channels_length.push(channel_len);
-            hosts_length.push(host_len);
-            pretty_durations.push(pretty_dur);
-            lengths.push(len);
-        }
-
-        for (id, v) in videos.iter().enumerate() {
-            debug_assert!(!(v.nsfw() && self.nsfw.is_block()));
-
-            // Create spacing for alignement
-            let spacing = " ".to_string().repeat(max_len - lengths[id]);
-            let colon_spacing = " "
-                .to_string()
-                .repeat(display_length(videos.len() - 1) - display_length(id + 1));
-            let duration_spacing = " "
-                .to_string()
-                .repeat(max_duration_len - duration_length[id]);
-            let channel_spacing = " "
-                .to_string()
-                .repeat(max_channel_len - channels_length[id]);
-            let host_spacing = " ".to_string().repeat(max_host_len - hosts_length[id]);
-            let views_str = display_count(v.views());
-            let view_spacing = " ".to_string().repeat(4 - views_str.chars().count());
-
-            let name = if history.is_viewed(v.uuid()) {
-                format!("{}{}{}", style::Bold, v.name(), style::Reset,)
-            } else {
-                format!(
-                    "{}{}{}",
-                    self.fg_color(color::Blue),
-                    v.name(),
-                    self.fg_color(color::Reset),
-                )
-            };
-
-            if !blacklist.is_blacklisted(v.host()) {
-                let aligned = format!(
-                    "{}{}: {} {}{}{} {}{}{} {}{}[{}] {}{}{} {}{}{}",
-                    id + 1,
-                    colon_spacing,
-                    name,
-                    spacing,
-                    self.fg_color(color::Green),
-                    v.channel_display_name(),
-                    channel_spacing,
-                    self.fg_color(color::Cyan),
-                    v.host(),
-                    host_spacing,
-                    self.fg_color(color::Yellow),
-                    pretty_durations[id],
-                    duration_spacing,
-                    self.fg_color(color::Green),
-                    views_str,
-                    view_spacing,
-                    pretty_date(v.published()),
-                    self.fg_color(color::Reset),
-                );
-
-                let tagged = if v.nsfw() && self.nsfw == NsfwBehavior::Tag {
-                    format!(
-                        "{} {}nsfw{}",
-                        aligned,
-                        self.fg_color(color::Red),
-                        self.fg_color(color::Reset)
-                    )
+        let mut video_parts = Vec::new();
+        let mut alignements_total =
+            vec![0; self.video_layout.iter().filter(|i| i.is_align()).count()];
+        for v in videos {
+            let mut align_off: usize = 0;
+            let mut align_id = 0;
+            let mut tmp_str = Vec::new();
+            let mut tmp_align = Vec::new();
+            for item in &self.video_layout {
+                if !item.is_align() {
+                    let dsp = item.display(v, self.colors);
+                    let s: &str = &dsp;
+                    if item.length_matters() {
+                        align_off += UnicodeWidthStr::width(s);
+                    }
+                    tmp_str.push(dsp);
                 } else {
-                    aligned
-                };
-                println!("{}", tagged);
-            } else {
-                println!(
-                    "{}{}: {}blocked video from: {}{}",
-                    id + 1,
-                    colon_spacing,
-                    self.fg_color(color::Red),
-                    v.host(),
-                    self.fg_color(color::Reset)
-                );
+                    if alignements_total[align_id] < align_off {
+                        alignements_total[align_id] = align_off;
+                    }
+                    tmp_align.push(align_off);
+                    align_off = 0;
+                    align_id += 1;
+                }
             }
+            video_parts.push((tmp_str, tmp_align));
         }
+
+        let mut buffer = String::new();
+        for (id, parts) in video_parts.into_iter().enumerate() {
+            buffer.push_str(&(id + 1).to_string());
+            buffer.push_str(
+                &" ".to_string()
+                    .repeat(display_length(videos.len()) - display_length(id + 1)),
+            );
+            buffer.push_str(": ");
+
+            let mut layout_align_it = alignements_total.iter();
+            let mut layout_it = self.video_layout.iter();
+            let mut parts_it = parts.0.iter();
+            let mut parts_align_it = parts.1.iter();
+
+            loop {
+                if let Some(item) = layout_it.next() {
+                    if item.is_align() {
+                        let spacing = layout_align_it
+                            .next()
+                            .expect("Internal error: align smaller than expected")
+                            - parts_align_it
+                                .next()
+                                .expect("Internal error: align smaller than expected");
+                        buffer.push_str(&" ".to_string().repeat(spacing));
+                    } else {
+                        buffer.push_str(
+                            &parts_it
+                                .next()
+                                .expect("Internal Error: parts smaller than alignement"),
+                        );
+                    }
+                } else {
+                    break;
+                }
+            }
+
+            buffer.push('\n');
+        }
+
+        print!("{}", buffer);
     }
 
     pub fn resolutions(&self, resolutions: Vec<Resolution>) {
@@ -329,6 +321,7 @@ fn full_date(d: Option<&DateTime<FixedOffset>>) -> String {
     d.map(|t| t.format("%a %b %Y").to_string())
         .unwrap_or_default()
 }
+
 fn pretty_duration_since(d: Duration) -> String {
     if d.num_milliseconds() < 0 {
         return "From the future. Bug?".to_string();
@@ -368,6 +361,79 @@ fn display_length(mut i: usize) -> usize {
     }
 
     len
+}
+
+enum VideoLayoutItem {
+    Color(Box<dyn fmt::Display>),
+    Name,
+    Channel,
+    Account,
+    Host,
+    Nsfw,
+    Views,
+    Likes,
+    Duration,
+    Alignement,
+    Published,
+    String(String),
+}
+
+impl VideoLayoutItem {
+    fn display(&self, v: &Video, colors: bool) -> String {
+        match self {
+            VideoLayoutItem::Color(c) => {
+                if colors {
+                    format!("{}", *c)
+                } else {
+                    String::new()
+                }
+            }
+            VideoLayoutItem::Name => v.name().to_owned(),
+            VideoLayoutItem::Channel => v.channel_display().to_owned(),
+            VideoLayoutItem::Account => v.account_display().to_owned(),
+            VideoLayoutItem::Host => v.host().to_owned(),
+            VideoLayoutItem::Nsfw => {
+                if v.nsfw() {
+                    "nsfw".to_string()
+                } else {
+                    "".to_string()
+                }
+            }
+            VideoLayoutItem::Views => display_count(v.views()),
+            VideoLayoutItem::Likes => display_count(v.likes()),
+            VideoLayoutItem::Duration => pretty_duration(v.duration()),
+            VideoLayoutItem::Published => pretty_date(v.published()),
+            VideoLayoutItem::String(s) => s.clone(),
+            VideoLayoutItem::Alignement => {
+                panic!("Internal error, trying to display an alignement")
+            }
+        }
+    }
+
+    fn is_align(&self) -> bool {
+        if let VideoLayoutItem::Alignement = self {
+            true
+        } else {
+            false
+        }
+    }
+
+    fn length_matters(&self) -> bool {
+        match self {
+            VideoLayoutItem::Name
+            | VideoLayoutItem::Channel
+            | VideoLayoutItem::Account
+            | VideoLayoutItem::Host
+            | VideoLayoutItem::Nsfw
+            | VideoLayoutItem::Views
+            | VideoLayoutItem::Likes
+            | VideoLayoutItem::Duration
+            | VideoLayoutItem::Alignement
+            | VideoLayoutItem::Published
+            | VideoLayoutItem::String(_) => true,
+            _ => false,
+        }
+    }
 }
 
 #[cfg(test)]
