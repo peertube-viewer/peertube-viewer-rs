@@ -1,6 +1,9 @@
 use peertube_api::{Resolution, Video};
 
-use super::{config::Blacklist, history::History};
+use super::{
+    config::Blacklist,
+    history::{History, HistoryT},
+};
 use std::fmt;
 use termion::{color, style};
 
@@ -8,7 +11,7 @@ use std::cmp;
 use std::rc::Rc;
 
 mod layout;
-use layout::VideoLayoutItem;
+use layout::{InnerLayoutItem, LayoutItem, VideoLayoutItem};
 
 mod helpers;
 use helpers::*;
@@ -20,8 +23,8 @@ const DEFAULT_COLS: usize = 20;
 pub struct Display {
     cols: usize,
     colors: bool,
-    video_layout: Vec<VideoLayoutItem>,
-    seen_video_layout: Vec<VideoLayoutItem>,
+    video_layout: Vec<LayoutItem<VideoLayoutItem>>,
+    seen_video_layout: Vec<LayoutItem<VideoLayoutItem>>,
 }
 
 #[derive(Debug)]
@@ -46,62 +49,62 @@ impl Display {
             .unwrap_or(DEFAULT_COLS);
 
         let video_layout = vec![
-            VideoLayoutItem::Style(Box::new(color::Fg(color::Blue))),
-            VideoLayoutItem::Name,
-            VideoLayoutItem::String(" ".to_string()),
-            VideoLayoutItem::Alignement,
-            VideoLayoutItem::Style(Box::new(color::Fg(color::Green))),
-            VideoLayoutItem::Channel,
-            VideoLayoutItem::String(" ".to_string()),
-            VideoLayoutItem::Alignement,
-            VideoLayoutItem::Style(Box::new(color::Fg(color::Cyan))),
-            VideoLayoutItem::Host,
-            VideoLayoutItem::Alignement,
-            VideoLayoutItem::Style(Box::new(color::Fg(color::Yellow))),
-            VideoLayoutItem::String(" [".to_string()),
-            VideoLayoutItem::Duration,
-            VideoLayoutItem::String("] ".to_string()),
-            VideoLayoutItem::Alignement,
-            VideoLayoutItem::Style(Box::new(color::Fg(color::Green))),
-            VideoLayoutItem::Views,
-            VideoLayoutItem::String(" ".to_string()),
-            VideoLayoutItem::Alignement,
-            VideoLayoutItem::Published,
-            VideoLayoutItem::String(" ".to_string()),
-            VideoLayoutItem::Alignement,
-            VideoLayoutItem::Style(Box::new(color::Fg(color::Red))),
-            VideoLayoutItem::Nsfw,
-            VideoLayoutItem::Style(Box::new(color::Fg(color::Reset))),
+            LayoutItem::Style(Box::new(color::Fg(color::Blue))),
+            LayoutItem::Inner(VideoLayoutItem::Name),
+            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+            LayoutItem::Alignement,
+            LayoutItem::Style(Box::new(color::Fg(color::Green))),
+            LayoutItem::Inner(VideoLayoutItem::Channel),
+            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+            LayoutItem::Alignement,
+            LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
+            LayoutItem::Inner(VideoLayoutItem::Host),
+            LayoutItem::Alignement,
+            LayoutItem::Style(Box::new(color::Fg(color::Yellow))),
+            LayoutItem::Inner(VideoLayoutItem::String(" [".to_string())),
+            LayoutItem::Inner(VideoLayoutItem::Duration),
+            LayoutItem::Inner(VideoLayoutItem::String("] ".to_string())),
+            LayoutItem::Alignement,
+            LayoutItem::Style(Box::new(color::Fg(color::Green))),
+            LayoutItem::Inner(VideoLayoutItem::Views),
+            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+            LayoutItem::Alignement,
+            LayoutItem::Inner(VideoLayoutItem::Published),
+            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+            LayoutItem::Alignement,
+            LayoutItem::Style(Box::new(color::Fg(color::Red))),
+            LayoutItem::Inner(VideoLayoutItem::Nsfw),
+            LayoutItem::Style(Box::new(color::Fg(color::Reset))),
         ];
 
         let seen_video_layout = vec![
-            VideoLayoutItem::Style(Box::new(style::Bold)),
-            VideoLayoutItem::Name,
-            VideoLayoutItem::Style(Box::new(style::Reset)),
-            VideoLayoutItem::String(" ".to_string()),
-            VideoLayoutItem::Alignement,
-            VideoLayoutItem::Style(Box::new(color::Fg(color::Green))),
-            VideoLayoutItem::Channel,
-            VideoLayoutItem::String(" ".to_string()),
-            VideoLayoutItem::Alignement,
-            VideoLayoutItem::Style(Box::new(color::Fg(color::Cyan))),
-            VideoLayoutItem::Host,
-            VideoLayoutItem::Alignement,
-            VideoLayoutItem::Style(Box::new(color::Fg(color::Yellow))),
-            VideoLayoutItem::String(" [".to_string()),
-            VideoLayoutItem::Duration,
-            VideoLayoutItem::String("] ".to_string()),
-            VideoLayoutItem::Alignement,
-            VideoLayoutItem::Style(Box::new(color::Fg(color::Green))),
-            VideoLayoutItem::Views,
-            VideoLayoutItem::String(" ".to_string()),
-            VideoLayoutItem::Alignement,
-            VideoLayoutItem::Published,
-            VideoLayoutItem::String(" ".to_string()),
-            VideoLayoutItem::Alignement,
-            VideoLayoutItem::Style(Box::new(color::Fg(color::Red))),
-            VideoLayoutItem::Nsfw,
-            VideoLayoutItem::Style(Box::new(color::Fg(color::Reset))),
+            LayoutItem::Style(Box::new(style::Bold)),
+            LayoutItem::Inner(VideoLayoutItem::Name),
+            LayoutItem::Style(Box::new(style::Reset)),
+            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+            LayoutItem::Alignement,
+            LayoutItem::Style(Box::new(color::Fg(color::Green))),
+            LayoutItem::Inner(VideoLayoutItem::Channel),
+            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+            LayoutItem::Alignement,
+            LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
+            LayoutItem::Inner(VideoLayoutItem::Host),
+            LayoutItem::Alignement,
+            LayoutItem::Style(Box::new(color::Fg(color::Yellow))),
+            LayoutItem::Inner(VideoLayoutItem::String(" [".to_string())),
+            LayoutItem::Inner(VideoLayoutItem::Duration),
+            LayoutItem::Inner(VideoLayoutItem::String("] ".to_string())),
+            LayoutItem::Alignement,
+            LayoutItem::Style(Box::new(color::Fg(color::Green))),
+            LayoutItem::Inner(VideoLayoutItem::Views),
+            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+            LayoutItem::Alignement,
+            LayoutItem::Inner(VideoLayoutItem::Published),
+            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+            LayoutItem::Alignement,
+            LayoutItem::Style(Box::new(color::Fg(color::Red))),
+            LayoutItem::Inner(VideoLayoutItem::Nsfw),
+            LayoutItem::Style(Box::new(color::Fg(color::Reset))),
         ];
         Display {
             cols,
@@ -128,32 +131,50 @@ impl Display {
         history: &History,
         blacklist: &impl Blacklist<Video>,
     ) {
-        let mut video_parts = Vec::new();
+        self.list(
+            videos,
+            history,
+            blacklist,
+            &self.video_layout,
+            &self.seen_video_layout,
+        );
+    }
+
+    fn list<I, D, B, H>(
+        &self,
+        contents: &[Rc<D>],
+        history: &H,
+        blacklist: &B,
+        layout: &[LayoutItem<I>],
+        seen_layout: &[LayoutItem<I>],
+    ) where
+        B: Blacklist<D>,
+        H: HistoryT<D>,
+        I: InnerLayoutItem<Data = D>,
+    {
+        let mut content_parts = Vec::new();
         let mut alignements_total = vec![
             0;
             cmp::max(
-                self.seen_video_layout
-                    .iter()
-                    .filter(|i| i.is_align())
-                    .count(),
-                self.video_layout.iter().filter(|i| i.is_align()).count()
+                seen_layout.iter().filter(|i| i.is_align()).count(),
+                layout.iter().filter(|i| i.is_align()).count()
             )
         ];
-        for v in videos {
+        for v in contents {
             let mut tmp_str = Vec::new();
             let mut tmp_align = Vec::new();
 
-            if blacklist.is_blacklisted(&v) {
-                video_parts.push((tmp_str, tmp_align));
+            if blacklist.is_blacklisted(&v).is_some() {
+                content_parts.push((tmp_str, tmp_align));
                 continue;
             }
 
             let mut align_off: usize = 0;
             let mut align_id = 0;
-            let layout_iter = if history.is_viewed(v.uuid()) {
-                self.seen_video_layout.iter()
+            let layout_iter = if history.is_viewed(&**v) {
+                seen_layout.iter()
             } else {
-                self.video_layout.iter()
+                layout.iter()
             };
 
             for item in layout_iter {
@@ -171,33 +192,33 @@ impl Display {
                     align_id += 1;
                 }
             }
-            video_parts.push((tmp_str, tmp_align));
+            content_parts.push((tmp_str, tmp_align));
         }
 
         let mut buffer = String::new();
-        for (id, parts) in video_parts.into_iter().enumerate() {
+        for (id, parts) in content_parts.into_iter().enumerate() {
             buffer.push_str(&(id + 1).to_string());
             buffer.push_str(
                 &" ".to_string()
-                    .repeat(display_length(videos.len()) - display_length(id + 1)),
+                    .repeat(display_length(contents.len()) - display_length(id + 1)),
             );
             buffer.push_str(": ");
 
-            if blacklist.is_blacklisted(&videos[id]) {
+            if let Some(reason) = blacklist.is_blacklisted(&contents[id]) {
                 buffer.push_str(&format!(
-                    "{}blocked video from: {}{}\n",
+                    "{}blocked content from: {}{}\n",
                     self.fg_color(color::Red),
-                    videos[id].host(),
+                    reason,
                     self.fg_color(color::Reset)
                 ));
                 continue;
             }
 
             let mut layout_align_it = alignements_total.iter();
-            let layout_it = if history.is_viewed(videos[id].uuid()) {
-                self.seen_video_layout.iter()
+            let layout_it = if history.is_viewed(&*contents[id]) {
+                seen_layout.iter()
             } else {
-                self.video_layout.iter()
+                layout.iter()
             };
             let mut parts_it = parts.0.iter();
             let mut parts_align_it = parts.1.iter();

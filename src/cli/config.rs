@@ -14,7 +14,7 @@ use std::process::exit;
 use std::{error, io};
 
 pub trait Blacklist<T: ?Sized> {
-    fn is_blacklisted(&self, instance: &T) -> bool;
+    fn is_blacklisted(&self, instance: &T) -> Option<String>;
 }
 
 #[derive(Debug, PartialEq)]
@@ -493,21 +493,37 @@ fn correct_instance(s: &str) -> String {
 }
 
 impl Blacklist<str> for Config {
-    fn is_blacklisted(&self, instance: &str) -> bool {
+    fn is_blacklisted(&self, instance: &str) -> Option<String> {
         if self.is_whitelist {
-            !self.listed_instances.contains(instance)
+            if !self.listed_instances.contains(instance) {
+                Some(instance.to_string())
+            } else {
+                None
+            }
         } else {
-            self.listed_instances.contains(instance)
+            if self.listed_instances.contains(instance) {
+                Some(instance.to_string())
+            } else {
+                None
+            }
         }
     }
 }
 
 impl Blacklist<peertube_api::Video> for Config {
-    fn is_blacklisted(&self, video: &peertube_api::Video) -> bool {
+    fn is_blacklisted(&self, video: &peertube_api::Video) -> Option<String> {
         if self.is_whitelist {
-            !self.listed_instances.contains(video.host())
+            if !self.listed_instances.contains(video.host()) {
+                Some(video.host().to_string())
+            } else {
+                None
+            }
         } else {
-            self.listed_instances.contains(video.host())
+            if self.listed_instances.contains(video.host()) {
+                Some(video.host().to_string())
+            } else {
+                None
+            }
         }
     }
 }

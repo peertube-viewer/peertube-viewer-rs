@@ -40,10 +40,6 @@ impl History {
         }
     }
 
-    pub fn is_viewed(&self, uuid: &str) -> bool {
-        self.videos.contains(uuid)
-    }
-
     pub fn save(&self, path: &PathBuf, max_len: usize) -> Result<(), Error> {
         let mut already_in = HashSet::new();
         let mut full_str = String::new();
@@ -59,5 +55,21 @@ impl History {
             }
         }
         std::fs::write(path, &full_str)
+    }
+}
+
+pub trait HistoryT<D: ?Sized> {
+    fn is_viewed(&self, uuid: &D) -> bool;
+}
+
+impl HistoryT<str> for History {
+    fn is_viewed(&self, uuid: &str) -> bool {
+        self.videos.contains(uuid)
+    }
+}
+
+impl HistoryT<peertube_api::Video> for History {
+    fn is_viewed(&self, video: &peertube_api::Video) -> bool {
+        self.videos.contains(video.uuid())
     }
 }
