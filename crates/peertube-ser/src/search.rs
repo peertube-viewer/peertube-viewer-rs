@@ -76,7 +76,7 @@ pub struct Video {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
-pub struct Search {
+pub struct Videos {
     pub total: Option<i64>,
     pub data: Vec<Video>,
 }

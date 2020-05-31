@@ -4,6 +4,7 @@ extern crate reqwest;
 extern crate serde_json;
 extern crate tokio;
 
+mod channels;
 pub mod error;
 mod instance;
 mod search;

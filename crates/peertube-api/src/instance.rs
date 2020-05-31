@@ -2,8 +2,8 @@ use std::rc::Rc;
 
 use reqwest::Client;
 
-use peertube_ser::search::Search;
 use peertube_ser::video::{Description, File, Video as FullVideo};
+use peertube_ser::Videos;
 
 use crate::error;
 use crate::search::VideoSearch;
@@ -51,7 +51,7 @@ impl Instance {
             query = query.query(&[("filter", "local")]);
         }
 
-        let mut search_res: Search = serde_json::from_str(&query.send().await?.text().await?)?;
+        let mut search_res: Videos = serde_json::from_str(&query.send().await?.text().await?)?;
         let mut res = Vec::new();
         for video in search_res.data.drain(..) {
             if let Some(v) = Video::maybe_from(self, video) {
@@ -91,7 +91,7 @@ impl Instance {
             query = query.query(&[("filter", "local")]);
         }
 
-        let mut search_res: Search = serde_json::from_str(&query.send().await?.text().await?)?;
+        let mut search_res: Videos = serde_json::from_str(&query.send().await?.text().await?)?;
         let mut res = Vec::new();
         for video in search_res.data.drain(..) {
             if let Some(v) = Video::maybe_from(self, video) {
