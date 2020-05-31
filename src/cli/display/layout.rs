@@ -1,5 +1,6 @@
 use peertube_api::Video;
 use std::fmt;
+use termion::{color, style};
 
 use super::helpers::*;
 
@@ -82,4 +83,70 @@ impl InnerLayoutItem for VideoLayoutItem {
 pub trait InnerLayoutItem {
     type Data;
     fn display(&self, data: &Self::Data) -> String;
+}
+
+pub fn default_video_layouts() -> (
+    Vec<LayoutItem<VideoLayoutItem>>,
+    Vec<LayoutItem<VideoLayoutItem>>,
+) {
+    let video_layout = vec![
+        LayoutItem::Style(Box::new(color::Fg(color::Blue))),
+        LayoutItem::Inner(VideoLayoutItem::Name),
+        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Alignement,
+        LayoutItem::Style(Box::new(color::Fg(color::Green))),
+        LayoutItem::Inner(VideoLayoutItem::Channel),
+        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Alignement,
+        LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
+        LayoutItem::Inner(VideoLayoutItem::Host),
+        LayoutItem::Alignement,
+        LayoutItem::Style(Box::new(color::Fg(color::Yellow))),
+        LayoutItem::Inner(VideoLayoutItem::String(" [".to_string())),
+        LayoutItem::Inner(VideoLayoutItem::Duration),
+        LayoutItem::Inner(VideoLayoutItem::String("] ".to_string())),
+        LayoutItem::Alignement,
+        LayoutItem::Style(Box::new(color::Fg(color::Green))),
+        LayoutItem::Inner(VideoLayoutItem::Views),
+        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Alignement,
+        LayoutItem::Inner(VideoLayoutItem::Published),
+        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Alignement,
+        LayoutItem::Style(Box::new(color::Fg(color::Red))),
+        LayoutItem::Inner(VideoLayoutItem::Nsfw),
+        LayoutItem::Style(Box::new(color::Fg(color::Reset))),
+    ];
+
+    let seen_video_layout = vec![
+        LayoutItem::Style(Box::new(style::Bold)),
+        LayoutItem::Inner(VideoLayoutItem::Name),
+        LayoutItem::Style(Box::new(style::Reset)),
+        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Alignement,
+        LayoutItem::Style(Box::new(color::Fg(color::Green))),
+        LayoutItem::Inner(VideoLayoutItem::Channel),
+        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Alignement,
+        LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
+        LayoutItem::Inner(VideoLayoutItem::Host),
+        LayoutItem::Alignement,
+        LayoutItem::Style(Box::new(color::Fg(color::Yellow))),
+        LayoutItem::Inner(VideoLayoutItem::String(" [".to_string())),
+        LayoutItem::Inner(VideoLayoutItem::Duration),
+        LayoutItem::Inner(VideoLayoutItem::String("] ".to_string())),
+        LayoutItem::Alignement,
+        LayoutItem::Style(Box::new(color::Fg(color::Green))),
+        LayoutItem::Inner(VideoLayoutItem::Views),
+        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Alignement,
+        LayoutItem::Inner(VideoLayoutItem::Published),
+        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Alignement,
+        LayoutItem::Style(Box::new(color::Fg(color::Red))),
+        LayoutItem::Inner(VideoLayoutItem::Nsfw),
+        LayoutItem::Style(Box::new(color::Fg(color::Reset))),
+    ];
+
+    (video_layout, seen_video_layout)
 }

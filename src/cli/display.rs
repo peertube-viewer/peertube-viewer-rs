@@ -11,7 +11,7 @@ use std::cmp;
 use std::rc::Rc;
 
 mod layout;
-use layout::{InnerLayoutItem, LayoutItem, VideoLayoutItem};
+use layout::{default_video_layouts, InnerLayoutItem, LayoutItem, VideoLayoutItem};
 
 mod helpers;
 use helpers::*;
@@ -48,64 +48,8 @@ impl Display {
             .map(|(c, _r)| c as usize)
             .unwrap_or(DEFAULT_COLS);
 
-        let video_layout = vec![
-            LayoutItem::Style(Box::new(color::Fg(color::Blue))),
-            LayoutItem::Inner(VideoLayoutItem::Name),
-            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
-            LayoutItem::Alignement,
-            LayoutItem::Style(Box::new(color::Fg(color::Green))),
-            LayoutItem::Inner(VideoLayoutItem::Channel),
-            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
-            LayoutItem::Alignement,
-            LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
-            LayoutItem::Inner(VideoLayoutItem::Host),
-            LayoutItem::Alignement,
-            LayoutItem::Style(Box::new(color::Fg(color::Yellow))),
-            LayoutItem::Inner(VideoLayoutItem::String(" [".to_string())),
-            LayoutItem::Inner(VideoLayoutItem::Duration),
-            LayoutItem::Inner(VideoLayoutItem::String("] ".to_string())),
-            LayoutItem::Alignement,
-            LayoutItem::Style(Box::new(color::Fg(color::Green))),
-            LayoutItem::Inner(VideoLayoutItem::Views),
-            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
-            LayoutItem::Alignement,
-            LayoutItem::Inner(VideoLayoutItem::Published),
-            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
-            LayoutItem::Alignement,
-            LayoutItem::Style(Box::new(color::Fg(color::Red))),
-            LayoutItem::Inner(VideoLayoutItem::Nsfw),
-            LayoutItem::Style(Box::new(color::Fg(color::Reset))),
-        ];
+        let (video_layout, seen_video_layout) = default_video_layouts();
 
-        let seen_video_layout = vec![
-            LayoutItem::Style(Box::new(style::Bold)),
-            LayoutItem::Inner(VideoLayoutItem::Name),
-            LayoutItem::Style(Box::new(style::Reset)),
-            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
-            LayoutItem::Alignement,
-            LayoutItem::Style(Box::new(color::Fg(color::Green))),
-            LayoutItem::Inner(VideoLayoutItem::Channel),
-            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
-            LayoutItem::Alignement,
-            LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
-            LayoutItem::Inner(VideoLayoutItem::Host),
-            LayoutItem::Alignement,
-            LayoutItem::Style(Box::new(color::Fg(color::Yellow))),
-            LayoutItem::Inner(VideoLayoutItem::String(" [".to_string())),
-            LayoutItem::Inner(VideoLayoutItem::Duration),
-            LayoutItem::Inner(VideoLayoutItem::String("] ".to_string())),
-            LayoutItem::Alignement,
-            LayoutItem::Style(Box::new(color::Fg(color::Green))),
-            LayoutItem::Inner(VideoLayoutItem::Views),
-            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
-            LayoutItem::Alignement,
-            LayoutItem::Inner(VideoLayoutItem::Published),
-            LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
-            LayoutItem::Alignement,
-            LayoutItem::Style(Box::new(color::Fg(color::Red))),
-            LayoutItem::Inner(VideoLayoutItem::Nsfw),
-            LayoutItem::Style(Box::new(color::Fg(color::Reset))),
-        ];
         Display {
             cols,
             colors,
