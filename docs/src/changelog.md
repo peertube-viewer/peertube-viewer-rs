@@ -12,6 +12,7 @@ Add `--local` filtering flag to only browse videos from the instance you are con
 v1.3.0
 ------
 Trending browsing.
+
 UI improvements:
 
 - A total result count is now displayed for the current search
