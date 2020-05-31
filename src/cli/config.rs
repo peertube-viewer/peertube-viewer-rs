@@ -13,8 +13,8 @@ use std::path::PathBuf;
 use std::process::exit;
 use std::{error, io};
 
-pub trait Blacklist {
-    fn is_blacklisted(&self, instance: &str) -> bool;
+pub trait Blacklist<T: ?Sized> {
+    fn is_blacklisted(&self, instance: &T) -> bool;
 }
 
 #[derive(Debug, PartialEq)]
@@ -492,12 +492,22 @@ fn correct_instance(s: &str) -> String {
     s
 }
 
-impl Blacklist for Config {
+impl Blacklist<str> for Config {
     fn is_blacklisted(&self, instance: &str) -> bool {
         if self.is_whitelist {
             !self.listed_instances.contains(instance)
         } else {
             self.listed_instances.contains(instance)
+        }
+    }
+}
+
+impl Blacklist<peertube_api::Video> for Config {
+    fn is_blacklisted(&self, video: &peertube_api::Video) -> bool {
+        if self.is_whitelist {
+            !self.listed_instances.contains(video.host())
+        } else {
+            self.listed_instances.contains(video.host())
         }
     }
 }

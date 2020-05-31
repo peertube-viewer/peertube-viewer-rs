@@ -117,7 +117,12 @@ impl Display {
     }
 
     /// Display a list of video results
-    pub fn video_list(&self, videos: &[Rc<Video>], history: &History, blacklist: &impl Blacklist) {
+    pub fn video_list(
+        &self,
+        videos: &[Rc<Video>],
+        history: &History,
+        blacklist: &impl Blacklist<Video>,
+    ) {
         let mut video_parts = Vec::new();
         let mut alignements_total = vec![
             0;
@@ -133,7 +138,7 @@ impl Display {
             let mut tmp_str = Vec::new();
             let mut tmp_align = Vec::new();
 
-            if blacklist.is_blacklisted(v.host()) {
+            if blacklist.is_blacklisted(&v) {
                 video_parts.push((tmp_str, tmp_align));
                 continue;
             }
@@ -173,7 +178,7 @@ impl Display {
             );
             buffer.push_str(": ");
 
-            if blacklist.is_blacklisted(videos[id].host()) {
+            if blacklist.is_blacklisted(&videos[id]) {
                 buffer.push_str(&format!(
                     "{}blocked video from: {}{}\n",
                     self.fg_color(color::Red),
