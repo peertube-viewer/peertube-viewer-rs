@@ -13,7 +13,7 @@ use crate::error::Error;
 
 use rustyline::error::ReadlineError;
 
-use peertube_api::{Instance, PreloadableList, TrendingList, VideoSearch};
+use peertube_api::{ChannelSearch, Instance, PreloadableList, TrendingList, VideoSearch};
 
 use std::fs::create_dir;
 use std::rc::Rc;
@@ -150,11 +150,16 @@ impl Cli {
                 mode = Mode::Trending(trend_tmp);
                 Action::Query(query_str)
             } else {
-                self.rl.add_history_entry(&query_str);
-                let mut search_tmp = self.instance.search(&query_str, SEARCH_TOTAL);
-                search_tmp.next_videos().await?;
+                //self.rl.add_history_entry(&query_str);
+                //let mut search_tmp = self.instance.search(&query_str, SEARCH_TOTAL);
+                //search_tmp.next_videos().await?;
 
-                mode = Mode::Search(search_tmp);
+                //mode = Mode::Search(search_tmp);
+                //Action::Query(query_str)
+                let mut channels_tmp = self.instance.channels(&query_str, SEARCH_TOTAL);
+                channels_tmp.next_channels().await?;
+
+                mode = Mode::ChannelSearch(channels_tmp);
                 Action::Query(query_str)
             }
         } else {
@@ -191,6 +196,9 @@ impl Cli {
                         Mode::Trending(trending) => {
                             trending.next_videos().await?;
                         }
+                        Mode::ChannelSearch(channels) => {
+                            channels.next_channels().await?;
+                        }
                     },
                     Action::Prev => match &mut mode {
                         Mode::Search(search) => {
@@ -198,6 +206,9 @@ impl Cli {
                         }
                         Mode::Trending(trending) => {
                             trending.prev();
+                        }
+                        Mode::ChannelSearch(channels) => {
+                            channels.prev();
                         }
                     },
                     _ => unreachable!(),
@@ -253,6 +264,28 @@ impl Cli {
                     };
 
                     video = trending.current()[choice - 1].clone();
+                }
+                Mode::ChannelSearch(channels) => {
+                    self.display
+                        .channel_list(channels.current(), &self.history, &self.config);
+                    self.display.mode_info(
+                        "Channels",
+                        channels.expected_total(),
+                        channels.offset(),
+                        channels.current_len(),
+                    );
+                    match self
+                        .rl
+                        .autoload_readline(">> ".to_string(), channels)
+                        .await?
+                    {
+                        Action::Id(id) => unimplemented!(),
+                        res => {
+                            query = res;
+                            changed_query = true;
+                            continue;
+                        }
+                    };
                 }
             }
             changed_query = false;
@@ -352,6 +385,7 @@ impl Cli {
 
 enum Mode {
     Search(VideoSearch),
+    ChannelSearch(ChannelSearch),
     Trending(TrendingList),
 }
 

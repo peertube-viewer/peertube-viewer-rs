@@ -180,8 +180,9 @@ pub fn default_channel_layouts() -> Vec<LayoutItem<ChannelLayoutItem>> {
         LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
         LayoutItem::Inner(ChannelLayoutItem::Host),
         LayoutItem::Alignement,
+        LayoutItem::Inner(ChannelLayoutItem::String(" ".to_string())),
         LayoutItem::Style(Box::new(color::Fg(color::Green))),
         LayoutItem::Inner(ChannelLayoutItem::Followers),
-        LayoutItem::Inner(ChannelLayoutItem::String(" ".to_string())),
+        LayoutItem::Style(Box::new(color::Fg(color::Reset))),
     ]
 }

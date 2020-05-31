@@ -116,7 +116,7 @@ impl Instance {
         skip: usize,
     ) -> error::Result<(Vec<Channel>, Option<usize>)> {
         let mut url = self.host.clone();
-        url.push_str("/api/v1/video-channels");
+        url.push_str("/api/v1/search/video-channels");
 
         let mut query = self.client.get(&url).query(&[
             ("search", query),

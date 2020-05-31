@@ -12,7 +12,7 @@ mod trending;
 mod video;
 
 pub use instance::Instance;
-pub use search::VideoSearch;
+pub use search::{ChannelSearch, VideoSearch};
 pub use trending::TrendingList;
 pub use video::{Resolution, Video};
 
