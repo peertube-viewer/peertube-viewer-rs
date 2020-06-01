@@ -36,6 +36,11 @@ args:
         short: t
         help: will start browsing trending videos
 
+    - channels:
+        long: channels
+        conflicts_with: trending
+        help: will start searching video channels
+
     - player-args:
         long: player-args 
         takes_value: true 

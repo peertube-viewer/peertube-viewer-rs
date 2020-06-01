@@ -123,9 +123,19 @@ impl NsfwBehavior {
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
-pub struct InitialInfo {
-    pub initial_query: Option<String>,
-    pub start_trending: bool,
+pub enum InitialInfo {
+    None,
+    Query(String),
+    Channels(Option<String>),
+    Trending,
+}
+
+impl InitialInfo {
+    pub fn take(&mut self) -> InitialInfo {
+        let mut tmp = InitialInfo::None;
+        std::mem::swap(&mut tmp, self);
+        tmp
+    }
 }
 
 /// Config for the cli interface
@@ -161,9 +171,14 @@ impl Config {
             exit(0);
         }
 
-        let initial_info = InitialInfo {
-            initial_query: cli_args.values_of("initial-query").map(concat),
-            start_trending: cli_args.is_present("trending"),
+        let initial_info = if cli_args.is_present("trending") {
+            InitialInfo::Trending
+        } else if cli_args.is_present("channels") {
+            InitialInfo::Channels(cli_args.values_of("initial-query").map(concat))
+        } else if let Some(s) = cli_args.values_of("initial-query").map(concat) {
+            InitialInfo::Query(s)
+        } else {
+            InitialInfo::None
         };
 
         // Parse config as an String with default to empty string

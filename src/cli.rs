@@ -77,8 +77,10 @@ impl Cli {
 
         // If the initial query is a url, connect to the corresponding instance
         let mut is_single_url = false;
-        let instance_domain = match initial_info.initial_query.as_ref() {
-            Some(s) if s.starts_with("http://") || s.starts_with("https://") => {
+        let instance_domain = match &initial_info {
+            InitialInfo::Query(s) | InitialInfo::Channels(Some(s))
+                if s.starts_with("http://") || s.starts_with("https://") =>
+            {
                 match s.split('/').nth(2) {
                     Some(domain) => {
                         let instance_temp =
@@ -86,13 +88,19 @@ impl Cli {
                         match s.split('/').nth(5) {
                             Some(uuid) => {
                                 is_single_url = true;
-                                initial_info.initial_query =
-                                    Some(uuid.split(' ').next().expect("Unreachable").to_string());
+                                initial_info = InitialInfo::Query(
+                                    uuid.split(' ').next().expect("Unreachable").to_string(),
+                                );
                             }
 
                             None => {
-                                initial_info.initial_query =
+                                initial_info = if let Some(s) =
                                     s.splitn(2, ' ').nth(1).map(|s| s.to_string())
+                                {
+                                    InitialInfo::Query(s)
+                                } else {
+                                    InitialInfo::None
+                                };
                             }
                         }
                         instance_temp
@@ -100,7 +108,7 @@ impl Cli {
                     None => config.instance().to_string(),
                 }
             }
-            None | Some(_) => config.instance().to_string(),
+            _ => config.instance().to_string(),
         };
 
         let instance = Instance::new(
@@ -133,46 +141,24 @@ impl Cli {
 
     /// Main loop for he cli interface
     async fn main_loop(&mut self) -> Result<(), Error> {
-        let mut mode;
-        let mut query = if !self.initial_info.start_trending {
-            // Check if the initital query is a video url
-            let query_str = match self.initial_info.initial_query.take() {
-                Some(q) => q,
-                None => self.rl.readline(">> ".to_string()).await?,
-            };
-
-            if self.is_single_url {
-                self.play_vid(&self.instance.single_video(&query_str).await?)
+        let mut mode = Mode::Temp; //Placeholder that will be changed just after anyway on the first loop run
+        let mut query = match self.initial_info.take() {
+            InitialInfo::Query(s) if self.is_single_url => {
+                self.play_vid(&self.instance.single_video(&s).await?)
                     .await?;
                 return Ok(());
             }
-            if query_str == ":trending" {
-                let mut trend_tmp = self.instance.trending(SEARCH_TOTAL);
-                trend_tmp.next_videos().await?;
-
-                mode = Mode::VideoList(trend_tmp);
-                Action::Query(query_str)
-            } else {
-                //self.rl.add_history_entry(&query_str);
-                //let mut search_tmp = self.instance.search(&query_str, SEARCH_TOTAL);
-                //search_tmp.next_videos().await?;
-
-                //mode = Mode::VideoList(search_tmp);
-                //Action::Query(query_str)
-                let mut channels_tmp = self.instance.channels(&query_str, SEARCH_TOTAL);
-                channels_tmp.next_channels().await?;
-
-                mode = Mode::ChannelSearch(channels_tmp);
-                Action::Query(query_str)
-            }
-        } else {
-            let mut trending_tmp = self.instance.trending(SEARCH_TOTAL);
-            trending_tmp.next_videos().await?;
-            mode = Mode::VideoList(trending_tmp);
-            Action::Query(":trending".to_string())
+            InitialInfo::Query(s) => Action::Query(s),
+            InitialInfo::Channels(Some(s)) => Action::Query(format!(":channels {}", s)),
+            InitialInfo::Channels(None) => Action::Query(format!(
+                ":channels {}",
+                self.rl.readline(">> ".to_string()).await?
+            )),
+            InitialInfo::Trending => Action::Query(":trending".to_string()),
+            InitialInfo::None => Action::Query(self.rl.readline(">> ".to_string()).await?),
         };
+        let mut changed_query = true;
 
-        let mut changed_query = false;
         // Main loop
         loop {
             let video;
@@ -184,6 +170,16 @@ impl Cli {
                             trending_tmp.next_videos().await?;
                             mode = Mode::VideoList(trending_tmp);
                             query = Action::Query(":trending".to_string());
+                        } else if s.starts_with(":channels") {
+                            let mut channels_tmp = self.instance.channels(&s[10..], SEARCH_TOTAL);
+                            channels_tmp.next_channels().await?;
+                            self.rl.add_history_entry(&s[10..]);
+                            mode = Mode::ChannelSearch(channels_tmp);
+                        } else if s.starts_with(":channel_handle") {
+                            let mut videos_tmp = self.instance.channel(&s[16..], SEARCH_TOTAL);
+                            videos_tmp.next_videos().await?;
+                            self.rl.add_history_entry(&s[16..]);
+                            mode = Mode::VideoList(videos_tmp);
                         } else {
                             let mut search_tmp = self.instance.search(&s, SEARCH_TOTAL);
                             search_tmp.next_videos().await?;
@@ -199,6 +195,7 @@ impl Cli {
                         Mode::ChannelSearch(channels) => {
                             channels.next_channels().await?;
                         }
+                        Mode::Temp => unreachable!(),
                     },
                     Action::Prev => match &mut mode {
                         Mode::VideoList(search) => {
@@ -207,6 +204,7 @@ impl Cli {
                         Mode::ChannelSearch(channels) => {
                             channels.prev();
                         }
+                        Mode::Temp => unreachable!(),
                     },
                     _ => unreachable!(),
                 };
@@ -250,15 +248,11 @@ impl Cli {
                         .await?
                     {
                         Action::Id(id) => {
-                            let mut channel_tmp = self
-                                .instance
-                                .channel(&channels.current()[id - 1].handle(), SEARCH_TOTAL);
-                            channel_tmp.next_videos().await?;
                             query = Action::Query(format!(
-                                ":channels {}",
+                                ":channel_handle {}",
                                 channels.current()[id - 1].handle()
                             ));
-                            mode = Mode::VideoList(channel_tmp);
+                            changed_query = true;
                             continue;
                         }
                         res => {
@@ -268,6 +262,7 @@ impl Cli {
                         }
                     };
                 }
+                Mode::Temp => unreachable!(),
             }
             changed_query = false;
             self.play_vid(&video).await?;
@@ -367,6 +362,7 @@ impl Cli {
 enum Mode {
     VideoList(VideoList),
     ChannelSearch(ChannelSearch),
+    Temp,
 }
 
 impl Drop for Cli {
