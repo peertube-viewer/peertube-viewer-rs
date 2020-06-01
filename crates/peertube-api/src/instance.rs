@@ -68,8 +68,49 @@ impl Instance {
         Ok((res, total))
     }
 
+    pub async fn channel_videos(
+        self: &Rc<Instance>,
+        handle: &str,
+        nb: usize,
+        skip: usize,
+    ) -> error::Result<(Vec<Video>, Option<usize>)> {
+        let mut url = self.host.clone();
+        url.push_str("/api/v1/video-channels/");
+        url.push_str(handle);
+        url.push_str("/videos");
+
+        let mut query = self.client.get(&url).query(&[
+            ("nsfw", self.include_nsfw),
+            ("count", &nb.to_string()),
+            ("start", &skip.to_string()),
+        ]);
+
+        if self.local {
+            query = query.query(&[("filter", "local")]);
+        }
+
+        let mut video_res: Videos = serde_json::from_str(&query.send().await?.text().await?)?;
+        let mut res = Vec::new();
+        for video in video_res.data.drain(..) {
+            if let Some(v) = Video::maybe_from(self, video) {
+                res.push(v);
+            }
+        }
+
+        let total = match video_res.total {
+            Some(c) if c > 0 => Some(c as usize),
+            _ => None,
+        };
+
+        Ok((res, total))
+    }
+
     pub fn search(self: &Rc<Instance>, query: &str, skip: usize) -> VideoList {
         VideoList::new_search(self.clone(), query, skip)
+    }
+
+    pub fn channel(self: &Rc<Instance>, handle: &str, skip: usize) -> VideoList {
+        VideoList::new_channel(self.clone(), handle, skip)
     }
 
     /// Perform a search for the given query

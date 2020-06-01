@@ -22,6 +22,7 @@ pub struct VideoList {
 
 enum Mode {
     Search(String),
+    Channel(String),
     Trending,
 }
 
@@ -33,6 +34,19 @@ impl VideoList {
             loading: None,
             preload_res: false,
             mode: Mode::Search(query.to_owned()),
+            current: 0,
+            step,
+            total: None,
+        }
+    }
+
+    pub fn new_channel(instance: Rc<Instance>, handle: &str, step: usize) -> VideoList {
+        VideoList {
+            instance,
+            loaded: Vec::new(),
+            loading: None,
+            preload_res: false,
+            mode: Mode::Channel(handle.to_owned()),
             current: 0,
             step,
             total: None,
@@ -68,6 +82,12 @@ impl VideoList {
                         temp = self
                             .instance
                             .search_videos(&query, self.step, self.current * self.step)
+                            .await?
+                    }
+                    Mode::Channel(handle) => {
+                        temp = self
+                            .instance
+                            .channel_videos(&handle, self.step, self.current * self.step)
                             .await?
                     }
                     Mode::Trending => {
@@ -108,6 +128,12 @@ impl PreloadableList for VideoList {
                     let quer_cloned = query.clone();
                     self.loading = Some(spawn_local(async move {
                         inst_cloned.search_videos(&quer_cloned, nb, skip).await
+                    }))
+                }
+                Mode::Channel(handle) => {
+                    let handle_cloned = handle.clone();
+                    self.loading = Some(spawn_local(async move {
+                        inst_cloned.channel_videos(&handle_cloned, nb, skip).await
                     }))
                 }
                 Mode::Trending => {

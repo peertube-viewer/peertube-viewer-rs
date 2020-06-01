@@ -40,6 +40,10 @@ impl Channel {
     pub fn updated_at(&self) -> &DateTime<FixedOffset> {
         &self.updated_at
     }
+
+    pub fn handle(&self) -> String {
+        format!("{}@{}", self.name, self.host)
+    }
 }
 
 impl Channel {

@@ -249,7 +249,18 @@ impl Cli {
                         .autoload_readline(">> ".to_string(), channels)
                         .await?
                     {
-                        Action::Id(id) => unimplemented!(),
+                        Action::Id(id) => {
+                            let mut channel_tmp = self
+                                .instance
+                                .channel(&channels.current()[id - 1].handle(), SEARCH_TOTAL);
+                            channel_tmp.next_videos().await?;
+                            query = Action::Query(format!(
+                                ":channels {}",
+                                channels.current()[id - 1].handle()
+                            ));
+                            mode = Mode::VideoList(channel_tmp);
+                            continue;
+                        }
                         res => {
                             query = res;
                             changed_query = true;
