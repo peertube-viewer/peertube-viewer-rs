@@ -7,6 +7,8 @@ Changes implemented but not yet released:
 
 Fix alignement when dealing with most unicode characters.
 
+Add `--channels, --chandle, :channels, :chandle` features.
+
 v1.3.1
 ------
 
