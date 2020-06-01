@@ -28,3 +28,5 @@ Here is a list of all the command that can be ran during a session:
 - `:n` get more results for the same search or get more trending results when browsing trending
 - `:p` go back to the previous results (the opposite of `:n`)
 - `:trending` start browsing trending results
+- `:channels <query>` search channels by name
+- `:chandle` list videos from a channel

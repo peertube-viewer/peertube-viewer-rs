@@ -11,6 +11,7 @@ The default is `$XDG_CONFIG_HOME/peertube-viewer-rs/config.toml` or `$HOME/.conf
 
 - `-i, --instance <instance>`       instance to be browsed (default is [video.ploud.fr](https://video.ploud.fr))
 - `-p, --player <player>`       player to play the videos with
+- `--chandle <handle>`       list the videos of a channel from its handle (ex: `mychannel@myinstance.com`)
 - `--player-args <player-args>...`       arguments to be passed to the player
 - `--torrent-downloader <torrent-downloader>`       choose the torrent software to download the videos with
 - `--torrent-downloader-args <torrent-downloader-arguments>`       arguments to be passed to the torrent downloader
@@ -25,6 +26,7 @@ flags
 ![quality prompt](../screenshots/select_quality.png)
 
 -   `-t, --trending`    will start browsing trendings videos. If an initial query is passed with it, it will be ignored
+-   `--channels`       Search channels instead of videos
 -   `--local`  Only browse videos hosted on the instance you are connected to
 
 -   `--tag-nsfw`    Tag nsfw results. This is the default behavior. This flag is only useful to override the config file
