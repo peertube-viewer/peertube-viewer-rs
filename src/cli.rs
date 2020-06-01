@@ -147,14 +147,14 @@ impl Cli {
                 let mut trend_tmp = self.instance.trending(SEARCH_TOTAL);
                 trend_tmp.next_videos().await?;
 
-                mode = Mode::Trending(trend_tmp);
+                mode = Mode::VideoList(trend_tmp);
                 Action::Query(query_str)
             } else {
                 //self.rl.add_history_entry(&query_str);
                 //let mut search_tmp = self.instance.search(&query_str, SEARCH_TOTAL);
                 //search_tmp.next_videos().await?;
 
-                //mode = Mode::Search(search_tmp);
+                //mode = Mode::VideoList(search_tmp);
                 //Action::Query(query_str)
                 let mut channels_tmp = self.instance.channels(&query_str, SEARCH_TOTAL);
                 channels_tmp.next_channels().await?;
@@ -165,7 +165,7 @@ impl Cli {
         } else {
             let mut trending_tmp = self.instance.trending(SEARCH_TOTAL);
             trending_tmp.next_videos().await?;
-            mode = Mode::Trending(trending_tmp);
+            mode = Mode::VideoList(trending_tmp);
             Action::Query(":trending".to_string())
         };
 
@@ -179,33 +179,27 @@ impl Cli {
                         if s == ":trending" {
                             let mut trending_tmp = self.instance.trending(SEARCH_TOTAL);
                             trending_tmp.next_videos().await?;
-                            mode = Mode::Trending(trending_tmp);
+                            mode = Mode::VideoList(trending_tmp);
                             query = Action::Query(":trending".to_string());
                         } else {
                             let mut search_tmp = self.instance.search(&s, SEARCH_TOTAL);
                             search_tmp.next_videos().await?;
                             self.rl.add_history_entry(&s);
-                            mode = Mode::Search(search_tmp);
+                            mode = Mode::VideoList(search_tmp);
                         }
                     }
                     Action::Quit => break,
                     Action::Next => match &mut mode {
-                        Mode::Search(search) => {
+                        Mode::VideoList(search) => {
                             search.next_videos().await?;
-                        }
-                        Mode::Trending(trending) => {
-                            trending.next_videos().await?;
                         }
                         Mode::ChannelSearch(channels) => {
                             channels.next_channels().await?;
                         }
                     },
                     Action::Prev => match &mut mode {
-                        Mode::Search(search) => {
+                        Mode::VideoList(search) => {
                             search.prev();
-                        }
-                        Mode::Trending(trending) => {
-                            trending.prev();
                         }
                         Mode::ChannelSearch(channels) => {
                             channels.prev();
@@ -215,7 +209,7 @@ impl Cli {
                 };
             }
             match &mut mode {
-                Mode::Search(search) => {
+                Mode::VideoList(search) => {
                     self.display
                         .video_list(search.current(), &self.history, &self.config);
                     self.display.mode_info(
@@ -237,33 +231,6 @@ impl Cli {
                     };
 
                     video = search.current()[choice - 1].clone();
-                }
-                Mode::Trending(trending) => {
-                    self.display
-                        .video_list(trending.current(), &self.history, &self.config);
-                    self.display.mode_info(
-                        "Trending",
-                        trending.expected_total(),
-                        trending.offset(),
-                        trending.current_len(),
-                    );
-
-                    trending.preload_res(self.config.select_quality() || self.config.use_raw_url());
-                    let choice;
-                    match self
-                        .rl
-                        .autoload_readline(">> ".to_string(), trending)
-                        .await?
-                    {
-                        Action::Id(id) => choice = id,
-                        res => {
-                            query = res;
-                            changed_query = true;
-                            continue;
-                        }
-                    };
-
-                    video = trending.current()[choice - 1].clone();
                 }
                 Mode::ChannelSearch(channels) => {
                     self.display
@@ -384,9 +351,8 @@ impl Cli {
 }
 
 enum Mode {
-    Search(VideoSearch),
+    VideoList(VideoSearch),
     ChannelSearch(ChannelSearch),
-    Trending(TrendingList),
 }
 
 impl Drop for Cli {

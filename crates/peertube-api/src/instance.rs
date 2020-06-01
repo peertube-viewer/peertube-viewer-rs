@@ -148,8 +148,8 @@ impl Instance {
         ChannelSearch::new(self.clone(), query, skip)
     }
 
-    pub fn trending(self: &Rc<Instance>, skip: usize) -> TrendingList {
-        TrendingList::new(self.clone(), skip)
+    pub fn trending(self: &Rc<Instance>, skip: usize) -> VideoSearch {
+        VideoSearch::new_trending(self.clone(), skip)
     }
 
     /// Load a single video from its uuid
