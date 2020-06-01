@@ -174,12 +174,12 @@ impl Cli {
                         } else if s.starts_with(":channels") {
                             let mut channels_tmp = self.instance.channels(&s[10..], SEARCH_TOTAL);
                             channels_tmp.next_channels().await?;
-                            self.rl.add_history_entry(&s[10..]);
+                            self.rl.add_history_entry(&s);
                             mode = Mode::ChannelSearch(channels_tmp);
                         } else if s.starts_with(":chandle") {
                             let mut videos_tmp = self.instance.channel(&s[9..], SEARCH_TOTAL);
                             videos_tmp.next_videos().await?;
-                            self.rl.add_history_entry(&s[9..]);
+                            self.rl.add_history_entry(&s);
                             mode = Mode::VideoList(videos_tmp);
                         } else {
                             let mut search_tmp = self.instance.search(&s, SEARCH_TOTAL);
