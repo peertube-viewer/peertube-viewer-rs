@@ -154,6 +154,7 @@ impl Cli {
                 ":channels {}",
                 self.rl.readline(">> ".to_string()).await?
             )),
+            InitialInfo::Handle(s) => Action::Query(format!(":chandle {}", s)),
             InitialInfo::Trending => Action::Query(":trending".to_string()),
             InitialInfo::None => Action::Query(self.rl.readline(">> ".to_string()).await?),
         };
@@ -175,10 +176,10 @@ impl Cli {
                             channels_tmp.next_channels().await?;
                             self.rl.add_history_entry(&s[10..]);
                             mode = Mode::ChannelSearch(channels_tmp);
-                        } else if s.starts_with(":channel_handle") {
-                            let mut videos_tmp = self.instance.channel(&s[16..], SEARCH_TOTAL);
+                        } else if s.starts_with(":chandle") {
+                            let mut videos_tmp = self.instance.channel(&s[9..], SEARCH_TOTAL);
                             videos_tmp.next_videos().await?;
-                            self.rl.add_history_entry(&s[16..]);
+                            self.rl.add_history_entry(&s[9..]);
                             mode = Mode::VideoList(videos_tmp);
                         } else {
                             let mut search_tmp = self.instance.search(&s, SEARCH_TOTAL);
@@ -249,7 +250,7 @@ impl Cli {
                     {
                         Action::Id(id) => {
                             query = Action::Query(format!(
-                                ":channel_handle {}",
+                                ":chandle {}",
                                 channels.current()[id - 1].handle()
                             ));
                             changed_query = true;

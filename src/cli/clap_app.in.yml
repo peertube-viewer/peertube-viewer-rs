@@ -34,12 +34,19 @@ args:
     - trending:
         long: trending
         short: t
+        conflicts_with: chandle
         help: will start browsing trending videos
 
     - channels:
         long: channels
         conflicts_with: trending
         help: will start searching video channels
+
+    - chandle:
+        long: chandle
+        conflicts_with: channels
+        takes_value: true
+        help: "start browsing the videos of a channel with its handle (ex: name@instance.com)"
 
     - player-args:
         long: player-args 

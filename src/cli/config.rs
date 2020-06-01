@@ -127,6 +127,7 @@ pub enum InitialInfo {
     None,
     Query(String),
     Channels(Option<String>),
+    Handle(String),
     Trending,
 }
 
@@ -173,6 +174,8 @@ impl Config {
 
         let initial_info = if cli_args.is_present("trending") {
             InitialInfo::Trending
+        } else if let Some(handle) = cli_args.value_of("chandle") {
+            InitialInfo::Handle(handle.to_owned())
         } else if cli_args.is_present("channels") {
             InitialInfo::Channels(cli_args.values_of("initial-query").map(concat))
         } else if let Some(s) = cli_args.values_of("initial-query").map(concat) {
