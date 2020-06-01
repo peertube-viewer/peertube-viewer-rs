@@ -14,20 +14,38 @@ pub struct VideoSearch {
     preload_res: bool,
     loaded: Vec<Vec<Rc<Video>>>,
     loading: Option<Loading>,
-    query: String,
+    mode: Mode,
     current: usize,
     step: usize,
     total: Option<usize>,
 }
 
+enum Mode {
+    Search(String),
+    Trending,
+}
+
 impl VideoSearch {
-    pub fn new(instance: Rc<Instance>, query: &str, step: usize) -> VideoSearch {
+    pub fn new_search(instance: Rc<Instance>, query: &str, step: usize) -> VideoSearch {
         VideoSearch {
             instance,
             loaded: Vec::new(),
             loading: None,
             preload_res: false,
-            query: query.to_owned(),
+            mode: Mode::Search(query.to_owned()),
+            current: 0,
+            step,
+            total: None,
+        }
+    }
+
+    pub fn new_trending(instance: Rc<Instance>, step: usize) -> VideoSearch {
+        VideoSearch {
+            instance,
+            loaded: Vec::new(),
+            loading: None,
+            preload_res: false,
+            mode: Mode::Trending,
             current: 0,
             step,
             total: None,
@@ -45,10 +63,20 @@ impl VideoSearch {
             if let Some(handle) = self.loading.take() {
                 temp = handle.await.unwrap()?;
             } else {
-                temp = self
-                    .instance
-                    .search_videos(&self.query, self.step, self.current * self.step)
-                    .await?;
+                match &self.mode {
+                    Mode::Search(query) => {
+                        temp = self
+                            .instance
+                            .search_videos(&query, self.step, self.current * self.step)
+                            .await?
+                    }
+                    Mode::Trending => {
+                        temp = self
+                            .instance
+                            .trending_videos(self.step, self.current * self.step)
+                            .await?
+                    }
+                }
             }
             let (videos, new_total) = temp;
             self.loaded.push(videos.into_iter().map(Rc::new).collect());
@@ -73,12 +101,21 @@ impl PreloadableList for VideoSearch {
     fn preload_next(&mut self) {
         if self.loaded.len() <= self.current + 1 && self.loading.is_none() {
             let inst_cloned = self.instance.clone();
-            let quer_cloned = self.query.clone();
             let nb = self.step;
             let skip = (self.current + 1) * self.step;
-            self.loading = Some(spawn_local(async move {
-                inst_cloned.search_videos(&quer_cloned, nb, skip).await
-            }));
+            match &self.mode {
+                Mode::Search(query) => {
+                    let quer_cloned = query.clone();
+                    self.loading = Some(spawn_local(async move {
+                        inst_cloned.search_videos(&quer_cloned, nb, skip).await
+                    }))
+                }
+                Mode::Trending => {
+                    self.loading = Some(spawn_local(async move {
+                        inst_cloned.trending_videos(nb, skip).await
+                    }))
+                }
+            }
         }
     }
 

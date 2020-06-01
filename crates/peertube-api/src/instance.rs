@@ -70,7 +70,7 @@ impl Instance {
     }
 
     pub fn search(self: &Rc<Instance>, query: &str, skip: usize) -> VideoSearch {
-        VideoSearch::new(self.clone(), query, skip)
+        VideoSearch::new_search(self.clone(), query, skip)
     }
 
     /// Perform a search for the given query
