@@ -7,29 +7,8 @@ extern crate tokio;
 pub mod channels;
 pub mod error;
 mod instance;
-mod search;
-mod trending;
+pub mod preloadable;
 mod video;
 
 pub use instance::Instance;
-pub use search::{ChannelSearch, VideoSearch};
-pub use trending::TrendingList;
 pub use video::{Resolution, Video};
-
-pub trait PreloadableList {
-    type Current;
-
-    fn preload_next(&mut self) {}
-    fn preload_prev(&mut self) {}
-
-    fn current_len(&self) -> usize;
-    fn current(&self) -> &Self::Current;
-
-    fn offset(&self) -> usize;
-    fn expected_total(&self) -> Option<usize> {
-        None
-    }
-
-    #[allow(unused)]
-    fn preload_id(&mut self, id: usize) {}
-}

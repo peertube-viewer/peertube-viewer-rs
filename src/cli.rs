@@ -13,7 +13,10 @@ use crate::error::Error;
 
 use rustyline::error::ReadlineError;
 
-use peertube_api::{ChannelSearch, Instance, PreloadableList, TrendingList, VideoSearch};
+use peertube_api::{
+    preloadable::{ChannelSearch, PreloadableList, VideoList},
+    Instance,
+};
 
 use std::fs::create_dir;
 use std::rc::Rc;
@@ -351,7 +354,7 @@ impl Cli {
 }
 
 enum Mode {
-    VideoList(VideoSearch),
+    VideoList(VideoList),
     ChannelSearch(ChannelSearch),
 }
 

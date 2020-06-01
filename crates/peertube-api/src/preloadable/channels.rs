@@ -2,10 +2,10 @@ use tokio::task::{spawn_local, JoinHandle};
 
 use std::rc::Rc;
 
+use super::PreloadableList;
 use crate::channels::Channel;
 use crate::error::{self, Error};
 use crate::Instance;
-use crate::PreloadableList;
 
 type Loading = JoinHandle<Result<(Vec<Channel>, Option<usize>), Error>>;
 pub struct ChannelSearch {

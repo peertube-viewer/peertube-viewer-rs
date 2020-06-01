@@ -8,8 +8,7 @@ use peertube_ser::Videos;
 
 use crate::channels::Channel;
 use crate::error;
-use crate::search::{ChannelSearch, VideoSearch};
-use crate::trending::TrendingList;
+use crate::preloadable::{ChannelSearch, VideoList};
 use crate::video::Video;
 
 /// Connexion to an instance
@@ -69,8 +68,8 @@ impl Instance {
         Ok((res, total))
     }
 
-    pub fn search(self: &Rc<Instance>, query: &str, skip: usize) -> VideoSearch {
-        VideoSearch::new_search(self.clone(), query, skip)
+    pub fn search(self: &Rc<Instance>, query: &str, skip: usize) -> VideoList {
+        VideoList::new_search(self.clone(), query, skip)
     }
 
     /// Perform a search for the given query
@@ -148,8 +147,8 @@ impl Instance {
         ChannelSearch::new(self.clone(), query, skip)
     }
 
-    pub fn trending(self: &Rc<Instance>, skip: usize) -> VideoSearch {
-        VideoSearch::new_trending(self.clone(), skip)
+    pub fn trending(self: &Rc<Instance>, skip: usize) -> VideoList {
+        VideoList::new_trending(self.clone(), skip)
     }
 
     /// Load a single video from its uuid

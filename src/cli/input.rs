@@ -10,7 +10,7 @@ use tokio::sync::mpsc::UnboundedReceiver;
 use std::path::PathBuf;
 use tokio::task::{spawn_blocking, JoinHandle};
 
-use peertube_api::PreloadableList;
+use peertube_api::preloadable::PreloadableList;
 
 use futures::{
     future::{Fuse, FutureExt}, // for `.fuse()`

@@ -2,13 +2,13 @@ use tokio::task::{spawn_local, JoinHandle};
 
 use std::rc::Rc;
 
+use super::PreloadableList;
 use crate::error::{self, Error};
 use crate::Instance;
-use crate::PreloadableList;
 use crate::Video;
 
 type Loading = JoinHandle<Result<(Vec<Video>, Option<usize>), Error>>;
-pub struct VideoSearch {
+pub struct VideoList {
     instance: Rc<Instance>,
 
     preload_res: bool,
@@ -25,9 +25,9 @@ enum Mode {
     Trending,
 }
 
-impl VideoSearch {
-    pub fn new_search(instance: Rc<Instance>, query: &str, step: usize) -> VideoSearch {
-        VideoSearch {
+impl VideoList {
+    pub fn new_search(instance: Rc<Instance>, query: &str, step: usize) -> VideoList {
+        VideoList {
             instance,
             loaded: Vec::new(),
             loading: None,
@@ -39,8 +39,8 @@ impl VideoSearch {
         }
     }
 
-    pub fn new_trending(instance: Rc<Instance>, step: usize) -> VideoSearch {
-        VideoSearch {
+    pub fn new_trending(instance: Rc<Instance>, step: usize) -> VideoList {
+        VideoList {
             instance,
             loaded: Vec::new(),
             loading: None,
@@ -53,7 +53,7 @@ impl VideoSearch {
     }
 }
 
-impl VideoSearch {
+impl VideoList {
     pub async fn next_videos(&mut self) -> error::Result<&Vec<Rc<Video>>> {
         if !self.loaded.is_empty() {
             self.current += 1;
@@ -95,7 +95,7 @@ impl VideoSearch {
     }
 }
 
-impl PreloadableList for VideoSearch {
+impl PreloadableList for VideoList {
     type Current = Vec<Rc<Video>>;
 
     fn preload_next(&mut self) {
@@ -147,6 +147,3 @@ impl PreloadableList for VideoSearch {
         self.total
     }
 }
-
-mod channels;
-pub use channels::ChannelSearch;
