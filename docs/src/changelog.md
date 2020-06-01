@@ -1,9 +1,8 @@
 Changelog
 =========
 
-dev
+1.4.0
 ---
-Changes implemented but not yet released:
 
 Fix alignement when dealing with most unicode characters.
 
