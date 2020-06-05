@@ -7,6 +7,7 @@ build = "build.rs"
 
 [dependencies]
 peertube-api = {version = "*", path = "crates/peertube-api"}
+preloadable-list = {version = "*", path = "crates/preloadable-list"}
 tokio = { version = "0.2.21", features = ["rt-threaded", "rt-util", "process"] }
 termion = "1"
 chrono = "0.4.11"
