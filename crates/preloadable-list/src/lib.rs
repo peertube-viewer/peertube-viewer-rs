@@ -3,41 +3,39 @@ use tokio::task::{spawn_local, JoinHandle};
 
 type Loading<D, E> = JoinHandle<Result<(Vec<D>, Option<usize>), E>>;
 
-pub struct PreloadableList<D, E, N, F>
-where
-    N: Fn(usize) -> F,
-    D: 'static,
-    E: 'static,
-    F: 'static,
-    F: Future<Output = Result<(Vec<D>, Option<usize>), E>>,
-{
-    loaded: Vec<Vec<Rc<D>>>,
-    loading: Option<Loading<D, E>>,
-    fetch_next: N,
+pub struct PreloadableList<Data, Error, Next, Id> {
+    loaded: Vec<Vec<Rc<Data>>>,
+    loading: Option<Loading<Data, Error>>,
+    fetch_next: Next,
+    fetch_id: Id,
 
     current: usize,
     total: Option<usize>,
 }
 
-impl<D, E, N, F> PreloadableList<D, E, N, F>
+impl<Data, Error, Next, Id, NF, IF> PreloadableList<Data, Error, Next, Id>
 where
-    N: Fn(usize) -> F,
-    D: 'static,
-    E: 'static,
-    F: 'static,
-    F: Future<Output = Result<(Vec<D>, Option<usize>), E>>,
+    Data: 'static,
+    Error: 'static,
+
+    Next: Fn(usize) -> NF,
+    NF: Future<Output = Result<(Vec<Data>, Option<usize>), Error>> + 'static,
+
+    Id: Fn(Rc<Data>) -> IF,
+    IF: Future<Output = ()> + 'static,
 {
-    pub fn new(next: N) -> PreloadableList<D, E, N, F> {
+    pub fn new(fetch_next: Next, fetch_id: Id) -> PreloadableList<Data, Error, Next, Id> {
         PreloadableList {
             loaded: Vec::new(),
             loading: None,
-            fetch_next: next,
+            fetch_next,
+            fetch_id,
             current: 0,
             total: None,
         }
     }
 
-    pub async fn next(&mut self) -> Result<&[Rc<D>], E> {
+    pub async fn next(&mut self) -> Result<&[Rc<Data>], Error> {
         if !self.loaded.is_empty() {
             self.current += 1;
         }
@@ -55,7 +53,7 @@ where
         Ok(&self.loaded[self.current])
     }
 
-    pub fn prev(&mut self) -> &Vec<Rc<D>> {
+    pub fn prev(&mut self) -> &Vec<Rc<Data>> {
         self.current -= 1;
         &self.loaded[self.current]
     }
@@ -66,7 +64,12 @@ where
         }
     }
 
-    fn current(&self) -> &Vec<Rc<D>> {
+    fn preload_id(&self, id: usize) {
+        let data_cloned = self.loaded[self.current][id].clone();
+        spawn_local((self.fetch_id)(data_cloned));
+    }
+
+    fn current(&self) -> &[Rc<Data>] {
         &self.loaded[self.current]
     }
 
