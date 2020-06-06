@@ -37,7 +37,7 @@ where
             if let Some(handle) = self.loading.take() {
                 temp = handle.await.unwrap()?;
             } else {
-                temp = self.loader.next(self.current).await?;
+                temp = self.loader.data(self.current).await?;
             }
             let (data, new_total) = temp;
             self.loaded.push(data.into_iter().map(Rc::new).collect());
@@ -53,7 +53,7 @@ where
 
     pub fn preload_next(&mut self) {
         if self.loaded.len() <= self.current + 1 && self.loading.is_none() {
-            self.loading = Some(spawn_local(self.loader.next(self.current + 1)));
+            self.loading = Some(spawn_local(self.loader.data(self.current + 1)));
         }
     }
 
@@ -80,7 +80,7 @@ pub trait AsyncLoader {
     type Error: 'static;
 
     // Workaround async_trait not allowing requirement for the returned futures to be async
-    fn next(
+    fn data(
         &mut self,
         current: usize,
     ) -> Pin<
