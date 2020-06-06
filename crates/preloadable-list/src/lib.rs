@@ -52,8 +52,10 @@ where
     }
 
     pub fn prev(&mut self) -> &Vec<Rc<D>> {
-        self.offset -= self.loaded[self.current].len();
-        self.current -= 1;
+        if self.current >= 1 {
+            self.offset -= self.loaded[self.current].len();
+            self.current -= 1;
+        }
         &self.loaded[self.current]
     }
 
