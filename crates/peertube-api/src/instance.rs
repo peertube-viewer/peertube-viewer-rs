@@ -8,7 +8,6 @@ use peertube_ser::Videos;
 
 use crate::channels::Channel;
 use crate::error;
-use crate::preloadable::{ChannelSearch, VideoList};
 use crate::video::Video;
 
 /// Connexion to an instance
@@ -36,7 +35,7 @@ impl Instance {
         self: &Rc<Instance>,
         query: &str,
         nb: usize,
-        skip: usize,
+        offset: usize,
     ) -> error::Result<(Vec<Video>, Option<usize>)> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/search/videos");
@@ -44,7 +43,7 @@ impl Instance {
         let mut query = self.client.get(&url).query(&[
             ("search", query),
             ("count", &nb.to_string()),
-            ("start", &skip.to_string()),
+            ("start", &offset.to_string()),
             ("nsfw", self.include_nsfw),
         ]);
 
@@ -72,7 +71,7 @@ impl Instance {
         self: &Rc<Instance>,
         handle: &str,
         nb: usize,
-        skip: usize,
+        offset: usize,
     ) -> error::Result<(Vec<Video>, Option<usize>)> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/video-channels/");
@@ -82,7 +81,7 @@ impl Instance {
         let mut query = self.client.get(&url).query(&[
             ("nsfw", self.include_nsfw),
             ("count", &nb.to_string()),
-            ("start", &skip.to_string()),
+            ("start", &offset.to_string()),
         ]);
 
         if self.local {
@@ -105,19 +104,11 @@ impl Instance {
         Ok((res, total))
     }
 
-    pub fn search(self: &Rc<Instance>, query: &str, skip: usize) -> VideoList {
-        VideoList::new_search(self.clone(), query, skip)
-    }
-
-    pub fn channel(self: &Rc<Instance>, handle: &str, skip: usize) -> VideoList {
-        VideoList::new_channel(self.clone(), handle, skip)
-    }
-
     /// Perform a search for the given query
     pub async fn trending_videos(
         self: &Rc<Instance>,
         nb: usize,
-        skip: usize,
+        offset: usize,
     ) -> error::Result<(Vec<Video>, Option<usize>)> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/videos");
@@ -125,7 +116,7 @@ impl Instance {
         let mut query = self.client.get(&url).query(&[
             ("sort", "-trending"),
             ("count", &nb.to_string()),
-            ("start", &skip.to_string()),
+            ("start", &offset.to_string()),
             ("nsfw", self.include_nsfw),
         ]);
 
@@ -153,7 +144,7 @@ impl Instance {
         self: &Rc<Instance>,
         query: &str,
         nb: usize,
-        skip: usize,
+        offset: usize,
     ) -> error::Result<(Vec<Channel>, Option<usize>)> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/search/video-channels");
@@ -161,7 +152,7 @@ impl Instance {
         let mut query = self.client.get(&url).query(&[
             ("search", query),
             ("count", &nb.to_string()),
-            ("start", &skip.to_string()),
+            ("start", &offset.to_string()),
         ]);
 
         if self.local {
@@ -182,14 +173,6 @@ impl Instance {
         };
 
         Ok((res, total))
-    }
-
-    pub fn channels(self: &Rc<Instance>, query: &str, skip: usize) -> ChannelSearch {
-        ChannelSearch::new(self.clone(), query, skip)
-    }
-
-    pub fn trending(self: &Rc<Instance>, skip: usize) -> VideoList {
-        VideoList::new_trending(self.clone(), skip)
     }
 
     /// Load a single video from its uuid

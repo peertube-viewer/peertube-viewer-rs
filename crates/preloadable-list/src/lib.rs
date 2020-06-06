@@ -9,6 +9,8 @@ pub struct PreloadableList<L: AsyncLoader> {
 
     loader: L,
     current: usize,
+    offset: usize,
+    step: usize,
     total: Option<usize>,
 }
 
@@ -18,18 +20,21 @@ where
     D: 'static,
     E: 'static,
 {
-    pub fn new(loader: L) -> PreloadableList<L> {
+    pub fn new(loader: L, step: usize) -> PreloadableList<L> {
         PreloadableList {
             loaded: Vec::new(),
             loading: None,
             loader,
             current: 0,
+            offset: 0,
+            step,
             total: None,
         }
     }
 
     pub async fn next(&mut self) -> Result<&[Rc<D>], E> {
         if !self.loaded.is_empty() {
+            self.offset += self.loaded[self.current].len();
             self.current += 1;
         }
         if self.loaded.len() <= self.current {
@@ -37,7 +42,7 @@ where
             if let Some(handle) = self.loading.take() {
                 temp = handle.await.unwrap()?;
             } else {
-                temp = self.loader.data(self.current).await?;
+                temp = self.loader.data(self.step, self.offset).await?;
             }
             let (data, new_total) = temp;
             self.loaded.push(data.into_iter().map(Rc::new).collect());
@@ -47,14 +52,22 @@ where
     }
 
     pub fn prev(&mut self) -> &Vec<Rc<D>> {
+        self.offset -= self.loaded[self.current].len();
         self.current -= 1;
         &self.loaded[self.current]
     }
 
     pub fn preload_next(&mut self) {
         if self.loaded.len() <= self.current + 1 && self.loading.is_none() {
-            self.loading = Some(spawn_local(self.loader.data(self.current + 1)));
+            self.loading = Some(spawn_local(
+                self.loader
+                    .data(self.step, self.offset + self.loaded[self.current].len()),
+            ));
         }
+    }
+
+    pub fn loader_mut(&mut self) -> &mut L {
+        &mut self.loader
     }
 
     pub fn preload_id(&self, id: usize) {
@@ -73,6 +86,18 @@ where
     pub fn expected_total(&self) -> Option<usize> {
         self.total
     }
+
+    pub fn step(&self) -> usize {
+        self.step
+    }
+
+    pub fn set_step(&mut self, step: usize) {
+        self.step = step;
+    }
+
+    pub fn offset(&self) -> usize {
+        self.offset
+    }
 }
 
 pub trait AsyncLoader {
@@ -82,7 +107,8 @@ pub trait AsyncLoader {
     // Workaround async_trait not allowing requirement for the returned futures to be async
     fn data(
         &mut self,
-        current: usize,
+        step: usize,
+        offset: usize,
     ) -> Pin<
         Box<dyn 'static + Future<Output = Result<(Vec<Self::Data>, Option<usize>), Self::Error>>>,
     >;

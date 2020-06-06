@@ -7,7 +7,6 @@ extern crate tokio;
 pub mod channels;
 pub mod error;
 mod instance;
-pub mod preloadable;
 mod video;
 
 pub use instance::Instance;
