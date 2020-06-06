@@ -1,41 +1,34 @@
-use std::{future::Future, rc::Rc};
+use std::{future::Future, pin::Pin, rc::Rc};
 use tokio::task::{spawn_local, JoinHandle};
 
 type Loading<D, E> = JoinHandle<Result<(Vec<D>, Option<usize>), E>>;
 
-pub struct PreloadableList<Data, Error, Next, Id> {
-    loaded: Vec<Vec<Rc<Data>>>,
-    loading: Option<Loading<Data, Error>>,
-    fetch_next: Next,
-    fetch_id: Id,
+pub struct PreloadableList<L: AsyncLoader> {
+    loaded: Vec<Vec<Rc<L::Data>>>,
+    loading: Option<Loading<L::Data, L::Error>>,
 
+    loader: L,
     current: usize,
     total: Option<usize>,
 }
 
-impl<Data, Error, Next, Id, NF, IF> PreloadableList<Data, Error, Next, Id>
+impl<L, D, E> PreloadableList<L>
 where
-    Data: 'static,
-    Error: 'static,
-
-    Next: Fn(usize) -> NF,
-    NF: Future<Output = Result<(Vec<Data>, Option<usize>), Error>> + 'static,
-
-    Id: Fn(Rc<Data>) -> IF,
-    IF: Future<Output = ()> + 'static,
+    L: AsyncLoader<Data = D, Error = E>,
+    D: 'static,
+    E: 'static,
 {
-    pub fn new(fetch_next: Next, fetch_id: Id) -> PreloadableList<Data, Error, Next, Id> {
+    pub fn new(loader: L) -> PreloadableList<L> {
         PreloadableList {
             loaded: Vec::new(),
             loading: None,
-            fetch_next,
-            fetch_id,
+            loader,
             current: 0,
             total: None,
         }
     }
 
-    pub async fn next(&mut self) -> Result<&[Rc<Data>], Error> {
+    pub async fn next(&mut self) -> Result<&[Rc<D>], E> {
         if !self.loaded.is_empty() {
             self.current += 1;
         }
@@ -44,7 +37,7 @@ where
             if let Some(handle) = self.loading.take() {
                 temp = handle.await.unwrap()?;
             } else {
-                temp = (self.fetch_next)(self.current).await?;
+                temp = self.loader.next(self.current).await?;
             }
             let (data, new_total) = temp;
             self.loaded.push(data.into_iter().map(Rc::new).collect());
@@ -53,31 +46,47 @@ where
         Ok(&self.loaded[self.current])
     }
 
-    pub fn prev(&mut self) -> &Vec<Rc<Data>> {
+    pub fn prev(&mut self) -> &Vec<Rc<D>> {
         self.current -= 1;
         &self.loaded[self.current]
     }
 
-    fn preload_next(&mut self) {
+    pub fn preload_next(&mut self) {
         if self.loaded.len() <= self.current + 1 && self.loading.is_none() {
-            self.loading = Some(spawn_local((self.fetch_next)(self.current + 1)));
+            self.loading = Some(spawn_local(self.loader.next(self.current + 1)));
         }
     }
 
-    fn preload_id(&self, id: usize) {
+    pub fn preload_id(&self, id: usize) {
         let data_cloned = self.loaded[self.current][id].clone();
-        spawn_local((self.fetch_id)(data_cloned));
+        self.loader.item(data_cloned);
     }
 
-    fn current(&self) -> &[Rc<Data>] {
+    pub fn current(&self) -> &[Rc<D>] {
         &self.loaded[self.current]
     }
 
-    fn current_len(&self) -> usize {
+    pub fn current_len(&self) -> usize {
         self.current().len()
     }
 
-    fn expected_total(&self) -> Option<usize> {
+    pub fn expected_total(&self) -> Option<usize> {
         self.total
+    }
+}
+
+pub trait AsyncLoader {
+    type Data: 'static;
+    type Error: 'static;
+
+    // Workaround async_trait not allowing requirement for the returned futures to be async
+    fn next(
+        &mut self,
+        current: usize,
+    ) -> Pin<
+        Box<dyn 'static + Future<Output = Result<(Vec<Self::Data>, Option<usize>), Self::Error>>>,
+    >;
+    fn item(&self, _: Rc<Self::Data>) -> Pin<Box<dyn 'static + Future<Output = ()>>> {
+        Box::pin(async {})
     }
 }

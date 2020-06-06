@@ -10,7 +10,8 @@ use tokio::sync::mpsc::UnboundedReceiver;
 use std::path::PathBuf;
 use tokio::task::{spawn_blocking, JoinHandle};
 
-use peertube_api::preloadable::PreloadableList;
+use peertube_api::preloadable::PreloadableList as OldPreloadableList;
+use preloadable_list::{AsyncLoader, PreloadableList};
 
 use futures::{
     future::{Fuse, FutureExt}, // for `.fuse()`
@@ -88,7 +89,7 @@ impl Editor {
         }
     }
 
-    pub async fn autoload_readline<T: PreloadableList>(
+    pub async fn old_autoload_readline<T: OldPreloadableList>(
         &mut self,
         prompt: String,
         list: &mut T,
@@ -124,6 +125,44 @@ impl Editor {
                 Message::CommandPrev => {
                     list.preload_prev();
                 }
+            }
+        }
+    }
+
+    pub async fn autoload_readline<Loader: AsyncLoader>(
+        &mut self,
+        prompt: String,
+        list: &mut PreloadableList<Loader>,
+    ) -> rustyline::Result<Action> {
+        let mut handle = self.helped_readline(prompt, Some(list.current().len()));
+        loop {
+            match handle.next().await {
+                Message::Over(res) => {
+                    let s = res?;
+                    if s == ":n" {
+                        return Ok(Action::Next);
+                    } else if s == ":p" {
+                        return Ok(Action::Prev);
+                    } else if s == ":q" {
+                        return Ok(Action::Quit);
+                    }
+                    match s.parse::<usize>() {
+                        Ok(id) if id > 0 && id <= list.current_len() => {
+                            return Ok(Action::Id(id));
+                        }
+                        Err(_) | Ok(_) => {
+                            return Ok(Action::Query(s));
+                        }
+                    }
+                }
+
+                Message::Number(id) => {
+                    list.preload_id(id - 1);
+                }
+                Message::CommandNext => {
+                    list.preload_next();
+                }
+                Message::CommandPrev => {}
             }
         }
     }

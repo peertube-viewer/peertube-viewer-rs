@@ -141,7 +141,7 @@ impl Cli {
 
     /// Main loop for he cli interface
     async fn main_loop(&mut self) -> Result<(), Error> {
-        let mut mode = Mode::Temp; //Placeholder that will be changed just after anyway on the first loop run
+        let mut mode = OldMode::Temp; //Placeholder that will be changed just after anyway on the first loop run
         let mut query = match self.initial_info.take() {
             InitialInfo::Query(s) if self.is_single_url => {
                 self.play_vid(&self.instance.single_video(&s).await?)
@@ -169,49 +169,49 @@ impl Cli {
                         if s == ":trending" {
                             let mut trending_tmp = self.instance.trending(SEARCH_TOTAL);
                             trending_tmp.next_videos().await?;
-                            mode = Mode::VideoList(trending_tmp);
+                            mode = OldMode::VideoList(trending_tmp);
                             query = Action::Query(":trending".to_string());
                         } else if s.starts_with(":channels") {
                             let mut channels_tmp = self.instance.channels(&s[10..], SEARCH_TOTAL);
                             channels_tmp.next_channels().await?;
                             self.rl.add_history_entry(&s);
-                            mode = Mode::ChannelSearch(channels_tmp);
+                            mode = OldMode::ChannelSearch(channels_tmp);
                         } else if s.starts_with(":chandle") {
                             let mut videos_tmp = self.instance.channel(&s[9..], SEARCH_TOTAL);
                             videos_tmp.next_videos().await?;
                             self.rl.add_history_entry(&s);
-                            mode = Mode::VideoList(videos_tmp);
+                            mode = OldMode::VideoList(videos_tmp);
                         } else {
                             let mut search_tmp = self.instance.search(&s, SEARCH_TOTAL);
                             search_tmp.next_videos().await?;
                             self.rl.add_history_entry(&s);
-                            mode = Mode::VideoList(search_tmp);
+                            mode = OldMode::VideoList(search_tmp);
                         }
                     }
                     Action::Quit => break,
                     Action::Next => match &mut mode {
-                        Mode::VideoList(search) => {
+                        OldMode::VideoList(search) => {
                             search.next_videos().await?;
                         }
-                        Mode::ChannelSearch(channels) => {
+                        OldMode::ChannelSearch(channels) => {
                             channels.next_channels().await?;
                         }
-                        Mode::Temp => unreachable!(),
+                        OldMode::Temp => unreachable!(),
                     },
                     Action::Prev => match &mut mode {
-                        Mode::VideoList(search) => {
+                        OldMode::VideoList(search) => {
                             search.prev();
                         }
-                        Mode::ChannelSearch(channels) => {
+                        OldMode::ChannelSearch(channels) => {
                             channels.prev();
                         }
-                        Mode::Temp => unreachable!(),
+                        OldMode::Temp => unreachable!(),
                     },
                     _ => unreachable!(),
                 };
             }
             match &mut mode {
-                Mode::VideoList(search) => {
+                OldMode::VideoList(search) => {
                     self.display
                         .video_list(search.current(), &self.history, &self.config);
                     self.display.mode_info(
@@ -223,7 +223,11 @@ impl Cli {
 
                     search.preload_res(self.config.select_quality() || self.config.use_raw_url());
                     let choice;
-                    match self.rl.autoload_readline(">> ".to_string(), search).await? {
+                    match self
+                        .rl
+                        .old_autoload_readline(">> ".to_string(), search)
+                        .await?
+                    {
                         Action::Id(id) => choice = id,
                         res => {
                             query = res;
@@ -234,7 +238,7 @@ impl Cli {
 
                     video = search.current()[choice - 1].clone();
                 }
-                Mode::ChannelSearch(channels) => {
+                OldMode::ChannelSearch(channels) => {
                     self.display
                         .channel_list(channels.current(), &self.history, &self.config);
                     self.display.mode_info(
@@ -245,7 +249,7 @@ impl Cli {
                     );
                     match self
                         .rl
-                        .autoload_readline(">> ".to_string(), channels)
+                        .old_autoload_readline(">> ".to_string(), channels)
                         .await?
                     {
                         Action::Id(id) => {
@@ -263,7 +267,7 @@ impl Cli {
                         }
                     };
                 }
-                Mode::Temp => unreachable!(),
+                OldMode::Temp => unreachable!(),
             }
             changed_query = false;
             self.play_vid(&video).await?;
@@ -360,7 +364,7 @@ impl Cli {
     }
 }
 
-enum Mode {
+enum OldMode {
     VideoList(VideoList),
     ChannelSearch(ChannelSearch),
     Temp,
