@@ -2,6 +2,7 @@ mod config;
 mod display;
 mod history;
 mod input;
+mod preloadables;
 
 pub use config::ConfigLoadError;
 use config::{Blacklist, Config, InitialInfo};

@@ -86,7 +86,5 @@ pub trait AsyncLoader {
     ) -> Pin<
         Box<dyn 'static + Future<Output = Result<(Vec<Self::Data>, Option<usize>), Self::Error>>>,
     >;
-    fn item(&self, _: Rc<Self::Data>) -> Pin<Box<dyn 'static + Future<Output = ()>>> {
-        Box::pin(async {})
-    }
+    fn item(&self, _: Rc<Self::Data>) {}
 }
