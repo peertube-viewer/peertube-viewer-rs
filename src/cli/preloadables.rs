@@ -56,22 +56,17 @@ impl AsyncLoader for Videos {
         offset: usize,
     ) -> Pin<Box<dyn 'static + Future<Output = Result<(Vec<Video>, Option<usize>), error::Error>>>>
     {
-        async fn inner(
-            instance: Rc<Instance>,
-            mode: VideoMode,
-            step: usize,
-            offset: usize,
-        ) -> Result<(Vec<Video>, Option<usize>), error::Error> {
-            match mode {
-                VideoMode::Search(query) => instance.search_videos(&query, step, offset).await,
-                VideoMode::Channel(handle) => instance.channel_videos(&handle, step, offset).await,
-                VideoMode::Trending => instance.trending_videos(step, offset).await,
-            }
-        }
-
         let instance_cl = self.instance.clone();
         let mode_cl = self.mode.clone();
-        Box::pin(async move { inner(instance_cl, mode_cl, step, offset).await })
+        Box::pin(async move {
+            match mode_cl {
+                VideoMode::Search(query) => instance_cl.search_videos(&query, step, offset).await,
+                VideoMode::Channel(handle) => {
+                    instance_cl.channel_videos(&handle, step, offset).await
+                }
+                VideoMode::Trending => instance_cl.trending_videos(step, offset).await,
+            }
+        })
     }
 
     fn item(&self, vid: Rc<Video>) {
@@ -110,17 +105,8 @@ impl AsyncLoader for Channels {
         offset: usize,
     ) -> Pin<Box<dyn 'static + Future<Output = Result<(Vec<Channel>, Option<usize>), error::Error>>>>
     {
-        async fn inner(
-            instance: Rc<Instance>,
-            query: String,
-            step: usize,
-            offset: usize,
-        ) -> Result<(Vec<Channel>, Option<usize>), error::Error> {
-            instance.search_channels(&query, step, offset).await
-        }
-
         let instance_cl = self.instance.clone();
         let query_cl = self.query.clone();
-        Box::pin(async move { inner(instance_cl, query_cl, step, offset).await })
+        Box::pin(async move { instance_cl.search_channels(&query_cl, step, offset).await })
     }
 }

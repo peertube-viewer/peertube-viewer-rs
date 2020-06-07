@@ -106,7 +106,11 @@ pub trait AsyncLoader {
     type Data: 'static;
     type Error: 'static;
 
-    // Workaround async_trait not allowing requirement for the returned futures to be async
+    // This should be an async trait but they are not stable yet.
+    // The async-trait crate provides some of the required features but can't require the produced
+    // future to be 'static
+    //
+    // To understand what's happening here check the docs for async-trait https://docs.rs/async-trait/0.1.33/async_trait/
     fn data(
         &mut self,
         step: usize,
