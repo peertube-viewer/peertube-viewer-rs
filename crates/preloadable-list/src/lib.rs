@@ -111,6 +111,7 @@ pub trait AsyncLoader {
     // future to be 'static
     //
     // To understand what's happening here check the docs for async-trait https://docs.rs/async-trait/0.1.33/async_trait/
+    #[allow(clippy::type_complexity)]
     fn data(
         &mut self,
         step: usize,

@@ -50,6 +50,7 @@ impl AsyncLoader for Videos {
     type Data = Video;
     type Error = error::Error;
 
+    #[allow(clippy::type_complexity)]
     fn data(
         &mut self,
         step: usize,
@@ -99,6 +100,7 @@ impl AsyncLoader for Channels {
     type Data = Channel;
     type Error = error::Error;
 
+    #[allow(clippy::type_complexity)]
     fn data(
         &mut self,
         step: usize,
