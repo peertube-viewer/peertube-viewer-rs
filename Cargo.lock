@@ -754,7 +754,7 @@ dependencies = [
 
 [[package]]
 name = "peertube-viewer-rs"
-version = "1.4.0"
+version = "1.4.1"
 dependencies = [
  "chrono",
  "clap",
