@@ -72,6 +72,10 @@ where
         &mut self.loader
     }
 
+    pub fn loader(&mut self) -> &L {
+        &self.loader
+    }
+
     pub fn preload_id(&self, id: usize) {
         let data_cloned = self.loaded[self.current][id].clone();
         self.loader.item(data_cloned);

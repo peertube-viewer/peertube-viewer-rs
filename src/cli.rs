@@ -228,7 +228,7 @@ impl Cli {
                     self.display
                         .video_list(search.current(), &self.history, &self.config);
                     self.display.mode_info(
-                        "Search",
+                        search.loader().name(),
                         search.expected_total(),
                         search.offset(),
                         search.current_len(),

@@ -44,6 +44,14 @@ impl Videos {
     pub fn preload_res(&mut self, should: bool) {
         self.preload_res = should;
     }
+
+    pub fn name(&self) -> &'static str {
+        match self.mode {
+            VideoMode::Search(_) => "Video search",
+            VideoMode::Trending => "Trending video",
+            VideoMode::Channel(_) => "Channel videos",
+        }
+    }
 }
 
 impl AsyncLoader for Videos {
