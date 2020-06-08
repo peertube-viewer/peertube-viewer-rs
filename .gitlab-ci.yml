@@ -28,6 +28,8 @@ rust-oldest:
     key: oldest
     paths:
       - target/
+  except:
+    -tags
 
 rust-nightly:
   allow_failure: true
@@ -42,6 +44,8 @@ rust-nightly:
       - target/
   only:
     - dev
+  except:
+    -tags
 
 release-linux:
   stage: build
