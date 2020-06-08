@@ -13,7 +13,7 @@ rust-latest:
   script:
     - rustup component add rustfmt
     - rustup component add clippy
-    - cargo build --verbose
+    - cargo build --verbose --locked
     - cargo test --verbose
     - cargo clippy --workspace --verbose -- --deny warnings
     - cargo fmt --all --verbose -- --check
@@ -22,7 +22,7 @@ rust-oldest:
   stage: test
   image: rust:1.41.0
   script:
-    - cargo build --verbose
+    - cargo build --verbose --locked
     - cargo test --verbose
   cache:
     key: oldest
@@ -34,7 +34,7 @@ rust-nightly:
   stage: test
   image: rustlang/rust:nightly
   script:
-    - cargo build --verbose
+    - cargo build --verbose --locked
     - cargo test --verbose
   cache:
     key: nightly
