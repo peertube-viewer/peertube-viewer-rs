@@ -1,8 +1,13 @@
 Changelog
 =========
 
+1.4.1
+-----
+
+Fix info message dispaying `Search` while browsing trending videos or videos from a channel
+
 1.4.0
----
+-----
 
 Fix alignement when dealing with most unicode characters.
 
