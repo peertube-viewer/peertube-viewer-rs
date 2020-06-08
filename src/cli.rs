@@ -253,7 +253,7 @@ impl Cli {
                     self.display
                         .channel_list(channels.current(), &self.history, &self.config);
                     self.display.mode_info(
-                        "Channels",
+                        "Channel search",
                         channels.expected_total(),
                         channels.offset(),
                         channels.current_len(),
