@@ -2,6 +2,7 @@ mod config;
 mod display;
 mod history;
 mod input;
+mod parser;
 mod preloadables;
 
 pub use config::ConfigLoadError;
@@ -175,22 +176,22 @@ impl Cli {
                             trending_tmp.next().await?;
                             mode = Mode::Videos(trending_tmp);
                             query = Action::Query(":trending".to_string());
-                        } else if s.starts_with(":channels") {
+                        } else if let Some(q) = parser::channels(&s) {
                             let mut channels_tmp = PreloadableList::new(
-                                Channels::new(self.instance.clone(), &s[10..]),
+                                Channels::new(self.instance.clone(), q),
                                 SEARCH_TOTAL,
                             );
                             channels_tmp.next().await?;
                             mode = Mode::Channels(channels_tmp);
-                            self.rl.add_history_entry(&s);
-                        } else if s.starts_with(":chandle") {
+                            self.rl.add_history_entry(s);
+                        } else if let Some(handle) = parser::chandle(s) {
                             let mut chandle_tmp = PreloadableList::new(
-                                Videos::new_channel(self.instance.clone(), &s[9..]),
+                                Videos::new_channel(self.instance.clone(), handle),
                                 SEARCH_TOTAL,
                             );
                             chandle_tmp.next().await?;
                             mode = Mode::Videos(chandle_tmp);
-                            self.rl.add_history_entry(&s);
+                            self.rl.add_history_entry(s);
                         } else {
                             self.rl.add_history_entry(&s);
                             let mut search_tmp = PreloadableList::new(
