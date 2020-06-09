@@ -192,6 +192,18 @@ impl Cli {
                             chandle_tmp.next().await?;
                             mode = Mode::Videos(chandle_tmp);
                             self.rl.add_history_entry(s);
+                        } else if let Some(id) = parser::info(s, mode.current_len()) {
+                            self.rl.add_history_entry(s);
+                            match &mode {
+                                Mode::Videos(v) => self.display.info(&v.current()[id - 1]).await,
+                                Mode::Channels(c) => unimplemented!(),
+                                Mode::Temp => panic!("Bad use of temp"),
+                            }
+                            self.rl
+                                .std_in("Press enter to continue".to_string())
+                                .await?;
+                            changed_query = false;
+                            continue;
                         } else {
                             self.rl.add_history_entry(&s);
                             let mut search_tmp = PreloadableList::new(
@@ -380,6 +392,16 @@ enum Mode {
     Videos(PreloadableList<Videos>),
     Channels(PreloadableList<Channels>),
     Temp,
+}
+
+impl Mode {
+    pub fn current_len(&self) -> usize {
+        match self {
+            Mode::Videos(v) => v.current().len(),
+            Mode::Channels(c) => c.current().len(),
+            Mode::Temp => 0,
+        }
+    }
 }
 
 impl Drop for Cli {

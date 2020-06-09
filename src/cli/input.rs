@@ -3,10 +3,13 @@ mod helper;
 use helper::Helper;
 pub use helper::Message;
 
+use crate::error;
+
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc::UnboundedReceiver;
 
+use std::io::{self, Write};
 use std::path::PathBuf;
 use tokio::task::{spawn_blocking, JoinHandle};
 
@@ -62,6 +65,20 @@ impl Editor {
                     e @ Err(_) => return e,
                 }
             }
+        })
+        .await
+        .expect("readline thread panicked")
+    }
+
+    pub async fn std_in(&mut self, prompt: String) -> Result<String, error::Error> {
+        spawn_blocking(move || {
+            print!("{}", prompt);
+            io::stdout().flush().expect("Unable to print to stdout");
+            let mut res = String::new();
+            io::stdin()
+                .read_line(&mut res)
+                .map(|_| res)
+                .map_err(|e| error::Error::Stdin(e))
         })
         .await
         .expect("readline thread panicked")

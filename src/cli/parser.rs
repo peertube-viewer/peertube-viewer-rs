@@ -27,7 +27,7 @@ pub fn clean_spaces(input: &str) -> Option<&str> {
         end -= 1;
     }
 
-    if start + 1 < end {
+    if start < end {
         Some(&input[start..end])
     } else {
         None
@@ -82,6 +82,7 @@ mod parser {
         assert_eq!(info(":info 20 ", 20), Some(20));
         assert_eq!(info(":info  21", 20), None);
         assert_eq!(info(":info  0 ", 20), None);
+        assert_eq!(info(":info  1", 20), Some(1));
     }
 
     #[test]
@@ -93,5 +94,6 @@ mod parser {
         assert_eq!(clean_spaces("eaz"), Some("eaz"));
         assert_eq!(clean_spaces(" eaze"), Some("eaze"));
         assert_eq!(clean_spaces("eae "), Some("eae"));
+        assert_eq!(clean_spaces("1"), Some("1"));
     }
 }
