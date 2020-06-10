@@ -322,8 +322,26 @@ impl Display {
         self.line('=');
     }
 
-    pub async fn channel_info(&self, video: &Channel) {
-        unimplemented!();
+    pub async fn channel_info(&self, channel: &Channel) {
+        self.line('=');
+        self.print_centered(channel.display_name());
+        self.line('=');
+        if let Some(d) = channel.description() {
+            if !d.is_empty() {
+                self.print_centered("DESCRIPTION");
+                self.line('=');
+                println!("{}", d);
+                self.line('=');
+            }
+        }
+        println!("id            : {}", channel.id());
+        println!("name          : {}", channel.name());
+        println!("display_name  : {}", channel.display_name());
+        println!("host          : {}", channel.host());
+        println!("followers     : {}", channel.followers());
+        println!("created       : {}", channel.created_at());
+        println!("handle        : {}", channel.handle());
+        self.line('=');
     }
 
     fn line(&self, c: char) {
