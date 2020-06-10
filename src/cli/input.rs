@@ -78,7 +78,7 @@ impl Editor {
             io::stdin()
                 .read_line(&mut res)
                 .map(|_| res)
-                .map_err(|e| error::Error::Stdin(e))
+                .map_err(error::Error::Stdin)
         })
         .await
         .expect("readline thread panicked")
