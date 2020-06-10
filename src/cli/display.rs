@@ -293,7 +293,7 @@ impl Display {
         }
     }
 
-    pub async fn info(&self, video: &Video) {
+    pub async fn video_info(&self, video: &Video) {
         self.line('=');
         self.print_centered(video.name());
         self.line('=');
@@ -320,6 +320,10 @@ impl Display {
             println!("{}nsfw{}", self.fg_color(color::Red), style::Reset,);
         }
         self.line('=');
+    }
+
+    pub async fn channel_info(&self, video: &Channel) {
+        unimplemented!();
     }
 
     fn line(&self, c: char) {

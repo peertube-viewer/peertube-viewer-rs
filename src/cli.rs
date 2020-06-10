@@ -195,8 +195,12 @@ impl Cli {
                         } else if let Some(id) = parser::info(s, mode.current_len()) {
                             self.rl.add_history_entry(s);
                             match &mode {
-                                Mode::Videos(v) => self.display.info(&v.current()[id - 1]).await,
-                                Mode::Channels(c) => unimplemented!(),
+                                Mode::Videos(v) => {
+                                    self.display.video_info(&v.current()[id - 1]).await
+                                }
+                                Mode::Channels(c) => {
+                                    self.display.channel_info(&c.current()[id - 1]).await
+                                }
                                 Mode::Temp => panic!("Bad use of temp"),
                             }
                             self.rl
@@ -301,7 +305,7 @@ impl Cli {
 
     async fn play_vid(&mut self, video: &peertube_api::Video) -> Result<(), Error> {
         // Resolution selection
-        self.display.info(&video).await;
+        self.display.video_info(&video).await;
         if self.config.is_blacklisted(video.host()).is_some() {
             self.display
                 .err(&"This video is from a blacklisted instance.");
