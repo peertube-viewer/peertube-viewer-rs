@@ -3,7 +3,8 @@ use chrono::{DateTime, FixedOffset};
 use peertube_ser::channels;
 
 pub struct Channel {
-    id: u64,
+    id: (String, u64), // Ids are not valable accross instances
+    //so we need to keep the instance where this ID is valable
     name: String,
     display_name: String,
     description: Option<String>,
@@ -15,9 +16,6 @@ pub struct Channel {
 
 #[allow(unused)]
 impl Channel {
-    pub fn id(&self) -> u64 {
-        self.id
-    }
     pub fn name(&self) -> &str {
         &self.name
     }
@@ -44,12 +42,30 @@ impl Channel {
     pub fn handle(&self) -> String {
         format!("{}@{}", self.name, self.host)
     }
+
+    pub fn rss(&self) -> String {
+        format!(
+            "{}/feeds/videos.xml?videoChannelId={}",
+            self.id.0, self.id.1
+        )
+    }
+
+    pub fn atom(&self) -> String {
+        format!(
+            "{}/feeds/videos.atom?videoChannelId={}",
+            self.id.0, self.id.1
+        )
+    }
 }
 
 impl Channel {
-    pub fn maybe_from(c: channels::Channel) -> Option<Channel> {
+    pub fn maybe_from(c: channels::Channel, source_instance: String) -> Option<Channel> {
         Some(Channel {
-            id: if c.id > 0 { c.id as u64 } else { 0 },
+            id: if c.id > 0 {
+                (source_instance, c.id as u64)
+            } else {
+                (source_instance, 0)
+            },
             followers: if c.followersCount > 0 {
                 c.followersCount as u64
             } else {

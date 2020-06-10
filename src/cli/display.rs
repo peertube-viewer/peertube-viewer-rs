@@ -334,13 +334,14 @@ impl Display {
                 self.line('=');
             }
         }
-        println!("id            : {}", channel.id());
         println!("name          : {}", channel.name());
         println!("display_name  : {}", channel.display_name());
         println!("host          : {}", channel.host());
         println!("followers     : {}", channel.followers());
         println!("created       : {}", channel.created_at());
         println!("handle        : {}", channel.handle());
+        println!("rss feed      : {}", channel.rss());
+        println!("atom feed     : {}", channel.atom());
         self.line('=');
     }
 

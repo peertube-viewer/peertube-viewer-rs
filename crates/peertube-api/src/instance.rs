@@ -162,7 +162,7 @@ impl Instance {
         let mut search_res: Channels = serde_json::from_str(&query.send().await?.text().await?)?;
         let mut res = Vec::new();
         for video in search_res.data.drain(..) {
-            if let Some(v) = Channel::maybe_from(video) {
+            if let Some(v) = Channel::maybe_from(video, self.host.clone()) {
                 res.push(v);
             }
         }
