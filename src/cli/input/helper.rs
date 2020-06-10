@@ -1,3 +1,4 @@
+use crate::cli::parser::info;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 
 use rustyline::{
@@ -47,12 +48,17 @@ impl Hinter for Helper {
         if line.is_empty() {
             return None;
         }
+
         if line == ":n" {
             self.sender.send(Message::CommandNext).unwrap();
         } else if line == ":p" {
             self.sender.send(Message::CommandPrev).unwrap();
         } else if let (Ok(num), Some(limit)) = (line.parse(), self.high_limit) {
             if num <= limit && num > 0 {
+                self.sender.send(Message::Number(num)).unwrap();
+            }
+        } else if let Some(limit) = self.high_limit {
+            if let Some(num) = info(&line, limit) {
                 self.sender.send(Message::Number(num)).unwrap();
             }
         }
