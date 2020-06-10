@@ -1,6 +1,13 @@
 Changelog
 =========
 
+dev
+---
+
+**These changes are implemented but not yet released**
+
+Add `:info` to get info on a specific item.
+
 1.4.1
 -----
 
