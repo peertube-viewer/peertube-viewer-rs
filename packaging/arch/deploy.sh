@@ -12,3 +12,5 @@ makepkg --printsrcinfo > .SRCINFO
 git add PKGBUILD
 git add .SRCINFO
 git commit -m "Release $release"
+cat PKGBUILD
+cat .SRCINFO
