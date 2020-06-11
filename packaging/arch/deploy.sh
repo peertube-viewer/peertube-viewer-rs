@@ -1,5 +1,7 @@
 #!/bin/sh
 
+
+pacman -Syu git openssh --noconfirm
 release=$(git describe --tags|sed 's/^v//')
 
 ssh-agent

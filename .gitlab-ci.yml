@@ -1,69 +1,69 @@
 stages:
-  - test
-  - build
+  #- test
+  #- build
   - deploy
 
-rust-latest:
-  stage: test
-  cache:
-    key: latest
-    paths:
-      - target/
-  image: rust:latest
-  script:
-    - rustup component add rustfmt
-    - rustup component add clippy
-    - cargo build --verbose --locked
-    - cargo test --verbose
-    - cargo clippy --workspace --verbose -- --deny warnings
-    - cargo fmt --all --verbose -- --check
-
-rust-oldest:
-  stage: test
-  image: rust:1.41.0
-  script:
-    - cargo build --verbose --locked
-    - cargo test --verbose
-  cache:
-    key: oldest
-    paths:
-      - target/
-  except:
-    - tags
-
-rust-nightly:
-  allow_failure: true
-  stage: test
-  image: rustlang/rust:nightly
-  script:
-    - cargo build --verbose --locked
-    - cargo test --verbose
-  cache:
-    key: nightly
-    paths:
-      - target/
-  only:
-    - dev
-  except:
-    - tags
-
-release-linux:
-  stage: build
-  image: rust:latest
-  script:
-    - cargo build --release --locked --verbose
-    - cp target/release/peertube-viewer-rs peertube-viewer-rs
-    - mkdir linux-build
-    - tar -czf linux-build/peertube-viewer-rs-"$(git describe --tags)".tar.gz completions/* peertube-viewer-rs peertube-viewer-rs.1
-  cache:
-    key: release-linux
-    paths:
-      - target/
-  artifacts:
-    paths:
-      - linux-build/
-  only:
-    - tags
+#rust-latest:
+#  stage: test
+#  cache:
+#    key: latest
+#    paths:
+#      - target/
+#  image: rust:latest
+#  script:
+#    - rustup component add rustfmt
+#    - rustup component add clippy
+#    - cargo build --verbose --locked
+#    - cargo test --verbose
+#    - cargo clippy --workspace --verbose -- --deny warnings
+#    - cargo fmt --all --verbose -- --check
+#
+#rust-oldest:
+#  stage: test
+#  image: rust:1.41.0
+#  script:
+#    - cargo build --verbose --locked
+#    - cargo test --verbose
+#  cache:
+#    key: oldest
+#    paths:
+#      - target/
+#  except:
+#    - tags
+#
+#rust-nightly:
+#  allow_failure: true
+#  stage: test
+#  image: rustlang/rust:nightly
+#  script:
+#    - cargo build --verbose --locked
+#    - cargo test --verbose
+#  cache:
+#    key: nightly
+#    paths:
+#      - target/
+#  only:
+#    - dev
+#  except:
+#    - tags
+#
+#release-linux:
+#  stage: build
+#  image: rust:latest
+#  script:
+#    - cargo build --release --locked --verbose
+#    - cp target/release/peertube-viewer-rs peertube-viewer-rs
+#    - mkdir linux-build
+#    - tar -czf linux-build/peertube-viewer-rs-"$(git describe --tags)".tar.gz completions/* peertube-viewer-rs peertube-viewer-rs.1
+#  cache:
+#    key: release-linux
+#    paths:
+#      - target/
+#  artifacts:
+#    paths:
+#      - linux-build/
+#  only:
+#    - tags
 
 release-aur:
   stage: deploy
