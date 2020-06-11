@@ -65,6 +65,15 @@ release-linux:
   only:
     - tags
 
+release-aur:
+  stage: deploy
+  image: archlinux:latest
+  script:
+    - pacman -Syu
+    - cd packaging/arch/ && ./deploy.sh
+  only:
+    - tags
+
 pages:
   stage: deploy
   image: ubuntu:latest
