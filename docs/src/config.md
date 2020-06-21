@@ -22,6 +22,7 @@ Format
     - [`nsfw`](#nsfw) behavior for nsfw content
     - [`colors`](#colors) coloring of the output
     - [`select-quality`](#select-quality) regarding quality selection
+    - [`edit-mode`](#edit-mode) to set the input mode to vi style keybindings
 
 - [[`player`]](#player)
     - [`command`](#command) video player command
@@ -65,6 +66,13 @@ Set whether the `--select-quality` flag is enabled by default
 - `true`
 - `false`: the default
 
+#### edit-mode
+Set the editing mode.
+This allows the use of either vi or emacs keybinds. If you don't know what it is you don't need to worry about this option.
+
+- `"emacs"`: the default
+- `"vi"`
+
 
 Example:
 ```toml
@@ -72,6 +80,7 @@ Example:
 nsfw = "block"
 colors = "enable"
 select-quality = true
+edit-mode = "vi"
 ```
 ### Player
 Configuration for the player
