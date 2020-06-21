@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.5.1
+---
+
+Migrate the project to a dedicated group on gitlab
+
 1.5.0
 ---
 
