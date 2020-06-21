@@ -10,6 +10,9 @@ colors = "disable"
 # can be true or false
 select-quality = true
 
+# can be emacs or vi, defaults to emacs
+edit-mode = "vi"
+
 [player]
 command = "mpv"
 args = ["--volume=30"]

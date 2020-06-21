@@ -1,5 +1,6 @@
 use clap::{App, ArgMatches, Values};
 use directories::ProjectDirs;
+use rustyline::config::EditMode;
 use toml::{
     de::Error as TomlError,
     value::{Table, Value},
@@ -148,6 +149,8 @@ pub struct Config {
     listed_instances: HashSet<String>,
     is_whitelist: bool,
 
+    edit_mode: EditMode,
+
     nsfw: NsfwBehavior,
     select_quality: bool,
     colors: bool,
@@ -269,7 +272,7 @@ impl Config {
             None
         };
 
-        /* ---Nsfw configuration --- */
+        /* ---General configuration --- */
         if let Some(Value::Table(t)) = config.get("general") {
             if let Some(Value::String(s)) = t.get("nsfw") {
                 if s == "block" {
@@ -303,6 +306,12 @@ impl Config {
 
             if let Some(Value::Boolean(true)) = t.get("select-quality") {
                 temp.select_quality = true;
+            }
+
+            if let Some(Value::String(s)) = t.get("edit-mode") {
+                if s == "vi" {
+                    temp.edit_mode = EditMode::Vi;
+                }
             }
         }
 
@@ -476,6 +485,10 @@ impl Config {
     pub fn nsfw(&self) -> NsfwBehavior {
         self.nsfw
     }
+
+    pub fn edit_mode(&self) -> EditMode {
+        self.edit_mode
+    }
 }
 
 impl Default for Config {
@@ -491,6 +504,7 @@ impl Default for Config {
             nsfw: NsfwBehavior::Tag,
             listed_instances: HashSet::new(),
             is_whitelist: false,
+            edit_mode: EditMode::Emacs,
             colors: true,
             select_quality: false,
             local: false,
@@ -583,6 +597,7 @@ mod config {
         assert!(config.is_blacklisted("peertube.social").is_some());
         assert_eq!(config.use_raw_url(), true);
         assert_eq!(config.select_quality(), true);
+        assert_eq!(config.edit_mode(), EditMode::Vi);
 
         let yml = load_yaml!("clap_app.yml");
         let app = App::from_yaml(yml);
@@ -606,6 +621,7 @@ mod config {
         assert_eq!(config.instance(), "https://args.ploud.fr");
         assert_eq!(config.select_quality(), true);
         assert_eq!(config.use_raw_url(), true);
+        assert_eq!(config.edit_mode(), EditMode::Vi);
     }
 
     #[test]
