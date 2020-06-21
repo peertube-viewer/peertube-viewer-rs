@@ -11,7 +11,7 @@ This readme provides a quick overview of peertube-viewer-rs, to learn how to use
 Compiling
 ---
 
-Compiling requires a [rust toolchain](https://www.rust-lang.org/tools/install)to be installed, newer that `v1.41.0`.
+Compiling requires a [rust toolchain](https://www.rust-lang.org/tools/install) to be installed, newer that `v1.41.0`.
 
 ```bash
 cargo build --locked --release
