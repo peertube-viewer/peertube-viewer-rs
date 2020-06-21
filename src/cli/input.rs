@@ -13,6 +13,8 @@ use std::io::{self, Write};
 use std::path::PathBuf;
 use tokio::task::{spawn_blocking, JoinHandle};
 
+use rustyline::config::{Builder, EditMode};
+
 use preloadable_list::{AsyncLoader, PreloadableList};
 
 use futures::{
@@ -44,9 +46,9 @@ pub struct Editor {
 }
 
 impl Editor {
-    pub fn new() -> Editor {
+    pub fn new(edit_mode: EditMode) -> Editor {
         let (rx, h) = Helper::new();
-        let mut rl = rustyline::Editor::new();
+        let mut rl = rustyline::Editor::with_config(Builder::new().edit_mode(edit_mode).build());
         rl.set_helper(Some(h));
         Editor {
             rx,
