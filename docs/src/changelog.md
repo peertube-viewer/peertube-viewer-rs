@@ -1,10 +1,15 @@
 Changelog
 =========
 
+1.5.2
+---
+
+Add `edit-mode` config option.
+
 1.5.1
 ---
 
-Migrate the project to a dedicated group on gitlab
+Migrate the project to a dedicated group on gitlab.
 
 1.5.0
 ---
@@ -14,7 +19,7 @@ Add `:info` to get info on a specific item.
 1.4.1
 -----
 
-Fix info message dispaying `Search` while browsing trending videos or videos from a channel
+Fix info message dispaying `Search` while browsing trending videos or videos from a channel.
 
 1.4.0
 -----
@@ -26,9 +31,9 @@ Add `--channels, --chandle, :channels, :chandle` features.
 v1.3.1
 ------
 
-Fix trending not working on the first search
+Fix trending not working on the first search.
 
-Add `--local` filtering flag to only browse videos from the instance you are connected to
+Add `--local` filtering flag to only browse videos from the instance you are connected to.
 
 
 v1.3.0
@@ -37,7 +42,7 @@ Trending browsing.
 
 UI improvements:
 
-- A total result count is now displayed for the current search
+- A total result count is now displayed for the current search.
 - Videos from blacklisted instances are now displayed as blocked (the title and other info isn't shown).
 Information can be obtained by  typing its ID.
 You will be prompted to check if you are sure you want to play it before playing the video.
@@ -46,7 +51,7 @@ You will be prompted to check if you are sure you want to play it before playing
 
 v1.2.1
 ------
-Small bug fixes in the configuration
+Small bug fixes in the configuration.
 
 v1.2.0
 ------
