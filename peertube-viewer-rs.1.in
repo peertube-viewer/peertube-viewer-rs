@@ -77,11 +77,11 @@ A config file can be put in `$XDG_CONFIG_HOME/peertube-viewer-rs/config.toml` or
 The expected format is TOML and an example of all configuration options can be obtained with the --print-full-example-config flag
 
 .SH ONLINE DOCUMENTATION
-https://sostheneguedon.gitlab.io/peertube-viewer-rs/peertube-viewer-rs.html
+https://peertube-viewer.gitlab.io/peertube-viewer-rs
 
 .SH REPORTING BUGS
 
-Gitlab issue tracker : https://gitlab.com/SostheneGuedon/peertube-viewer-rs/issues
+Gitlab issue tracker : https://gitlab.com/peertube-viewer/peertube-viewer-rs/-/issues
 
 .SH AUTHOR
 
