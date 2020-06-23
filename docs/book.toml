@@ -6,6 +6,8 @@ authors = ["Sosthène Guédon"]
 [output.html]
 git-repository-url = "https://gitlab.com/peertube-viewer/peertube-viewer-rs"
 git-repository-icon = "fa-gitlab"
+default-theme = "Rust"
+preferred-dark-theme = "Ayu"
 
 [[output.html.additional-resources]]
 output-dir="img"
