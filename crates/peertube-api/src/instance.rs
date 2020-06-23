@@ -104,7 +104,7 @@ impl Instance {
         Ok((res, total))
     }
 
-    /// Perform a search for the given query
+    /// Returns the trending videos of an instance
     pub async fn trending_videos(
         self: &Rc<Instance>,
         nb: usize,
@@ -139,6 +139,7 @@ impl Instance {
 
         Ok((res, total))
     }
+
     /// Perform a search for the given query
     pub async fn search_channels(
         self: &Rc<Instance>,
