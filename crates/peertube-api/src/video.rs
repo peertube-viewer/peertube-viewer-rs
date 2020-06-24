@@ -3,6 +3,7 @@ use tokio::sync::Mutex;
 
 use std::rc::Rc;
 
+use crate::common::Channel;
 use crate::error;
 use crate::instance::Instance;
 use peertube_ser::{search, video};
@@ -48,34 +49,6 @@ impl File {
 }
 
 #[derive(Clone, Debug)]
-struct Channel {
-    pub id: i64,
-    pub name: String,
-    pub display_name: String,
-    pub url: String,
-    pub host: String,
-}
-
-#[allow(unused)]
-impl Channel {
-    fn id(&self) -> &i64 {
-        &self.id
-    }
-    fn name(&self) -> &str {
-        &self.name
-    }
-    fn display_name(&self) -> &str {
-        &self.display_name
-    }
-    fn url(&self) -> &str {
-        &self.url
-    }
-    fn host(&self) -> &str {
-        &self.host
-    }
-}
-
-#[derive(Clone, Debug)]
 pub struct Resolution {
     id: i64,
     label: String,
@@ -116,18 +89,6 @@ impl From<video::File> for File {
             torrent_download_url: v.torrentDownloadUrl,
             webseed_url: v.fileUrl,
             download_url: v.fileDownloadUrl,
-        }
-    }
-}
-
-impl From<search::Channel> for Channel {
-    fn from(c: search::Channel) -> Channel {
-        Channel {
-            id: c.id,
-            name: c.name,
-            display_name: c.displayName,
-            url: c.url,
-            host: c.host,
         }
     }
 }

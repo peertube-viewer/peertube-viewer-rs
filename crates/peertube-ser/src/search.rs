@@ -1,17 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::common::Avatar;
-
-#[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
-pub struct Channel {
-    pub id: i64,
-    pub name: String,
-    pub displayName: String,
-    pub url: String,
-    pub host: String,
-    pub Avatar: Option<Avatar>,
-}
+use super::common::{Avatar, Channel};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]

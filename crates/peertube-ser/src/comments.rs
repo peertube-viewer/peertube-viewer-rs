@@ -1,22 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::common::Avatar;
-
-#[derive(Serialize, Deserialize, Debug)]
-#[allow(non_snake_case)]
-pub struct Account {
-    pub url: String,
-    pub name: String,
-    pub host: String,
-    pub avatar: Option<Avatar>,
-    pub id: i64,
-    pub followingCount: i64,
-    pub followersCount: i64,
-    pub createdAt: String,
-    pub updatedAt: String,
-    pub displayName: String,
-    pub description: Option<String>,
-}
+use super::common::{Avatar, Channel};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
@@ -25,13 +9,12 @@ pub struct Comment {
     pub url: String,
     pub text: Option<String>,
     pub threadId: i64,
-    pub inReplyToCommentId: Option<String>,
     pub videoId: i64,
     pub createdAt: String,
     pub updatedAt: String,
     pub deleted: Option<String>,
     pub isDeleted: bool,
-    pub account: Option<Account>,
+    pub account: Option<Channel>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

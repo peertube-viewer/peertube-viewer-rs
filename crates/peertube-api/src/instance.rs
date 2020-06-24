@@ -1,12 +1,14 @@
+use std::convert::TryFrom;
 use std::rc::Rc;
 
 use reqwest::Client;
 
 use peertube_ser::channels::Channels;
 use peertube_ser::video::{Description, File, Video as FullVideo};
-use peertube_ser::Videos;
+use peertube_ser::{Comments, Videos};
 
 use crate::channels::Channel;
+use crate::comments::Comment;
 use crate::error;
 use crate::video::Video;
 
@@ -97,6 +99,38 @@ impl Instance {
         }
 
         let total = match video_res.total {
+            Some(c) if c > 0 => Some(c as usize),
+            _ => None,
+        };
+
+        Ok((res, total))
+    }
+
+    pub async fn comments(
+        self: &Rc<Instance>,
+        video_uuid: &str,
+        nb: usize,
+        offset: usize,
+    ) -> error::Result<(Vec<Comment>, Option<usize>)> {
+        let mut url = self.host.clone();
+        url.push_str("/api/v1/videos/");
+        url.push_str(video_uuid);
+        url.push_str("/comment-threads");
+
+        let mut query = self
+            .client
+            .get(&url)
+            .query(&[("count", &nb.to_string()), ("start", &offset.to_string())]);
+
+        let mut comment_res: Comments = serde_json::from_str(&query.send().await?.text().await?)?;
+        let mut res = Vec::new();
+        for comment in comment_res.data.drain(..) {
+            if let Ok(c) = Comment::try_from(comment) {
+                res.push(c);
+            }
+        }
+
+        let total = match comment_res.total {
             Some(c) if c > 0 => Some(c as usize),
             _ => None,
         };

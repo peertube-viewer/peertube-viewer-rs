@@ -1,4 +1,5 @@
-use crate::search::{Channel, IdentifiedLabel, Language};
+use crate::common::Channel;
+use crate::search::{IdentifiedLabel, Language};
 use serde::{Deserialize, Serialize};
 
 /// Structure used to deserialize the json output from fetching a video description
