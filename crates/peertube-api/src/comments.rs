@@ -1,8 +1,6 @@
 use crate::common::Channel;
-use crate::Instance;
 use chrono::{DateTime, FixedOffset};
 use std::convert::TryFrom;
-use std::rc::Rc;
 
 pub struct Comment {
     content: String,

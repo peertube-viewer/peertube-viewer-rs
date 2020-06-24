@@ -1,5 +1,4 @@
 use peertube_ser::common;
-use peertube_ser::search;
 
 #[derive(Clone, Debug)]
 pub struct Channel {

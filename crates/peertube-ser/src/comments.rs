@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::common::{Avatar, Channel};
+use super::common::Channel;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]

@@ -117,7 +117,7 @@ impl Instance {
         url.push_str(video_uuid);
         url.push_str("/comment-threads");
 
-        let mut query = self
+        let query = self
             .client
             .get(&url)
             .query(&[("count", &nb.to_string()), ("start", &offset.to_string())]);
