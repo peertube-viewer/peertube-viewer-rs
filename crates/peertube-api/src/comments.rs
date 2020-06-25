@@ -42,6 +42,10 @@ impl Comment {
         &self.author.display_name
     }
 
+    pub fn author_host(&self) -> &str {
+        &self.author.host
+    }
+
     pub fn created_at(&self) -> &Option<DateTime<FixedOffset>> {
         &self.created_at
     }

@@ -1,4 +1,4 @@
-use peertube_api::{channels::Channel, Video};
+use peertube_api::{channels::Channel, Comment, Video};
 use std::fmt;
 use termion::{color, style};
 
@@ -105,6 +105,28 @@ impl InnerLayoutItem for ChannelLayoutItem {
     }
 }
 
+pub enum CommentLayoutItem {
+    Content,
+    Date,
+    Author,
+    Host,
+    String(String),
+}
+
+impl InnerLayoutItem for CommentLayoutItem {
+    type Data = Comment;
+
+    fn display(&self, c: &Self::Data) -> String {
+        match self {
+            CommentLayoutItem::Author => c.author_display_name().to_owned(),
+            CommentLayoutItem::Host => c.author_host().to_owned(),
+            CommentLayoutItem::Date => pretty_date(c.created_at().as_ref()),
+            CommentLayoutItem::Content => c.content().to_owned(),
+            CommentLayoutItem::String(s) => s.clone(),
+        }
+    }
+}
+
 pub fn default_video_layouts() -> (
     Vec<LayoutItem<VideoLayoutItem>>,
     Vec<LayoutItem<VideoLayoutItem>>,
@@ -183,6 +205,21 @@ pub fn default_channel_layouts() -> Vec<LayoutItem<ChannelLayoutItem>> {
         LayoutItem::Inner(ChannelLayoutItem::String(" ".to_string())),
         LayoutItem::Style(Box::new(color::Fg(color::Green))),
         LayoutItem::Inner(ChannelLayoutItem::Followers),
+        LayoutItem::Style(Box::new(color::Fg(color::Reset))),
+    ]
+}
+
+pub fn default_comment_layouts() -> Vec<LayoutItem<CommentLayoutItem>> {
+    vec![
+        LayoutItem::Style(Box::new(color::Fg(color::Blue))),
+        LayoutItem::Inner(CommentLayoutItem::Author),
+        LayoutItem::Inner(CommentLayoutItem::String(" ".to_string())),
+        LayoutItem::Alignement,
+        LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
+        LayoutItem::Inner(CommentLayoutItem::Host),
+        LayoutItem::Alignement,
+        LayoutItem::Inner(CommentLayoutItem::String("\n".to_string())),
+        LayoutItem::Inner(CommentLayoutItem::Content),
         LayoutItem::Style(Box::new(color::Fg(color::Reset))),
     ]
 }
