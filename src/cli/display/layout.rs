@@ -218,8 +218,11 @@ pub fn default_comment_layouts() -> Vec<LayoutItem<CommentLayoutItem>> {
         LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
         LayoutItem::Inner(CommentLayoutItem::Host),
         LayoutItem::Alignement,
+        LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
+        LayoutItem::Inner(CommentLayoutItem::Date),
+        LayoutItem::Alignement,
+        LayoutItem::Style(Box::new(color::Fg(color::Reset))),
         LayoutItem::Inner(CommentLayoutItem::String("\n".to_string())),
         LayoutItem::Inner(CommentLayoutItem::Content),
-        LayoutItem::Style(Box::new(color::Fg(color::Reset))),
     ]
 }
