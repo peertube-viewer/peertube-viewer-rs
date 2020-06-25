@@ -264,6 +264,17 @@ impl Display {
         );
     }
 
+    pub fn warn<T: fmt::Display>(&self, warn: &T) {
+        println!(
+            "{}{}{}{}{}",
+            self.fg_color(color::Yellow),
+            style::Bold,
+            warn,
+            style::Reset,
+            self.fg_color(color::Reset)
+        );
+    }
+
     pub fn message(&self, msg: &str) {
         println!("{}", msg);
     }
