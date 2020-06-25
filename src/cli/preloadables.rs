@@ -1,4 +1,4 @@
-use peertube_api::{channels::Channel, error, Instance, Video};
+use peertube_api::{channels::Channel, error, Comment, Instance, Video};
 use preloadable_list::AsyncLoader;
 use std::{future::Future, pin::Pin, rc::Rc};
 use tokio::task::spawn_local;
@@ -104,6 +104,11 @@ impl Channels {
     }
 }
 
+pub struct Comments {
+    instance: Rc<Instance>,
+    video_uuid: String,
+}
+
 impl AsyncLoader for Channels {
     type Data = Channel;
     type Error = error::Error;
@@ -118,5 +123,31 @@ impl AsyncLoader for Channels {
         let instance_cl = self.instance.clone();
         let query_cl = self.query.clone();
         Box::pin(async move { instance_cl.search_channels(&query_cl, step, offset).await })
+    }
+}
+
+impl Comments {
+    pub fn new(instance: Rc<Instance>, video_uuid: &str) -> Comments {
+        Comments {
+            instance,
+            video_uuid: video_uuid.to_owned(),
+        }
+    }
+}
+
+impl AsyncLoader for Comments {
+    type Data = Comment;
+    type Error = error::Error;
+
+    #[allow(clippy::type_complexity)]
+    fn data(
+        &mut self,
+        step: usize,
+        offset: usize,
+    ) -> Pin<Box<dyn 'static + Future<Output = Result<(Vec<Comment>, Option<usize>), error::Error>>>>
+    {
+        let instance_cl = self.instance.clone();
+        let video_uuid_cl = self.video_uuid.clone();
+        Box::pin(async move { instance_cl.comments(&video_uuid_cl, step, offset).await })
     }
 }
