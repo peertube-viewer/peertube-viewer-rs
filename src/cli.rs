@@ -18,7 +18,7 @@ use rustyline::error::ReadlineError;
 use peertube_api::Instance;
 
 use preloadable_list::PreloadableList;
-use preloadables::{Channels, Videos};
+use preloadables::{Channels, Comments, Videos};
 
 use std::fs::create_dir;
 use std::rc::Rc;
@@ -201,11 +201,40 @@ impl Cli {
                                 Mode::Channels(c) => {
                                     self.display.channel_info(&c.current()[id - 1]).await
                                 }
+                                Mode::Comments(_) => {
+                                    self.display.warn(&"No additionnal info available")
+                                }
                                 Mode::Temp => panic!("Bad use of temp"),
                             }
                             self.rl
                                 .std_in("Press enter to continue".to_string())
                                 .await?;
+                            changed_query = false;
+                            continue;
+                        } else if let Some(id) = parser::comments(s, mode.current_len()) {
+                            self.rl.add_history_entry(s);
+                            match &mode {
+                                Mode::Videos(v) => {
+                                    self.display.video_info(&v.current()[id - 1]).await;
+                                    let mut comments_tmp = PreloadableList::new(
+                                        Comments::new(
+                                            self.instance.clone(),
+                                            v.current()[id - 1].uuid(),
+                                        ),
+                                        SEARCH_TOTAL,
+                                    );
+                                    comments_tmp.next().await?;
+                                    mode = Mode::Comments(comments_tmp);
+                                    self.rl.add_history_entry(s);
+                                }
+                                Mode::Channels(_) => {
+                                    self.display.err(&"Channels don't have comments")
+                                }
+                                Mode::Comments(_) => {
+                                    self.display.err(&"Comments don't have comments")
+                                }
+                                Mode::Temp => panic!("Bad use of temp"),
+                            }
                             changed_query = false;
                             continue;
                         } else {
@@ -226,6 +255,9 @@ impl Cli {
                         Mode::Channels(channels) => {
                             channels.next().await?;
                         }
+                        Mode::Comments(comments) => {
+                            comments.next().await?;
+                        }
                         Mode::Temp => unreachable!(),
                     },
                     Action::Prev => match &mut mode {
@@ -234,6 +266,9 @@ impl Cli {
                         }
                         Mode::Channels(channels) => {
                             channels.prev();
+                        }
+                        Mode::Comments(comments) => {
+                            comments.prev();
                         }
                         Mode::Temp => unreachable!(),
                     },
@@ -284,6 +319,34 @@ impl Cli {
                             query = Action::Query(format!(
                                 ":chandle {}",
                                 channels.current()[id - 1].handle()
+                            ));
+                            changed_query = true;
+                            continue;
+                        }
+                        res => {
+                            query = res;
+                            changed_query = true;
+                            continue;
+                        }
+                    };
+                }
+                Mode::Comments(comments) => {
+                    self.display.comment_list(comments.current());
+                    self.display.mode_info(
+                        "Browsing video comments",
+                        comments.expected_total(),
+                        comments.offset(),
+                        comments.current_len(),
+                    );
+                    match self
+                        .rl
+                        .autoload_readline(">> ".to_string(), comments)
+                        .await?
+                    {
+                        Action::Id(id) => {
+                            query = Action::Query(format!(
+                                ":browser {}",
+                                comments.current()[id - 1].url()
                             ));
                             changed_query = true;
                             continue;
@@ -395,6 +458,7 @@ impl Cli {
 enum Mode {
     Videos(PreloadableList<Videos>),
     Channels(PreloadableList<Channels>),
+    Comments(PreloadableList<Comments>),
     Temp,
 }
 
@@ -403,6 +467,7 @@ impl Mode {
         match self {
             Mode::Videos(v) => v.current().len(),
             Mode::Channels(c) => c.current().len(),
+            Mode::Comments(c) => c.current().len(),
             Mode::Temp => 0,
         }
     }

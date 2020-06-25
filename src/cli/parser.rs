@@ -47,6 +47,19 @@ pub fn info(input: &str, max: usize) -> Option<usize> {
     }
 }
 
+pub fn comments(input: &str, max: usize) -> Option<usize> {
+    if input.starts_with(":comments ") {
+        let res = clean_spaces(&input[9..])?.parse().ok()?;
+        if 0 < res && res <= max {
+            Some(res)
+        } else {
+            None
+        }
+    } else {
+        None
+    }
+}
+
 #[cfg(test)]
 mod parser {
     use super::*;
@@ -83,6 +96,18 @@ mod parser {
         assert_eq!(info(":info  21", 20), None);
         assert_eq!(info(":info  0 ", 20), None);
         assert_eq!(info(":info  1", 20), Some(1));
+    }
+
+    #[test]
+    fn test_comments() {
+        assert_eq!(comments("eaz", 20), None);
+        assert_eq!(comments(":comments", 20), None);
+        assert_eq!(comments(":comments ", 20), None);
+        assert_eq!(comments(":comments 18", 20), Some(18));
+        assert_eq!(comments(":comments 20 ", 20), Some(20));
+        assert_eq!(comments(":comments  21", 20), None);
+        assert_eq!(comments(":comments  0 ", 20), None);
+        assert_eq!(comments(":comments  1", 20), Some(1));
     }
 
     #[test]

@@ -1,4 +1,4 @@
-use peertube_api::{channels::Channel, Resolution, Video};
+use peertube_api::{channels::Channel, Comment, Resolution, Video};
 
 use super::{
     config::Blacklist,
@@ -12,8 +12,8 @@ use std::rc::Rc;
 
 mod layout;
 use layout::{
-    default_channel_layouts, default_video_layouts, ChannelLayoutItem, InnerLayoutItem, LayoutItem,
-    VideoLayoutItem,
+    default_channel_layouts, default_comment_layouts, default_video_layouts, ChannelLayoutItem,
+    CommentLayoutItem, InnerLayoutItem, LayoutItem, VideoLayoutItem,
 };
 
 mod helpers;
@@ -29,6 +29,7 @@ pub struct Display {
     video_layout: Vec<LayoutItem<VideoLayoutItem>>,
     seen_video_layout: Vec<LayoutItem<VideoLayoutItem>>,
     channel_layout: Vec<LayoutItem<ChannelLayoutItem>>,
+    comment_layout: Vec<LayoutItem<CommentLayoutItem>>,
 }
 
 #[derive(Debug)]
@@ -60,6 +61,7 @@ impl Display {
             video_layout,
             seen_video_layout,
             channel_layout: default_channel_layouts(),
+            comment_layout: default_comment_layouts(),
         }
     }
 
@@ -96,6 +98,16 @@ impl Display {
             &(),
             &self.channel_layout,
             &self.channel_layout,
+        );
+    }
+
+    pub fn comment_list(&self, comments: &[Rc<Comment>]) {
+        self.list(
+            comments,
+            &(),
+            &(),
+            &self.comment_layout,
+            &self.comment_layout,
         );
     }
 
