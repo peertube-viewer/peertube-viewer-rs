@@ -1,7 +1,7 @@
 peertube-viewer-rs
 ===
 
-A command line program to view browse [peertube](https://joinpeertube.org), inspired by the youtube-viewer utility
+A command line program to view and browse [peertube](https://joinpeertube.org), inspired by the youtube-viewer utility
 
 Documentation
 ---
