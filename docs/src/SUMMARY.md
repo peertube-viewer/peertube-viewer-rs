@@ -8,5 +8,5 @@
     - [Command line arguments](cli/args.md)
 
 - [Configuration](config.md)
-- [Building from source](build.md)
+- [Installation](install.md)
 - [changelog](changelog.md)
