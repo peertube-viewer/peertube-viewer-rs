@@ -1,4 +1,4 @@
-usage
+Usage
 =====
 
 When launching **peertube-viewer-rs** you will be prompted to enter a search.
@@ -17,7 +17,7 @@ You can then enter a search and will be displayed the results with:
 The white/bold results are those that you have already been watched.
 ![select_prompt](../screenshots/select_prompt.png)
 
-You can either play one of the results by typing its id or get more results with `:n`
+You can either play one of the results by typing its ID or get more results with `:n`
 ![next](../screenshots/next_done.png)
 
 At any moment you can quit with `:q`
