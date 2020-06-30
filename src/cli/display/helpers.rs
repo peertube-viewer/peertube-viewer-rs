@@ -94,6 +94,11 @@ pub fn remove_html(mut input: &str) -> String {
             input = &input[4..];
             continue;
         }
+        if input.starts_with("&apos") {
+            s.push('\'');
+            input = &input[6..];
+            continue;
+        }
         if input.starts_with('&') {
             s.push('&');
             input = &input[1..];
