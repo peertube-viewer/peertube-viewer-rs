@@ -121,7 +121,7 @@ impl InnerLayoutItem for CommentLayoutItem {
             CommentLayoutItem::Author => c.author_display_name().to_owned(),
             CommentLayoutItem::Host => c.author_host().to_owned(),
             CommentLayoutItem::Date => pretty_date(c.created_at().as_ref()),
-            CommentLayoutItem::Content => c.content().to_owned(),
+            CommentLayoutItem::Content => remove_html(c.content()),
             CommentLayoutItem::String(s) => s.clone(),
         }
     }
@@ -218,11 +218,13 @@ pub fn default_comment_layouts() -> Vec<LayoutItem<CommentLayoutItem>> {
         LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
         LayoutItem::Inner(CommentLayoutItem::Host),
         LayoutItem::Alignement,
+        LayoutItem::Inner(CommentLayoutItem::String(" ".to_string())),
         LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
         LayoutItem::Inner(CommentLayoutItem::Date),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Reset))),
         LayoutItem::Inner(CommentLayoutItem::String("\n".to_string())),
         LayoutItem::Inner(CommentLayoutItem::Content),
+        LayoutItem::Inner(CommentLayoutItem::String("\n".to_string())),
     ]
 }
