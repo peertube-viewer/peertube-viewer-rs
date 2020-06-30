@@ -26,6 +26,8 @@ Allows you to search videos from a peertube instance with a similar interface to
  
 .B quality selection
 
+.B video comments
+
 
 .SH OPTIONS
 
