@@ -75,9 +75,95 @@ pub fn display_length(mut i: usize) -> usize {
     len
 }
 
+pub fn remove_html(mut input: &str) -> String {
+    let mut s = String::new();
+
+    while !input.is_empty() {
+        if input.starts_with("&amp") {
+            s.push('&');
+            input = &input[5..];
+            continue;
+        }
+        if input.starts_with("&lt") {
+            s.push('<');
+            input = &input[4..];
+            continue;
+        }
+        if input.starts_with("&gt") {
+            s.push('>');
+            input = &input[4..];
+            continue;
+        }
+        if input.starts_with('&') {
+            s.push('&');
+            input = &input[1..];
+            continue;
+        }
+
+        match (input.find('<'), input.find('&')) {
+            (None, None) => {
+                s.push_str(input);
+                return s;
+            }
+            (None, Some(idx)) => {
+                s.push_str(&input[..idx]);
+                input = &input[idx..];
+                continue;
+            }
+            (Some(idx), None) => {
+                s.push_str(&input[..idx]);
+                input = &input[idx + 1..];
+                if let Some(idx) = input.find('>') {
+                    if &input[..idx] == "br /" {
+                        s.push('\n');
+                    }
+                    input = &input[idx + 1..];
+                } else {
+                    return s;
+                }
+            }
+            (Some(idx1), Some(idx2)) if idx1 < idx2 => {
+                s.push_str(&input[..idx1]);
+                input = &input[idx1 + 1..];
+                if let Some(idx) = input.find('>') {
+                    if &input[..idx] == "br /" {
+                        s.push('\n');
+                    }
+                    input = &input[idx + 1..];
+                    continue;
+                } else {
+                    return s;
+                }
+            }
+            (Some(_), Some(idx)) => {
+                s.push_str(&input[..idx]);
+                input = &input[idx..];
+                continue;
+            }
+        }
+    }
+
+    s
+}
+
 #[cfg(test)]
 mod helpers {
     use super::*;
+
+    #[test]
+    pub fn html() {
+        assert_eq!(
+            remove_html("Some text<br /><br />More text?"),
+            "Some text\n\nMore text?"
+        );
+
+        assert_eq!(
+            remove_html(
+                r#"<p><span class="h-card"><a href="https://framatube.org/accounts/framasoft" class="u-url mention">@<span>framasoft</span></a></span> I love this. ❤️</p>"#
+            ),
+            "@framasoft I love this. ❤️"
+        );
+    }
 
     #[test]
     pub fn length() {
