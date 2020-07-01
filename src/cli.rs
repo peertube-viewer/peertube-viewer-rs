@@ -225,7 +225,12 @@ impl Cli {
                                 }
                                 Mode::Channels(c) => {
                                     self.display.channel_info(&c.current()[id - 1]).await;
-                                    unimplemented!();
+                                    Command::new(self.config.browser())
+                                        .arg(self.instance.channel_url(&c.current()[id - 1]))
+                                        .spawn()
+                                        .map_err(Error::BrowserLaunch)?
+                                        .await
+                                        .map_err(Error::BrowserLaunch)?;
                                 }
                                 Mode::Comments(c) => {
                                     Command::new(self.config.browser())

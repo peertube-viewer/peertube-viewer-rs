@@ -247,6 +247,14 @@ impl Instance {
         Ok(video.files)
     }
 
+    pub fn channel_url(&self, channel: &Channel) -> String {
+        let mut channel_url = self.host.clone();
+        channel_url.push_str("/video-channels/");
+        channel_url.push_str(&channel.handle());
+        channel_url.push_str("/videos/");
+        channel_url
+    }
+
     pub fn host(&self) -> &String {
         &self.host
     }
