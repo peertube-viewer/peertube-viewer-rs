@@ -9,6 +9,7 @@ use toml::{
 use std::collections::HashSet;
 use std::default::Default;
 use std::env::vars_os;
+use std::ffi::OsString;
 use std::fmt::{self, Display};
 use std::fs::read_to_string;
 use std::path::PathBuf;
@@ -49,6 +50,10 @@ pub enum ConfigLoadError {
     UseTorrentAndNoInfo,
     NotATable,
     NotAString,
+    NonUtf8EnvironmentVariable {
+        name: &'static str,
+        provided: OsString,
+    },
     IncorrectTag {
         name: &'static str,
         provided: String,
@@ -69,6 +74,11 @@ impl Display for ConfigLoadError {
                 f,
                 "The config was not parsable as TOML:\n{}\nUsing default config",
                 e
+            ),
+            ConfigLoadError::NonUtf8EnvironmentVariable{name,provided:_} => write!(
+                f,
+                "Environnment variable {} is not utf8.",
+                name ,
             ),
             ConfigLoadError::IncorrectTag{name,provided,allowed} => write!(
                 f,
@@ -103,6 +113,10 @@ impl error::Error for ConfigLoadError {
                 name: _,
                 provided: _,
                 allowed: _,
+            }
+            | ConfigLoadError::NonUtf8EnvironmentVariable {
+                name: _,
+                provided: _,
             }
             | ConfigLoadError::UseTorrentAndNoInfo
             | ConfigLoadError::NotATable
@@ -214,8 +228,12 @@ impl Config {
 
         for (key, value) in vars_os() {
             if key == "BROWSER" {
-                if let Ok(b) = value.into_string() {
-                    temp.browser = b;
+                match value.into_string() {
+                    Ok(b) => temp.browser = b,
+                    Err(ostr) => load_errors.push(ConfigLoadError::NonUtf8EnvironmentVariable {
+                        name: "BROWSER",
+                        provided: ostr,
+                    }),
                 }
             }
         }
