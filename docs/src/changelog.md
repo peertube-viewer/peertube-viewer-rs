@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.6.0
+---
+
+Add comments support via the `:comments` command.
+
 1.5.2
 ---
 
