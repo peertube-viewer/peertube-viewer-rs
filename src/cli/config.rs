@@ -40,8 +40,8 @@ struct PlayerConf {
 }
 
 const NSFW_ALLOWED: [&str; 3] = ["tag", "block", "let"];
-
 const COLORS_ALLOWED: [&str; 2] = ["enable", "disable"];
+const EDIT_MODE_ALLOWED: [&str; 2] = ["emacs", "vi"];
 
 #[derive(Debug)]
 pub enum ConfigLoadError {
@@ -339,6 +339,14 @@ impl Config {
             if let Some(Value::String(s)) = t.get("edit-mode") {
                 if s == "vi" {
                     temp.edit_mode = EditMode::Vi;
+                } else if s == "emacs" {
+                    temp.edit_mode = EditMode::Emacs;
+                } else {
+                    load_errors.push(ConfigLoadError::IncorrectTag {
+                        name: "edit-mode",
+                        provided: s.to_string(),
+                        allowed: &EDIT_MODE_ALLOWED,
+                    });
                 }
             }
 
