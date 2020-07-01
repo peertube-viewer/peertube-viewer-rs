@@ -13,6 +13,10 @@ select-quality = true
 # can be emacs or vi, defaults to emacs
 edit-mode = "vi"
 
+# If this option isn't present, the "BROWSER" environment variable is used
+# If it isn't set, the default is Firefox
+browser = "qutebrowser"
+
 [player]
 command = "mpv"
 args = ["--volume=30"]

@@ -23,6 +23,7 @@ Format
     - [`colors`](#colors) coloring of the output
     - [`select-quality`](#select-quality) regarding quality selection
     - [`edit-mode`](#edit-mode) to set the input mode to vi style keybindings
+    - [`browser`](#browser) set the browser to be used
 
 - [[`player`]](#player)
     - [`command`](#command) video player command
@@ -73,6 +74,11 @@ This allows the use of either vi or emacs keybinds. If you don't know what it is
 - `"emacs"`: the default
 - `"vi"`
 
+#### browser
+Set the browser to use when opening items with the `:browser` command.
+If this variable isn't set, the `BROWSER` environment variable is used.
+If the environment variable isn't available, Firefox is the default
+
 
 Example:
 ```toml
@@ -81,6 +87,7 @@ nsfw = "block"
 colors = "enable"
 select-quality = true
 edit-mode = "vi"
+browser = "qutebrowser"
 ```
 ### Player
 Configuration for the player

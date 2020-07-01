@@ -8,6 +8,7 @@ use toml::{
 
 use std::collections::HashSet;
 use std::default::Default;
+use std::env::vars_os;
 use std::fmt::{self, Display};
 use std::fs::read_to_string;
 use std::path::PathBuf;
@@ -150,6 +151,7 @@ pub struct Config {
     is_whitelist: bool,
 
     edit_mode: EditMode,
+    browser: String,
 
     nsfw: NsfwBehavior,
     select_quality: bool,
@@ -209,6 +211,14 @@ impl Config {
     fn from_config_file(path: &PathBuf) -> (Config, Vec<ConfigLoadError>) {
         let mut temp = Config::default();
         let mut load_errors = Vec::new();
+
+        for (key, value) in vars_os() {
+            if key == "BROWSER" {
+                if let Ok(b) = value.into_string() {
+                    temp.browser = b;
+                }
+            }
+        }
 
         /* ---File parsing--- */
 
@@ -312,6 +322,10 @@ impl Config {
                 if s == "vi" {
                     temp.edit_mode = EditMode::Vi;
                 }
+            }
+
+            if let Some(Value::String(s)) = t.get("browser") {
+                temp.browser = s.to_owned();
             }
         }
 
@@ -458,6 +472,10 @@ impl Config {
         &self.instance
     }
 
+    pub fn browser(&self) -> &str {
+        &self.browser
+    }
+
     pub fn use_torrent(&self) -> bool {
         if let Some((_, true)) = self.torrent {
             true
@@ -505,6 +523,7 @@ impl Default for Config {
             listed_instances: HashSet::new(),
             is_whitelist: false,
             edit_mode: EditMode::Emacs,
+            browser: "firefox".to_string(),
             colors: true,
             select_quality: false,
             local: false,
@@ -594,6 +613,7 @@ mod config {
         assert_eq!(config.player(), "mpv");
         assert_eq!(*config.player_args(), vec!["--volume=30"]);
         assert_eq!(config.instance(), "https://skeptikon.fr");
+        assert_eq!(config.browser(), "qutebrowser");
         assert!(config.is_blacklisted("peertube.social").is_some());
         assert_eq!(config.use_raw_url(), true);
         assert_eq!(config.select_quality(), true);
