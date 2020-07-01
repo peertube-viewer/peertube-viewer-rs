@@ -31,16 +31,16 @@ Add `:info` to get info on a specific item.
 1.4.1
 -----
 
-Fix info message dispaying `Search` while browsing trending videos or videos from a channel.
+Fix info message displaying `Search` while browsing trending videos or videos from a channel.
 
 1.4.0
 -----
 
-Fix alignement when dealing with most unicode characters.
+Fix alignment when dealing with most unicode characters.
 
 Add `--channels, --chandle, :channels, :chandle` features.
 
-v1.3.1
+1.3.1
 ------
 
 Fix trending not working on the first search.
@@ -48,7 +48,7 @@ Fix trending not working on the first search.
 Add `--local` filtering flag to only browse videos from the instance you are connected to.
 
 
-v1.3.0
+1.3.0
 ------
 Trending browsing.
 
@@ -61,11 +61,11 @@ You will be prompted to check if you are sure you want to play it before playing
 - video information is now displayed before the prompt for quality selection
 
 
-v1.2.1
+1.2.1
 ------
 Small bug fixes in the configuration.
 
-v1.2.0
+1.2.0
 ------
 UI improvements:
 
@@ -76,16 +76,16 @@ UI improvements:
     - view count
 - Switched to elapsed time since publication instead of full date in the search results
 
-v1.1.1
+1.1.1
 ------
 Bug fixes:
 
 - Playing the last search result caused a new search to be launched instead of playing the video
 
-v1.1.0
+1.1.0
 ------
 Add commands `:n` and `:p`
 
-v1.0.0
+1.0.0
 ------
 Initial release, features searching and playing videos.
