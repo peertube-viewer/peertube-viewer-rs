@@ -72,7 +72,7 @@ where
         &mut self.loader
     }
 
-    pub fn loader(&mut self) -> &L {
+    pub fn loader(&self) -> &L {
         &self.loader
     }
 
