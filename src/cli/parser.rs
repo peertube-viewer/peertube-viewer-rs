@@ -60,6 +60,19 @@ pub fn comments(input: &str, max: usize) -> Option<usize> {
     }
 }
 
+pub fn browser(input: &str, max: usize) -> Option<usize> {
+    if input.starts_with(":browser ") {
+        let res = clean_spaces(&input[8..])?.parse().ok()?;
+        if 0 < res && res <= max {
+            Some(res)
+        } else {
+            None
+        }
+    } else {
+        None
+    }
+}
+
 #[cfg(test)]
 mod parser {
     use super::*;
@@ -108,6 +121,18 @@ mod parser {
         assert_eq!(comments(":comments  21", 20), None);
         assert_eq!(comments(":comments  0 ", 20), None);
         assert_eq!(comments(":comments  1", 20), Some(1));
+    }
+
+    #[test]
+    fn test_browser() {
+        assert_eq!(browser("eaz", 20), None);
+        assert_eq!(browser(":browser", 20), None);
+        assert_eq!(browser(":browser ", 20), None);
+        assert_eq!(browser(":browser 18", 20), Some(18));
+        assert_eq!(browser(":browser 20 ", 20), Some(20));
+        assert_eq!(browser(":browser  21", 20), None);
+        assert_eq!(browser(":browser  0 ", 20), None);
+        assert_eq!(browser(":browser  1", 20), Some(1));
     }
 
     #[test]
