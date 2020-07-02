@@ -31,4 +31,5 @@ Here is a list of all the command that can be ran during a session:
 - `:channels <query>` search channels by name
 - `:chandle` list videos from a channel
 - `:info <id>` give information on the current item (channel or video)
-- `comments <id>` Lists the comments of a video
+- `:comments <id>` Lists the comments of a video
+- `:browser <id>` Open an item in the browser
