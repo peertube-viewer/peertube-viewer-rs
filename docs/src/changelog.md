@@ -1,10 +1,8 @@
 Changelog
 =========
 
-dev
----
-
-Theses features are implemented but not yet released.
+1.6.1
+=====
 
 Add command `:browser` to open items in the browser.
 
