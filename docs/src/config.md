@@ -32,8 +32,8 @@ Format
 
 - [[`instances`]](#instances)
     - [`main`](#main) main instance to search
-    - [`blacklist`](#blacklist-whitelist) instance blacklist
-    - [`whitelist`](#blacklist-whitelist) instance whitelist
+    - [`blocklist`](#blocklist-allowlist) instance blocklist
+    - [`allowlist`](#blocklist-allowlist) instance blocklist
 
 - [[`torrent`]](#torrent)
     - [`command`](#command) torrent downloader command
@@ -131,14 +131,14 @@ Instance settings
 #### main
 The main instance to be connected to, it is expected to be a string.
 
-#### blacklist-whitelist
+#### blocklist-allowlist
 
-- `blacklist`: an array of strings of instances to be blacklisted
-- `whitelist`: an array of strings of instances to be whitelisted
+- `blocklist`: an array of strings of instances to be blocked
+- `allowlist`: an array of strings of instances to be allowed
 
 Both can't be present at the same time.
-When blacklist is present, no video from the instances listed will be shown.
-When whitelist is present, only videos from the instances listed will be shown.
+When blocklist is present, no video from the instances listed will be shown.
+When allowlist is present, only videos from the instances listed will be shown.
 
 ---
 

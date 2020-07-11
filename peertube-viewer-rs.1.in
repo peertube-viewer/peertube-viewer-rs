@@ -22,7 +22,7 @@ Allows you to search videos from a peertube instance with a similar interface to
 
 .B instance selection
 
-.B instance blacklist and whitelist
+.B instance blocklist and allowlist
  
 .B quality selection
 
