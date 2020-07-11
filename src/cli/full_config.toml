@@ -27,8 +27,8 @@ use-raw-urls = true
 [instances]
 main = "skeptikon.fr"
 
-# whitelist = ["video.ploud.fr"]
-blacklist = ["peertube.social"]
+# allowlist = ["video.ploud.fr"]
+blocklist = ["peertube.social"]
 
 [torrent]
 command = "transmission-remote"

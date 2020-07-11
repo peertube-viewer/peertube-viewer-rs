@@ -357,7 +357,21 @@ impl Config {
 
         /* ---Blocklist configuration --- */
         let (list, is_allowlist) = if let Some(Value::Table(t)) = config.get("instances") {
-            if t.contains_key("whitelist") {
+            if t.contains_key("allowlist") {
+                (
+                    get_string_array(t, "allowlist", &mut load_errors)
+                        .into_iter()
+                        .collect(),
+                    true,
+                )
+            } else if t.contains_key("blocklist") {
+                (
+                    get_string_array(t, "blocklist", &mut load_errors)
+                        .into_iter()
+                        .collect(),
+                    false,
+                )
+            } else if t.contains_key("whitelist") {
                 (
                     get_string_array(t, "whitelist", &mut load_errors)
                         .into_iter()
