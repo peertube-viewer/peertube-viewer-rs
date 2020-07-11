@@ -16,12 +16,12 @@ use std::path::PathBuf;
 use std::process::exit;
 use std::{error, io};
 
-pub trait Blacklist<T: ?Sized> {
-    fn is_blacklisted(&self, instance: &T) -> Option<String>;
+pub trait Blocklist<T: ?Sized> {
+    fn is_blocked(&self, instance: &T) -> Option<String>;
 }
 
-impl<T: ?Sized> Blacklist<T> for () {
-    fn is_blacklisted(&self, _: &T) -> Option<String> {
+impl<T: ?Sized> Blocklist<T> for () {
+    fn is_blocked(&self, _: &T) -> Option<String> {
         None
     }
 }
@@ -94,7 +94,7 @@ impl Display for ConfigLoadError {
             ),
             ConfigLoadError::NotAString => write!(
                 f,
-                "Command arguments and blacklisted instances need to be a table of String\n Ignoring bad arguments"
+                "Command arguments and blocklisted instances need to be a table of String\n Ignoring bad arguments"
             ),
             ConfigLoadError::UseTorrentAndNoInfo=> write!(
                 f,
@@ -162,7 +162,7 @@ pub struct Config {
     instance: String,
     torrent: Option<(TorrentConf, bool)>,
     listed_instances: HashSet<String>,
-    is_whitelist: bool,
+    is_allowlist: bool,
 
     edit_mode: EditMode,
     browser: String,
@@ -355,8 +355,8 @@ impl Config {
             }
         }
 
-        /* ---Blacklist configuration --- */
-        let (list, is_whitelist) = if let Some(Value::Table(t)) = config.get("instances") {
+        /* ---Blocklist configuration --- */
+        let (list, is_allowlist) = if let Some(Value::Table(t)) = config.get("instances") {
             if t.contains_key("whitelist") {
                 (
                     get_string_array(t, "whitelist", &mut load_errors)
@@ -383,7 +383,7 @@ impl Config {
         }
 
         temp.listed_instances = list;
-        temp.is_whitelist = is_whitelist;
+        temp.is_allowlist = is_allowlist;
 
         temp.torrent = torrent.map(|t| (t, false));
 
@@ -547,7 +547,7 @@ impl Default for Config {
             torrent: None,
             nsfw: NsfwBehavior::Tag,
             listed_instances: HashSet::new(),
-            is_whitelist: false,
+            is_allowlist: false,
             edit_mode: EditMode::Emacs,
             browser: "firefox".to_string(),
             colors: true,
@@ -575,9 +575,9 @@ fn correct_instance(s: &str) -> String {
     s
 }
 
-impl Blacklist<str> for Config {
-    fn is_blacklisted(&self, instance: &str) -> Option<String> {
-        if self.is_whitelist ^ self.listed_instances.contains(instance) {
+impl Blocklist<str> for Config {
+    fn is_blocked(&self, instance: &str) -> Option<String> {
+        if self.is_allowlist ^ self.listed_instances.contains(instance) {
             Some(instance.to_string())
         } else {
             None
@@ -585,9 +585,9 @@ impl Blacklist<str> for Config {
     }
 }
 
-impl Blacklist<peertube_api::Video> for Config {
-    fn is_blacklisted(&self, video: &peertube_api::Video) -> Option<String> {
-        if self.is_whitelist ^ self.listed_instances.contains(video.host()) {
+impl Blocklist<peertube_api::Video> for Config {
+    fn is_blocked(&self, video: &peertube_api::Video) -> Option<String> {
+        if self.is_allowlist ^ self.listed_instances.contains(video.host()) {
             Some(format!("Blocked video from: {}", video.host().to_string()))
         } else {
             None
@@ -640,7 +640,7 @@ mod config {
         assert_eq!(*config.player_args(), vec!["--volume=30"]);
         assert_eq!(config.instance(), "https://skeptikon.fr");
         assert_eq!(config.browser(), "qutebrowser");
-        assert!(config.is_blacklisted("peertube.social").is_some());
+        assert!(config.is_blocked("peertube.social").is_some());
         assert_eq!(config.use_raw_url(), true);
         assert_eq!(config.select_quality(), true);
         assert_eq!(config.edit_mode(), EditMode::Vi);
@@ -679,7 +679,7 @@ mod config {
         assert_eq!(config.player(), "mpv");
         assert_eq!(*config.player_args(), vec!["--volume=30"]);
         assert_eq!(config.instance(), "https://skeptikon.fr");
-        assert!(config.is_blacklisted("peertube.social").is_some());
+        assert!(config.is_blocked("peertube.social").is_some());
         assert_eq!(config.use_raw_url(), true);
         assert_eq!(config.select_quality(), true);
         assert_eq!(config.use_torrent(), false);

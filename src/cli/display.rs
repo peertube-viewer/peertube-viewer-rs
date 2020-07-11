@@ -1,7 +1,7 @@
 use peertube_api::{channels::Channel, Comment, Resolution, Video};
 
 use super::{
-    config::Blacklist,
+    config::Blocklist,
     history::{History, HistoryT},
 };
 use std::fmt;
@@ -80,18 +80,18 @@ impl Display {
         &self,
         videos: &[Rc<Video>],
         history: &History,
-        blacklist: &impl Blacklist<Video>,
+        blocklist: &impl Blocklist<Video>,
     ) {
         self.list(
             videos,
             history,
-            blacklist,
+            blocklist,
             &self.video_layout,
             &self.seen_video_layout,
         );
     }
 
-    pub fn channel_list(&self, channels: &[Rc<Channel>], _: &History, _: &impl Blacklist<Video>) {
+    pub fn channel_list(&self, channels: &[Rc<Channel>], _: &History, _: &impl Blocklist<Video>) {
         self.list(
             channels,
             &(),
@@ -115,11 +115,11 @@ impl Display {
         &self,
         contents: &[Rc<D>],
         history: &H,
-        blacklist: &B,
+        blocklist: &B,
         layout: &[LayoutItem<I>],
         seen_layout: &[LayoutItem<I>],
     ) where
-        B: Blacklist<D>,
+        B: Blocklist<D>,
         H: HistoryT<D>,
         I: InnerLayoutItem<Data = D>,
     {
@@ -135,7 +135,7 @@ impl Display {
             let mut tmp_str = Vec::new();
             let mut tmp_align = Vec::new();
 
-            if blacklist.is_blacklisted(&v).is_some() {
+            if blocklist.is_blocked(&v).is_some() {
                 content_parts.push((tmp_str, tmp_align));
                 continue;
             }
@@ -175,7 +175,7 @@ impl Display {
             );
             buffer.push_str(": ");
 
-            if let Some(reason) = blacklist.is_blacklisted(&contents[id]) {
+            if let Some(reason) = blocklist.is_blocked(&contents[id]) {
                 buffer.push_str(&format!(
                     "{}{}{}\n",
                     self.fg_color(color::Red),

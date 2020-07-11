@@ -11,7 +11,7 @@ pub enum Error {
     VideoLaunch(io::Error),
     BrowserLaunch(io::Error),
     Stdin(io::Error),
-    BlacklistedInstance(String),
+    BlockedInstance(String),
 }
 
 impl fmt::Display for Error {
@@ -23,9 +23,7 @@ impl fmt::Display for Error {
             Error::RuntimeInit(_) => write!(f, "Unable to init the async runtime"),
             Error::VideoLaunch(_) => write!(f, "Unable to launch video"),
             Error::BrowserLaunch(_) => write!(f, "Unable to launch video"),
-            Error::BlacklistedInstance(s) => {
-                write!(f, "Connexion to a blacklisted instance: {}", s)
-            }
+            Error::BlockedInstance(s) => write!(f, "Connexion to a blocked instance: {}", s),
         }
     }
 }
@@ -40,7 +38,7 @@ impl error::Error for Error {
             Error::RuntimeInit(err) => Some(err),
             Error::VideoLaunch(err) => Some(err),
             Error::BrowserLaunch(err) => Some(err),
-            Error::BlacklistedInstance(_) => None,
+            Error::BlockedInstance(_) => None,
         }
     }
 }

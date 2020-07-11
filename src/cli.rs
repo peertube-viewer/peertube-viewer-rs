@@ -6,7 +6,7 @@ mod parser;
 mod preloadables;
 
 pub use config::ConfigLoadError;
-use config::{Blacklist, Config, InitialInfo};
+use config::{Blocklist, Config, InitialInfo};
 use display::Display;
 use history::History;
 use input::{Action, Editor};
@@ -114,8 +114,8 @@ impl Cli {
         };
 
         let instance = Instance::new(
-            if config.is_blacklisted(&instance_domain[8..]).is_some() {
-                let err = Error::BlacklistedInstance(instance_domain[8..].to_string());
+            if config.is_blocked(&instance_domain[8..]).is_some() {
+                let err = Error::BlockedInstance(instance_domain[8..].to_string());
                 display.err(&err);
                 return Err(err);
             } else {
@@ -399,9 +399,8 @@ impl Cli {
     async fn play_vid(&mut self, video: &peertube_api::Video) -> Result<(), Error> {
         // Resolution selection
         self.display.video_info(&video).await;
-        if self.config.is_blacklisted(video.host()).is_some() {
-            self.display
-                .err(&"This video is from a blacklisted instance.");
+        if self.config.is_blocked(video.host()).is_some() {
+            self.display.err(&"This video is from a blocked instance.");
             let confirm = self
                 .rl
                 .readline("Play it anyway ? [y/N]: ".to_string())
