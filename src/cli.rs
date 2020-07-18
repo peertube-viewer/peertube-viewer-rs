@@ -179,12 +179,11 @@ impl Cli {
     async fn one_loop(&mut self, data: LoopData) -> Result<LoopData, Error> {
         let LoopData {
             mut mode,
-            mut query,
-            mut changed_query,
+            query,
+            changed_query,
             stop: _,
         } = data;
 
-        let video;
         if changed_query {
             match &query {
                 Action::Query(s) => {
@@ -226,121 +225,136 @@ impl Cli {
                 _ => unreachable!(),
             };
         }
-        match &mut mode {
-            Mode::Videos(search) => {
-                self.display
-                    .video_list(search.current(), &self.history, &self.config);
-                self.display.mode_info(
-                    search.loader().name(),
-                    search.expected_total(),
-                    search.offset(),
-                    search.current_len(),
-                );
-
-                search
-                    .loader_mut()
-                    .preload_res(self.config.select_quality() || self.config.use_raw_url());
-                let choice;
-                match self.rl.autoload_readline(">> ".to_string(), search).await? {
-                    Action::Id(id) => choice = id,
-                    res => {
-                        query = res;
-                        changed_query = true;
-                        return Ok(LoopData {
-                            mode,
-                            query,
-                            changed_query,
-                            stop: false,
-                        });
-                    }
-                };
-
-                video = search.current()[choice - 1].clone();
+        match mode {
+            Mode::Videos(videos) => {
+                return self.video_prompt(videos, query).await;
             }
             Mode::Channels(channels) => {
-                self.display
-                    .channel_list(channels.current(), &self.history, &self.config);
-                self.display.mode_info(
-                    "Channel search",
-                    channels.expected_total(),
-                    channels.offset(),
-                    channels.current_len(),
-                );
-                match self
-                    .rl
-                    .autoload_readline(">> ".to_string(), channels)
-                    .await?
-                {
-                    Action::Id(id) => {
-                        query = Action::Query(format!(
-                            ":chandle {}",
-                            channels.current()[id - 1].handle()
-                        ));
-                        changed_query = true;
-                        return Ok(LoopData {
-                            mode,
-                            query,
-                            changed_query,
-                            stop: false,
-                        });
-                    }
-                    res => {
-                        query = res;
-                        changed_query = true;
-                        return Ok(LoopData {
-                            mode,
-                            query,
-                            changed_query,
-                            stop: false,
-                        });
-                    }
-                };
+                return self.channel_prompt(channels).await;
             }
             Mode::Comments(comments) => {
-                self.display.comment_list(comments.current());
-                self.display.mode_info(
-                    "Browsing video comments",
-                    comments.expected_total(),
-                    comments.offset(),
-                    comments.current_len(),
-                );
-                match self
-                    .rl
-                    .autoload_readline(">> ".to_string(), comments)
-                    .await?
-                {
-                    Action::Id(id) => {
-                        query = Action::Query(format!(":browser {}", id));
-                        changed_query = true;
-                        return Ok(LoopData {
-                            mode,
-                            query,
-                            changed_query,
-                            stop: false,
-                        });
-                    }
-                    res => {
-                        query = res;
-                        changed_query = true;
-                        return Ok(LoopData {
-                            mode,
-                            query,
-                            changed_query,
-                            stop: false,
-                        });
-                    }
-                };
+                return self.comments_prompt(comments).await;
             }
             Mode::Temp => unreachable!(),
         }
-        changed_query = false;
+    }
+
+    async fn video_prompt(
+        &mut self,
+        mut videos: PreloadableList<Videos>,
+        query: Action,
+    ) -> Result<LoopData, Error> {
+        self.display
+            .video_list(videos.current(), &self.history, &self.config);
+        self.display.mode_info(
+            videos.loader().name(),
+            videos.expected_total(),
+            videos.offset(),
+            videos.current_len(),
+        );
+
+        videos
+            .loader_mut()
+            .preload_res(self.config.select_quality() || self.config.use_raw_url());
+        let choice;
+        match self
+            .rl
+            .autoload_readline(">> ".to_string(), &mut videos)
+            .await?
+        {
+            Action::Id(id) => choice = id,
+            action => {
+                return Ok(LoopData {
+                    mode: Mode::Videos(videos),
+                    query: action,
+                    changed_query: true,
+                    stop: false,
+                });
+            }
+        };
+
+        let video = videos.current()[choice - 1].clone();
         self.play_vid(&video).await?;
         Ok(LoopData {
-            mode,
-            changed_query,
+            mode: Mode::Videos(videos),
+            changed_query: false,
             query,
             stop: false,
         })
+    }
+
+    async fn channel_prompt(
+        &mut self,
+        mut channels: PreloadableList<Channels>,
+    ) -> Result<LoopData, Error> {
+        self.display
+            .channel_list(channels.current(), &self.history, &self.config);
+        self.display.mode_info(
+            "Channel search",
+            channels.expected_total(),
+            channels.offset(),
+            channels.current_len(),
+        );
+        match self
+            .rl
+            .autoload_readline(">> ".to_string(), &mut channels)
+            .await?
+        {
+            Action::Id(id) => {
+                return Ok(LoopData {
+                    query: Action::Query(format!(
+                        ":chandle {}",
+                        channels.current()[id - 1].handle()
+                    )),
+                    mode: Mode::Channels(channels), // out of order to please the borrow checker
+                    changed_query: true,
+                    stop: false,
+                });
+            }
+            res => {
+                return Ok(LoopData {
+                    mode: Mode::Channels(channels),
+                    query: res,
+                    changed_query: true,
+                    stop: false,
+                });
+            }
+        }
+    }
+
+    async fn comments_prompt(
+        &mut self,
+        mut comments: PreloadableList<Comments>,
+    ) -> Result<LoopData, Error> {
+        self.display.comment_list(comments.current());
+        self.display.mode_info(
+            "Browsing video comments",
+            comments.expected_total(),
+            comments.offset(),
+            comments.current_len(),
+        );
+        match self
+            .rl
+            .autoload_readline(">> ".to_string(), &mut comments)
+            .await?
+        {
+            Action::Id(id) => {
+                return Ok(LoopData {
+                    mode: Mode::Comments(comments),
+                    query: Action::Query(format!(":browser {}", id)),
+                    changed_query: true,
+                    stop: false,
+                });
+            }
+            query => {
+                return Ok(LoopData {
+                    mode: Mode::Comments(comments),
+                    query,
+                    changed_query: true,
+                    stop: false,
+                });
+            }
+        };
     }
 
     async fn parse_query(&mut self, mut mode: Mode, s: &str) -> Result<Mode, Error> {
