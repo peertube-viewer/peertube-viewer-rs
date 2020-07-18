@@ -189,6 +189,7 @@ impl Cli {
             match &query {
                 Action::Query(s) => {
                     mode = self.parse_query(mode, s).await?;
+                    mode.ensure_init().await?;
                 }
                 Action::Quit => {
                     return Ok(LoopData {
@@ -344,22 +345,19 @@ impl Cli {
 
     async fn parse_query(&mut self, mut mode: Mode, s: &str) -> Result<Mode, Error> {
         if s == ":trending" {
-            let mut trending_tmp =
+            let trending_tmp =
                 PreloadableList::new(Videos::new_trending(self.instance.clone()), SEARCH_TOTAL);
-            trending_tmp.next().await?;
             mode = Mode::Videos(trending_tmp);
         } else if let Some(q) = parser::channels(&s) {
-            let mut channels_tmp =
+            let channels_tmp =
                 PreloadableList::new(Channels::new(self.instance.clone(), q), SEARCH_TOTAL);
-            channels_tmp.next().await?;
             mode = Mode::Channels(channels_tmp);
             self.rl.add_history_entry(s);
         } else if let Some(handle) = parser::chandle(s) {
-            let mut chandle_tmp = PreloadableList::new(
+            let chandle_tmp = PreloadableList::new(
                 Videos::new_channel(self.instance.clone(), handle),
                 SEARCH_TOTAL,
             );
-            chandle_tmp.next().await?;
             mode = Mode::Videos(chandle_tmp);
             self.rl.add_history_entry(s);
         } else if let Some(id) = parser::info(s, mode.current_len()) {
@@ -411,11 +409,10 @@ impl Cli {
             match &mode {
                 Mode::Videos(v) => {
                     self.display.video_info(&v.current()[id - 1]).await;
-                    let mut comments_tmp = PreloadableList::new(
+                    let comments_tmp = PreloadableList::new(
                         Comments::new(self.instance.clone(), v.current()[id - 1].uuid()),
                         SEARCH_TOTAL,
                     );
-                    comments_tmp.next().await?;
                     mode = Mode::Comments(comments_tmp);
                     self.rl.add_history_entry(s);
                 }
@@ -426,9 +423,8 @@ impl Cli {
             return Ok(mode);
         } else {
             self.rl.add_history_entry(&s);
-            let mut search_tmp =
+            let search_tmp =
                 PreloadableList::new(Videos::new_search(self.instance.clone(), &s), SEARCH_TOTAL);
-            search_tmp.next().await?;
             mode = Mode::Videos(search_tmp);
         }
 
@@ -544,6 +540,15 @@ impl Mode {
             Mode::Channels(c) => c.current().len(),
             Mode::Comments(c) => c.current().len(),
             Mode::Temp => 0,
+        }
+    }
+
+    pub async fn ensure_init(&mut self) -> Result<(), Error> {
+        match self {
+            Mode::Videos(v) => Ok(v.ensure_init().await?),
+            Mode::Channels(c) => Ok(c.ensure_init().await?),
+            Mode::Comments(c) => Ok(c.ensure_init().await?),
+            Mode::Temp => panic!("Bad use of temp"),
         }
     }
 }

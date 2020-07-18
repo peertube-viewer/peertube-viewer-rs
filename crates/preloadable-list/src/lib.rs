@@ -32,6 +32,14 @@ where
         }
     }
 
+    pub async fn ensure_init(&mut self) -> Result<(), E> {
+        if self.loaded.len() == 0 {
+            return self.next().await.map(|_| ());
+        } else {
+            return Ok(());
+        }
+    }
+
     pub async fn next(&mut self) -> Result<&[Rc<D>], E> {
         if !self.loaded.is_empty() {
             self.offset += self.loaded[self.current].len();
