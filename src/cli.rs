@@ -369,21 +369,8 @@ impl Cli {
             self.rl.add_history_entry(s);
             return Ok(mode);
         } else if let Some(id) = parser::comments(s, mode.current_len()) {
+            mode = self.comments(mode, id).await?;
             self.rl.add_history_entry(s);
-            match &mode {
-                Mode::Videos(v) => {
-                    self.display.video_info(&v.current()[id - 1]).await;
-                    let comments_tmp = PreloadableList::new(
-                        Comments::new(self.instance.clone(), v.current()[id - 1].uuid()),
-                        SEARCH_TOTAL,
-                    );
-                    mode = Mode::Comments(comments_tmp);
-                    self.rl.add_history_entry(s);
-                }
-                Mode::Channels(_) => self.display.err(&"Channels don't have comments"),
-                Mode::Comments(_) => self.display.err(&"Comments don't have comments"),
-                Mode::Temp => panic!("Bad use of temp"),
-            }
             return Ok(mode);
         } else {
             self.rl.add_history_entry(&s);
@@ -393,6 +380,23 @@ impl Cli {
         }
 
         return Ok(mode);
+    }
+
+    async fn comments(&mut self, mut mode: Mode, id: usize) -> Result<Mode, Error> {
+        match &mode {
+            Mode::Videos(v) => {
+                self.display.video_info(&v.current()[id - 1]).await;
+                let comments_tmp = PreloadableList::new(
+                    Comments::new(self.instance.clone(), v.current()[id - 1].uuid()),
+                    SEARCH_TOTAL,
+                );
+                mode = Mode::Comments(comments_tmp);
+            }
+            Mode::Channels(_) => self.display.err(&"Channels don't have comments"),
+            Mode::Comments(_) => self.display.err(&"Comments don't have comments"),
+            Mode::Temp => panic!("Bad use of temp"),
+        }
+        Ok(mode)
     }
 
     async fn info(&mut self, mode: &Mode, id: usize) -> Result<(), Error> {
