@@ -6,4 +6,4 @@ edition = "2018"
 
 
 [dependencies]
-tokio = "0.2.20"
+tokio = "0.2.21"
