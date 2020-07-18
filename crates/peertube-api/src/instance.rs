@@ -38,7 +38,7 @@ impl Instance {
         query: &str,
         nb: usize,
         offset: usize,
-    ) -> error::Result<(Vec<Video>, Option<usize>)> {
+    ) -> error::Result<(Vec<Video>, usize)> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/search/videos");
 
@@ -57,12 +57,10 @@ impl Instance {
         let mut res = Vec::new();
 
         for video in search_res.data.drain(..) {
-            res.push(Video::maybe_from(self, video));
+            res.push(Video::from_search(self, video));
         }
 
-        let total = Some(search_res.total); // TODO remove Option here
-
-        Ok((res, total))
+        Ok((res, search_res.total))
     }
 
     pub async fn channel_videos(
@@ -70,7 +68,7 @@ impl Instance {
         handle: &str,
         nb: usize,
         offset: usize,
-    ) -> error::Result<(Vec<Video>, Option<usize>)> {
+    ) -> error::Result<(Vec<Video>, usize)> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/video-channels/");
         url.push_str(handle);
@@ -89,12 +87,10 @@ impl Instance {
         let mut video_res: Videos = serde_json::from_str(&query.send().await?.text().await?)?;
         let mut res = Vec::new();
         for video in video_res.data.drain(..) {
-            res.push(Video::maybe_from(self, video));
+            res.push(Video::from_search(self, video));
         }
 
-        let total = Some(video_res.total); // TODO remove Option here
-
-        Ok((res, total))
+        Ok((res, video_res.total))
     }
 
     pub async fn comments(
@@ -102,7 +98,7 @@ impl Instance {
         video_uuid: &str,
         nb: usize,
         offset: usize,
-    ) -> error::Result<(Vec<Comment>, Option<usize>)> {
+    ) -> error::Result<(Vec<Comment>, usize)> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/videos/");
         url.push_str(video_uuid);
@@ -121,9 +117,7 @@ impl Instance {
             }
         }
 
-        let total = Some(comment_res.total); // TODO remove Option here
-
-        Ok((res, total))
+        Ok((res, comment_res.total))
     }
 
     /// Returns the trending videos of an instance
@@ -131,7 +125,7 @@ impl Instance {
         self: &Rc<Instance>,
         nb: usize,
         offset: usize,
-    ) -> error::Result<(Vec<Video>, Option<usize>)> {
+    ) -> error::Result<(Vec<Video>, usize)> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/videos");
 
@@ -149,12 +143,10 @@ impl Instance {
         let mut search_res: Videos = serde_json::from_str(&query.send().await?.text().await?)?;
         let mut res = Vec::new();
         for video in search_res.data.drain(..) {
-            res.push(Video::maybe_from(self, video));
+            res.push(Video::from_search(self, video));
         }
 
-        let total = Some(search_res.total); // TODO remove Option here
-
-        Ok((res, total))
+        Ok((res, search_res.total))
     }
 
     /// Perform a search for the given query
@@ -163,7 +155,7 @@ impl Instance {
         query: &str,
         nb: usize,
         offset: usize,
-    ) -> error::Result<(Vec<Channel>, Option<usize>)> {
+    ) -> error::Result<(Vec<Channel>, usize)> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/search/video-channels");
 
@@ -185,9 +177,7 @@ impl Instance {
             }
         }
 
-        let total = Some(search_res.total); // TODO remove Option here
-
-        Ok((res, total))
+        Ok((res, search_res.total))
     }
 
     /// Load a single video from its uuid
@@ -195,7 +185,7 @@ impl Instance {
         let mut url = self.host.clone();
         url.push_str("/api/v1/videos/");
         url.push_str(uuid);
-        Ok(Video::from(
+        Ok(Video::from_full(
             self,
             serde_json::from_str::<FullVideo>(&*self.client.get(&url).send().await?.text().await?)?,
         ))

@@ -63,8 +63,7 @@ impl AsyncLoader for Videos {
         &mut self,
         step: usize,
         offset: usize,
-    ) -> Pin<Box<dyn 'static + Future<Output = Result<(Vec<Video>, Option<usize>), error::Error>>>>
-    {
+    ) -> Pin<Box<dyn 'static + Future<Output = Result<(Vec<Video>, usize), error::Error>>>> {
         let instance_cl = self.instance.clone();
         let mode_cl = self.mode.clone();
         Box::pin(async move {
@@ -118,8 +117,7 @@ impl AsyncLoader for Channels {
         &mut self,
         step: usize,
         offset: usize,
-    ) -> Pin<Box<dyn 'static + Future<Output = Result<(Vec<Channel>, Option<usize>), error::Error>>>>
-    {
+    ) -> Pin<Box<dyn 'static + Future<Output = Result<(Vec<Channel>, usize), error::Error>>>> {
         let instance_cl = self.instance.clone();
         let query_cl = self.query.clone();
         Box::pin(async move { instance_cl.search_channels(&query_cl, step, offset).await })
@@ -144,8 +142,7 @@ impl AsyncLoader for Comments {
         &mut self,
         step: usize,
         offset: usize,
-    ) -> Pin<Box<dyn 'static + Future<Output = Result<(Vec<Comment>, Option<usize>), error::Error>>>>
-    {
+    ) -> Pin<Box<dyn 'static + Future<Output = Result<(Vec<Comment>, usize), error::Error>>>> {
         let instance_cl = self.instance.clone();
         let video_uuid_cl = self.video_uuid.clone();
         Box::pin(async move { instance_cl.comments(&video_uuid_cl, step, offset).await })

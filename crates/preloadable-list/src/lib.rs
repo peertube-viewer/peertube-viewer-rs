@@ -1,7 +1,7 @@
 use std::{future::Future, pin::Pin, rc::Rc};
 use tokio::task::{spawn_local, JoinHandle};
 
-type Loading<D, E> = JoinHandle<Result<(Vec<D>, Option<usize>), E>>;
+type Loading<D, E> = JoinHandle<Result<(Vec<D>, usize), E>>;
 
 pub struct PreloadableList<L: AsyncLoader> {
     loaded: Vec<Vec<Rc<L::Data>>>,
@@ -11,7 +11,7 @@ pub struct PreloadableList<L: AsyncLoader> {
     current: usize,
     offset: usize,
     step: usize,
-    total: Option<usize>,
+    total: usize,
 }
 
 impl<L, D, E> PreloadableList<L>
@@ -28,7 +28,7 @@ where
             current: 0,
             offset: 0,
             step,
-            total: None,
+            total: 0,
         }
     }
 
@@ -54,7 +54,7 @@ where
             }
             let (data, new_total) = temp;
             self.loaded.push(data.into_iter().map(Rc::new).collect());
-            self.total = new_total.or(self.total);
+            self.total = new_total;
         }
         Ok(&self.loaded[self.current])
     }
@@ -97,7 +97,7 @@ where
         self.current().len()
     }
 
-    pub fn expected_total(&self) -> Option<usize> {
+    pub fn expected_total(&self) -> usize {
         self.total
     }
 
@@ -128,8 +128,6 @@ pub trait AsyncLoader {
         &mut self,
         step: usize,
         offset: usize,
-    ) -> Pin<
-        Box<dyn 'static + Future<Output = Result<(Vec<Self::Data>, Option<usize>), Self::Error>>>,
-    >;
+    ) -> Pin<Box<dyn 'static + Future<Output = Result<(Vec<Self::Data>, usize), Self::Error>>>>;
     fn item(&self, _: Rc<Self::Data>) {}
 }

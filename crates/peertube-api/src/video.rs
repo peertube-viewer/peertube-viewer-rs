@@ -180,8 +180,7 @@ impl Video {
 }
 
 impl Video {
-    pub fn maybe_from(i: &Rc<Instance>, v: search::Video) -> Video {
-        //TODO switch to from
+    pub fn from_search(i: &Rc<Instance>, v: search::Video) -> Video {
         Video {
             instance: i.clone(),
             name: v.name,
@@ -199,7 +198,7 @@ impl Video {
             account: v.account.into(),
         }
     }
-    pub fn from(i: &Rc<Instance>, mut v: video::Video) -> Video {
+    pub fn from_full(i: &Rc<Instance>, mut v: video::Video) -> Video {
         Video {
             instance: i.clone(),
             name: v.name,
