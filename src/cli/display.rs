@@ -365,7 +365,7 @@ impl Display {
         self.line('=');
     }
 
-    pub fn report_error(&self, err: impl Debug) {
+    pub fn report_error(&self, err: impl Debug, host: &str) {
         self.message(&format!(
             "\
             If you believe that this is a bug from peertube-viewer-rs, please file a bug report at:\n\
@@ -373,10 +373,12 @@ impl Display {
             \n\
             With the following information (you might want to anonymise it before sending it):\n\
             {:?}\n\
+            On instance: {}\n\
             ",
             style::Bold,
             style::Reset,
-            err
+            err,
+            host,
         ));
     }
 
