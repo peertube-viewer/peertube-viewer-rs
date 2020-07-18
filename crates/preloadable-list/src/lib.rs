@@ -33,10 +33,10 @@ where
     }
 
     pub async fn ensure_init(&mut self) -> Result<(), E> {
-        if self.loaded.len() == 0 {
-            return self.next().await.map(|_| ());
+        if self.loaded.is_empty() {
+            self.next().await.map(|_| ())
         } else {
-            return Ok(());
+            Ok(())
         }
     }
 

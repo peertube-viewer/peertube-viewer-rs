@@ -226,15 +226,9 @@ impl Cli {
             };
         }
         match mode {
-            Mode::Videos(videos) => {
-                return self.video_prompt(videos, query).await;
-            }
-            Mode::Channels(channels) => {
-                return self.channel_prompt(channels).await;
-            }
-            Mode::Comments(comments) => {
-                return self.comments_prompt(comments).await;
-            }
+            Mode::Videos(videos) => self.video_prompt(videos, query).await,
+            Mode::Channels(channels) => self.channel_prompt(channels).await,
+            Mode::Comments(comments) => self.comments_prompt(comments).await,
             Mode::Temp => unreachable!(),
         }
     }
@@ -301,7 +295,7 @@ impl Cli {
             .await?
         {
             Action::Id(id) => {
-                return Ok(LoopData {
+                Ok(LoopData {
                     query: Action::Query(format!(
                         ":chandle {}",
                         channels.current()[id - 1].handle()
@@ -309,16 +303,14 @@ impl Cli {
                     mode: Mode::Channels(channels), // out of order to please the borrow checker
                     changed_query: true,
                     stop: false,
-                });
+                })
             }
-            res => {
-                return Ok(LoopData {
-                    mode: Mode::Channels(channels),
-                    query: res,
-                    changed_query: true,
-                    stop: false,
-                });
-            }
+            res => Ok(LoopData {
+                mode: Mode::Channels(channels),
+                query: res,
+                changed_query: true,
+                stop: false,
+            }),
         }
     }
 
@@ -338,23 +330,19 @@ impl Cli {
             .autoload_readline(">> ".to_string(), &mut comments)
             .await?
         {
-            Action::Id(id) => {
-                return Ok(LoopData {
-                    mode: Mode::Comments(comments),
-                    query: Action::Query(format!(":browser {}", id)),
-                    changed_query: true,
-                    stop: false,
-                });
-            }
-            query => {
-                return Ok(LoopData {
-                    mode: Mode::Comments(comments),
-                    query,
-                    changed_query: true,
-                    stop: false,
-                });
-            }
-        };
+            Action::Id(id) => Ok(LoopData {
+                mode: Mode::Comments(comments),
+                query: Action::Query(format!(":browser {}", id)),
+                changed_query: true,
+                stop: false,
+            }),
+            query => Ok(LoopData {
+                mode: Mode::Comments(comments),
+                query,
+                changed_query: true,
+                stop: false,
+            }),
+        }
     }
 
     async fn parse_query(&mut self, mut mode: Mode, s: &str) -> Result<Mode, Error> {
@@ -393,7 +381,7 @@ impl Cli {
             mode = Mode::Videos(search_tmp);
         }
 
-        return Ok(mode);
+        Ok(mode)
     }
 
     async fn comments(&mut self, mut mode: Mode, id: usize) -> Result<Mode, Error> {
@@ -423,7 +411,7 @@ impl Cli {
         self.rl
             .std_in("Press enter to continue".to_string())
             .await?;
-        return Ok(());
+        Ok(())
     }
 
     async fn open_browser(&mut self, mode: &Mode, id: usize) -> Result<(), Error> {
@@ -457,7 +445,7 @@ impl Cli {
             Mode::Temp => panic!("Bad use of temp"),
         }
 
-        return Ok(());
+        Ok(())
     }
 
     async fn play_vid(&mut self, video: &peertube_api::Video) -> Result<(), Error> {
