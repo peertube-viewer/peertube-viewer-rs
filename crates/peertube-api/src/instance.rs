@@ -53,7 +53,8 @@ impl Instance {
             query = query.query(&[("filter", "local")]);
         }
 
-        let mut search_res: Videos = serde_json::from_str(&query.send().await?.text().await?)?;
+        let mut search_res: Videos =
+            serde_json::from_str(&query.send().await?.error_for_status()?.text().await?)?;
         let mut res = Vec::new();
 
         for video in search_res.data.drain(..) {
@@ -84,7 +85,8 @@ impl Instance {
             query = query.query(&[("filter", "local")]);
         }
 
-        let mut video_res: Videos = serde_json::from_str(&query.send().await?.text().await?)?;
+        let mut video_res: Videos =
+            serde_json::from_str(&query.send().await?.error_for_status()?.text().await?)?;
         let mut res = Vec::new();
         for video in video_res.data.drain(..) {
             res.push(Video::from_search(self, video));
@@ -109,7 +111,8 @@ impl Instance {
             .get(&url)
             .query(&[("count", &nb.to_string()), ("start", &offset.to_string())]);
 
-        let mut comment_res: Comments = serde_json::from_str(&query.send().await?.text().await?)?;
+        let mut comment_res: Comments =
+            serde_json::from_str(&query.send().await?.error_for_status()?.text().await?)?;
         let mut res = Vec::new();
         for comment in comment_res.data.drain(..) {
             if let Ok(c) = Comment::try_from(comment) {
@@ -140,7 +143,8 @@ impl Instance {
             query = query.query(&[("filter", "local")]);
         }
 
-        let mut search_res: Videos = serde_json::from_str(&query.send().await?.text().await?)?;
+        let mut search_res: Videos =
+            serde_json::from_str(&query.send().await?.error_for_status()?.text().await?)?;
         let mut res = Vec::new();
         for video in search_res.data.drain(..) {
             res.push(Video::from_search(self, video));
@@ -169,7 +173,8 @@ impl Instance {
             query = query.query(&[("filter", "local")]);
         }
 
-        let mut search_res: Channels = serde_json::from_str(&query.send().await?.text().await?)?;
+        let mut search_res: Channels =
+            serde_json::from_str(&query.send().await?.error_for_status()?.text().await?)?;
         let mut res = Vec::new();
         for video in search_res.data.drain(..) {
             if let Some(v) = Channel::maybe_from(video, self.host.clone()) {
