@@ -188,126 +188,7 @@ impl Cli {
         if changed_query {
             match &query {
                 Action::Query(s) => {
-                    if s == ":trending" {
-                        let mut trending_tmp = PreloadableList::new(
-                            Videos::new_trending(self.instance.clone()),
-                            SEARCH_TOTAL,
-                        );
-                        trending_tmp.next().await?;
-                        mode = Mode::Videos(trending_tmp);
-                        query = Action::Query(":trending".to_string());
-                    } else if let Some(q) = parser::channels(&s) {
-                        let mut channels_tmp = PreloadableList::new(
-                            Channels::new(self.instance.clone(), q),
-                            SEARCH_TOTAL,
-                        );
-                        channels_tmp.next().await?;
-                        mode = Mode::Channels(channels_tmp);
-                        self.rl.add_history_entry(s);
-                    } else if let Some(handle) = parser::chandle(s) {
-                        let mut chandle_tmp = PreloadableList::new(
-                            Videos::new_channel(self.instance.clone(), handle),
-                            SEARCH_TOTAL,
-                        );
-                        chandle_tmp.next().await?;
-                        mode = Mode::Videos(chandle_tmp);
-                        self.rl.add_history_entry(s);
-                    } else if let Some(id) = parser::info(s, mode.current_len()) {
-                        self.rl.add_history_entry(s);
-                        match &mode {
-                            Mode::Videos(v) => self.display.video_info(&v.current()[id - 1]).await,
-                            Mode::Channels(c) => {
-                                self.display.channel_info(&c.current()[id - 1]).await
-                            }
-                            Mode::Comments(_) => {
-                                self.display.warn(&"No additionnal info available")
-                            }
-                            Mode::Temp => panic!("Bad use of temp"),
-                        }
-                        self.rl
-                            .std_in("Press enter to continue".to_string())
-                            .await?;
-                        changed_query = false;
-                        return Ok(LoopData {
-                            mode,
-                            query,
-                            changed_query,
-                            stop: false,
-                        });
-                    } else if let Some(id) = parser::browser(s, mode.current_len()) {
-                        self.rl.add_history_entry(s);
-                        match &mode {
-                            Mode::Videos(v) => {
-                                self.display.video_info(&v.current()[id - 1]).await;
-                                Command::new(self.config.browser())
-                                    .arg(&v.current()[id - 1].watch_url())
-                                    .spawn()
-                                    .map_err(Error::BrowserLaunch)?
-                                    .await
-                                    .map_err(Error::BrowserLaunch)?;
-                            }
-                            Mode::Channels(c) => {
-                                self.display.channel_info(&c.current()[id - 1]).await;
-                                Command::new(self.config.browser())
-                                    .arg(self.instance.channel_url(&c.current()[id - 1]))
-                                    .spawn()
-                                    .map_err(Error::BrowserLaunch)?
-                                    .await
-                                    .map_err(Error::BrowserLaunch)?;
-                            }
-                            Mode::Comments(c) => {
-                                Command::new(self.config.browser())
-                                    .arg(&c.current()[id - 1].url())
-                                    .spawn()
-                                    .map_err(Error::BrowserLaunch)?
-                                    .await
-                                    .map_err(Error::BrowserLaunch)?;
-                            }
-                            Mode::Temp => panic!("Bad use of temp"),
-                        }
-                        changed_query = false;
-                        return Ok(LoopData {
-                            mode,
-                            query,
-                            changed_query,
-                            stop: false,
-                        });
-                    } else if let Some(id) = parser::comments(s, mode.current_len()) {
-                        self.rl.add_history_entry(s);
-                        match &mode {
-                            Mode::Videos(v) => {
-                                self.display.video_info(&v.current()[id - 1]).await;
-                                let mut comments_tmp = PreloadableList::new(
-                                    Comments::new(
-                                        self.instance.clone(),
-                                        v.current()[id - 1].uuid(),
-                                    ),
-                                    SEARCH_TOTAL,
-                                );
-                                comments_tmp.next().await?;
-                                mode = Mode::Comments(comments_tmp);
-                                self.rl.add_history_entry(s);
-                            }
-                            Mode::Channels(_) => self.display.err(&"Channels don't have comments"),
-                            Mode::Comments(_) => self.display.err(&"Comments don't have comments"),
-                            Mode::Temp => panic!("Bad use of temp"),
-                        }
-                        changed_query = false;
-                        return Ok(LoopData {
-                            mode,
-                            query,
-                            changed_query,
-                            stop: false,
-                        });
-                    } else {
-                        self.rl.add_history_entry(&s);
-                        let mut search_tmp = PreloadableList::new(
-                            Videos::new_search(self.instance.clone(), &s),
-                            SEARCH_TOTAL,
-                        );
-                        search_tmp.next().await?;
-                        mode = Mode::Videos(search_tmp);
-                    }
+                    mode = self.parse_query(mode, s).await?;
                 }
                 Action::Quit => {
                     return Ok(LoopData {
@@ -459,6 +340,99 @@ impl Cli {
             query,
             stop: false,
         })
+    }
+
+    async fn parse_query(&mut self, mut mode: Mode, s: &str) -> Result<Mode, Error> {
+        if s == ":trending" {
+            let mut trending_tmp =
+                PreloadableList::new(Videos::new_trending(self.instance.clone()), SEARCH_TOTAL);
+            trending_tmp.next().await?;
+            mode = Mode::Videos(trending_tmp);
+        } else if let Some(q) = parser::channels(&s) {
+            let mut channels_tmp =
+                PreloadableList::new(Channels::new(self.instance.clone(), q), SEARCH_TOTAL);
+            channels_tmp.next().await?;
+            mode = Mode::Channels(channels_tmp);
+            self.rl.add_history_entry(s);
+        } else if let Some(handle) = parser::chandle(s) {
+            let mut chandle_tmp = PreloadableList::new(
+                Videos::new_channel(self.instance.clone(), handle),
+                SEARCH_TOTAL,
+            );
+            chandle_tmp.next().await?;
+            mode = Mode::Videos(chandle_tmp);
+            self.rl.add_history_entry(s);
+        } else if let Some(id) = parser::info(s, mode.current_len()) {
+            self.rl.add_history_entry(s);
+            match &mode {
+                Mode::Videos(v) => self.display.video_info(&v.current()[id - 1]).await,
+                Mode::Channels(c) => self.display.channel_info(&c.current()[id - 1]).await,
+                Mode::Comments(_) => self.display.warn(&"No additionnal info available"),
+                Mode::Temp => panic!("Bad use of temp"),
+            }
+            self.rl
+                .std_in("Press enter to continue".to_string())
+                .await?;
+            return Ok(mode);
+        } else if let Some(id) = parser::browser(s, mode.current_len()) {
+            self.rl.add_history_entry(s);
+            match &mode {
+                Mode::Videos(v) => {
+                    self.display.video_info(&v.current()[id - 1]).await;
+                    Command::new(self.config.browser())
+                        .arg(&v.current()[id - 1].watch_url())
+                        .spawn()
+                        .map_err(Error::BrowserLaunch)?
+                        .await
+                        .map_err(Error::BrowserLaunch)?;
+                }
+                Mode::Channels(c) => {
+                    self.display.channel_info(&c.current()[id - 1]).await;
+                    Command::new(self.config.browser())
+                        .arg(self.instance.channel_url(&c.current()[id - 1]))
+                        .spawn()
+                        .map_err(Error::BrowserLaunch)?
+                        .await
+                        .map_err(Error::BrowserLaunch)?;
+                }
+                Mode::Comments(c) => {
+                    Command::new(self.config.browser())
+                        .arg(&c.current()[id - 1].url())
+                        .spawn()
+                        .map_err(Error::BrowserLaunch)?
+                        .await
+                        .map_err(Error::BrowserLaunch)?;
+                }
+                Mode::Temp => panic!("Bad use of temp"),
+            }
+            return Ok(mode);
+        } else if let Some(id) = parser::comments(s, mode.current_len()) {
+            self.rl.add_history_entry(s);
+            match &mode {
+                Mode::Videos(v) => {
+                    self.display.video_info(&v.current()[id - 1]).await;
+                    let mut comments_tmp = PreloadableList::new(
+                        Comments::new(self.instance.clone(), v.current()[id - 1].uuid()),
+                        SEARCH_TOTAL,
+                    );
+                    comments_tmp.next().await?;
+                    mode = Mode::Comments(comments_tmp);
+                    self.rl.add_history_entry(s);
+                }
+                Mode::Channels(_) => self.display.err(&"Channels don't have comments"),
+                Mode::Comments(_) => self.display.err(&"Comments don't have comments"),
+                Mode::Temp => panic!("Bad use of temp"),
+            }
+            return Ok(mode);
+        } else {
+            self.rl.add_history_entry(&s);
+            let mut search_tmp =
+                PreloadableList::new(Videos::new_search(self.instance.clone(), &s), SEARCH_TOTAL);
+            search_tmp.next().await?;
+            mode = Mode::Videos(search_tmp);
+        }
+
+        return Ok(mode);
     }
 
     async fn play_vid(&mut self, video: &peertube_api::Video) -> Result<(), Error> {
