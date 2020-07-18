@@ -368,12 +368,14 @@ impl Display {
     pub fn report_error(&self, err: impl Debug) {
         self.message(&format!(
             "\
-            However, if you believe that this is a bug from peertube-viewer-rs, please file a bug report at:\n\
-            https://gitlab.com/peertube-viewer/peertube-viewer-rs/-/issues\n\
+            If you believe that this is a bug from peertube-viewer-rs, please file a bug report at:\n\
+            {}https://gitlab.com/peertube-viewer/peertube-viewer-rs/-/issues{}\n\
             \n\
             With the following information (you might want to anonymise it before sending it):\n\
-            {:?}
-",
+            {:?}\n\
+            ",
+            style::Bold,
+            style::Reset,
             err
         ));
     }

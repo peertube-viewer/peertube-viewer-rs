@@ -544,6 +544,24 @@ impl Cli {
         }
     }
 
+    fn top_level_err(&mut self, err: Error) {
+        match &err {
+            Error::Readline(ReadlineError::Interrupted) | Error::Readline(ReadlineError::Eof) => {
+                return
+            }
+            err => {
+                self.display.err(&format!(
+                    "\
+                Unexpected error: {}\n\
+                This is likely an error with peertube-viewer-rs.\n\
+                ",
+                    err
+                ));
+                self.display.report_error(err);
+            }
+        }
+    }
+
     pub fn run(&mut self) {
         let mut basic_rt = match runtime::Builder::new()
             .enable_all()
@@ -562,11 +580,7 @@ impl Cli {
                 let local = LocalSet::new();
                 local.run_until(self.main_loop()).await
             })
-            .unwrap_or_else(|e| match e {
-                Error::Readline(ReadlineError::Interrupted)
-                | Error::Readline(ReadlineError::Eof) => (),
-                err => self.display.err(&err),
-            });
+            .unwrap_or_else(|e| self.top_level_err(e));
     }
 }
 
