@@ -23,7 +23,7 @@ impl fmt::Display for Error {
             Error::RuntimeInit(_) => write!(f, "Unable to init the async runtime"),
             Error::VideoLaunch(_) => write!(f, "Unable to launch video"),
             Error::BrowserLaunch(_) => write!(f, "Unable to launch video"),
-            Error::BlockedInstance(s) => write!(f, "Connexion to a blocked instance: {}", s),
+            Error::BlockedInstance(s) => write!(f, "Can't connect to a blocked instance: {}", s),
         }
     }
 }

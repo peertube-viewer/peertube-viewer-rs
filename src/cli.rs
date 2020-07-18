@@ -15,7 +15,7 @@ use crate::error::Error;
 
 use rustyline::error::ReadlineError;
 
-use peertube_api::Instance;
+use peertube_api::{error::Error as ApiError, Instance};
 
 use preloadable_list::PreloadableList;
 use preloadables::{Channels, Comments, Videos};
@@ -144,7 +144,7 @@ impl Cli {
     /// Main loop for he cli interface
     async fn main_loop(&mut self) -> Result<(), Error> {
         let mode = Mode::Temp; //Placeholder that will be changed just after anyway on the first loop run
-        let query = match self.initial_info.take() {
+        let action = match self.initial_info.take() {
             InitialInfo::Query(s) if self.is_single_url => {
                 self.play_vid(&self.instance.single_video(&s).await?)
                     .await?;
@@ -160,45 +160,63 @@ impl Cli {
             InitialInfo::Trending => Action::Query(":trending".to_string()),
             InitialInfo::None => Action::Query(self.rl.readline(">> ".to_string()).await?),
         };
-        let changed_query = true;
+        let changed_action = true;
 
         let mut data = LoopData {
             mode,
-            query,
-            changed_query,
+            action,
+            changed_action,
             stop: false,
         };
 
         // Main loop
         while !data.stop {
-            data = self.one_loop(data).await?;
+            if let Err(err) = self.one_loop(&mut data).await {
+                if let Some(err) = self.handle_err(err) {
+                    return Err(err);
+                } else {
+                    data.changed_action = true;
+                    data.mode = Mode::Temp;
+                    self.display.continue_despite_error();
+                    data.action = Action::Query(self.rl.readline(">> ".to_string()).await?);
+                };
+            }
         }
         Ok(())
     }
 
-    async fn one_loop(&mut self, data: LoopData) -> Result<LoopData, Error> {
-        let LoopData {
-            mut mode,
-            query,
-            changed_query,
-            stop: _,
-        } = data;
+    async fn one_loop(&mut self, data: &mut LoopData) -> Result<(), Error> {
+        self.parse_action(data).await?;
+        match &mut data.mode {
+            Mode::Videos(videos) => {
+                self.video_prompt(videos, &mut data.action, &mut data.changed_action)
+                    .await?
+            }
+            Mode::Channels(channels) => {
+                self.channel_prompt(channels, &mut data.action, &mut data.changed_action)
+                    .await?
+            }
+            Mode::Comments(comments) => {
+                self.comments_prompt(comments, &mut data.action, &mut data.changed_action)
+                    .await?
+            }
+            Mode::Temp => unreachable!(),
+        };
+        Ok(())
+    }
 
-        if changed_query {
-            match &query {
+    async fn parse_action(&mut self, data: &mut LoopData) -> Result<(), Error> {
+        if data.changed_action {
+            match &data.action {
                 Action::Query(s) => {
-                    mode = self.parse_query(mode, s).await?;
-                    mode.ensure_init().await?;
+                    self.parse_query(&mut data.mode, &s).await?;
+                    data.mode.ensure_init().await?;
                 }
                 Action::Quit => {
-                    return Ok(LoopData {
-                        mode,
-                        query,
-                        changed_query,
-                        stop: true,
-                    })
+                    data.stop = true;
+                    return Ok(());
                 }
-                Action::Next => match &mut mode {
+                Action::Next => match &mut data.mode {
                     Mode::Videos(search) => {
                         search.next().await?;
                     }
@@ -210,7 +228,7 @@ impl Cli {
                     }
                     Mode::Temp => unreachable!(),
                 },
-                Action::Prev => match &mut mode {
+                Action::Prev => match &mut data.mode {
                     Mode::Videos(search) => {
                         search.prev();
                     }
@@ -225,19 +243,15 @@ impl Cli {
                 _ => unreachable!(),
             };
         }
-        match mode {
-            Mode::Videos(videos) => self.video_prompt(videos, query).await,
-            Mode::Channels(channels) => self.channel_prompt(channels).await,
-            Mode::Comments(comments) => self.comments_prompt(comments).await,
-            Mode::Temp => unreachable!(),
-        }
+        Ok(())
     }
 
     async fn video_prompt(
         &mut self,
-        mut videos: PreloadableList<Videos>,
-        query: Action,
-    ) -> Result<LoopData, Error> {
+        videos: &mut PreloadableList<Videos>,
+        action: &mut Action,
+        changed_action: &mut bool,
+    ) -> Result<(), Error> {
         self.display
             .video_list(videos.current(), &self.history, &self.config);
         self.display.mode_info(
@@ -251,36 +265,27 @@ impl Cli {
             .loader_mut()
             .preload_res(self.config.select_quality() || self.config.use_raw_url());
         let choice;
-        match self
-            .rl
-            .autoload_readline(">> ".to_string(), &mut videos)
-            .await?
-        {
+        match self.rl.autoload_readline(">> ".to_string(), videos).await? {
             Action::Id(id) => choice = id,
-            action => {
-                return Ok(LoopData {
-                    mode: Mode::Videos(videos),
-                    query: action,
-                    changed_query: true,
-                    stop: false,
-                });
+            new_action => {
+                *action = new_action;
+                *changed_action = true;
+                return Ok(());
             }
         };
 
         let video = videos.current()[choice - 1].clone();
         self.play_vid(&video).await?;
-        Ok(LoopData {
-            mode: Mode::Videos(videos),
-            changed_query: false,
-            query,
-            stop: false,
-        })
+        *changed_action = false;
+        Ok(())
     }
 
     async fn channel_prompt(
         &mut self,
-        mut channels: PreloadableList<Channels>,
-    ) -> Result<LoopData, Error> {
+        channels: &mut PreloadableList<Channels>,
+        action: &mut Action,
+        changed_action: &mut bool,
+    ) -> Result<(), Error> {
         self.display
             .channel_list(channels.current(), &self.history, &self.config);
         self.display.mode_info(
@@ -291,33 +296,29 @@ impl Cli {
         );
         match self
             .rl
-            .autoload_readline(">> ".to_string(), &mut channels)
+            .autoload_readline(">> ".to_string(), channels)
             .await?
         {
             Action::Id(id) => {
-                Ok(LoopData {
-                    query: Action::Query(format!(
-                        ":chandle {}",
-                        channels.current()[id - 1].handle()
-                    )),
-                    mode: Mode::Channels(channels), // out of order to please the borrow checker
-                    changed_query: true,
-                    stop: false,
-                })
+                *action =
+                    Action::Query(format!(":chandle {}", channels.current()[id - 1].handle()));
+                *changed_action = true;
+                Ok(())
             }
-            res => Ok(LoopData {
-                mode: Mode::Channels(channels),
-                query: res,
-                changed_query: true,
-                stop: false,
-            }),
+            new_action => {
+                *action = new_action;
+                *changed_action = true;
+                Ok(())
+            }
         }
     }
 
     async fn comments_prompt(
         &mut self,
-        mut comments: PreloadableList<Comments>,
-    ) -> Result<LoopData, Error> {
+        comments: &mut PreloadableList<Comments>,
+        action: &mut Action,
+        changed_action: &mut bool,
+    ) -> Result<(), Error> {
         self.display.comment_list(comments.current());
         self.display.mode_info(
             "Browsing video comments",
@@ -327,78 +328,76 @@ impl Cli {
         );
         match self
             .rl
-            .autoload_readline(">> ".to_string(), &mut comments)
+            .autoload_readline(">> ".to_string(), comments)
             .await?
         {
-            Action::Id(id) => Ok(LoopData {
-                mode: Mode::Comments(comments),
-                query: Action::Query(format!(":browser {}", id)),
-                changed_query: true,
-                stop: false,
-            }),
-            query => Ok(LoopData {
-                mode: Mode::Comments(comments),
-                query,
-                changed_query: true,
-                stop: false,
-            }),
+            Action::Id(id) => {
+                *action = Action::Query(format!(":browser {}", id));
+                *changed_action = true;
+                Ok(())
+            }
+            new_action => {
+                *action = new_action;
+                *changed_action = true;
+                Ok(())
+            }
         }
     }
 
-    async fn parse_query(&mut self, mut mode: Mode, s: &str) -> Result<Mode, Error> {
+    async fn parse_query(&mut self, mode: &mut Mode, s: &str) -> Result<(), Error> {
         if s == ":trending" {
             let trending_tmp =
                 PreloadableList::new(Videos::new_trending(self.instance.clone()), SEARCH_TOTAL);
-            mode = Mode::Videos(trending_tmp);
+            *mode = Mode::Videos(trending_tmp);
         } else if let Some(q) = parser::channels(&s) {
             let channels_tmp =
                 PreloadableList::new(Channels::new(self.instance.clone(), q), SEARCH_TOTAL);
-            mode = Mode::Channels(channels_tmp);
+            *mode = Mode::Channels(channels_tmp);
             self.rl.add_history_entry(s);
         } else if let Some(handle) = parser::chandle(s) {
             let chandle_tmp = PreloadableList::new(
                 Videos::new_channel(self.instance.clone(), handle),
                 SEARCH_TOTAL,
             );
-            mode = Mode::Videos(chandle_tmp);
+            *mode = Mode::Videos(chandle_tmp);
             self.rl.add_history_entry(s);
         } else if let Some(id) = parser::info(s, mode.current_len()) {
             self.info(&mode, id).await?;
             self.rl.add_history_entry(s);
-            return Ok(mode);
+            return Ok(());
         } else if let Some(id) = parser::browser(s, mode.current_len()) {
-            self.open_browser(&mode, id).await?;
+            self.open_browser(mode, id).await?;
             self.rl.add_history_entry(s);
-            return Ok(mode);
+            return Ok(());
         } else if let Some(id) = parser::comments(s, mode.current_len()) {
-            mode = self.comments(mode, id).await?;
+            self.comments(mode, id).await?;
             self.rl.add_history_entry(s);
-            return Ok(mode);
+            return Ok(());
         } else {
             self.rl.add_history_entry(&s);
             let search_tmp =
                 PreloadableList::new(Videos::new_search(self.instance.clone(), &s), SEARCH_TOTAL);
-            mode = Mode::Videos(search_tmp);
+            *mode = Mode::Videos(search_tmp);
         }
 
-        Ok(mode)
+        Ok(())
     }
 
-    async fn comments(&mut self, mut mode: Mode, id: usize) -> Result<Mode, Error> {
-        match &mode {
+    async fn comments(&mut self, mode: &mut Mode, id: usize) -> Result<(), Error> {
+        match mode {
             Mode::Videos(v) => {
                 self.display.video_info(&v.current()[id - 1]).await;
                 let comments_tmp = PreloadableList::new(
                     Comments::new(self.instance.clone(), v.current()[id - 1].uuid()),
                     SEARCH_TOTAL,
                 );
-                mode = Mode::Comments(comments_tmp);
+                *mode = Mode::Comments(comments_tmp);
             }
             Mode::Channels(_) => self.display.err(&"Channels don't have comments"),
             Mode::Comments(_) => self.display.err(&"Comments don't have comments"),
             Mode::Temp => panic!("Bad use of temp"),
         }
-        Ok(mode)
+        Ok(())
     }
 
     async fn info(&mut self, mode: &Mode, id: usize) -> Result<(), Error> {
@@ -510,6 +509,70 @@ impl Cli {
         Ok(())
     }
 
+    /// Returns None if the error was dealt with
+    fn handle_err(&mut self, err: Error) -> Option<Error> {
+        match &err {
+            Error::Api(ApiError::Reqwest(req_err)) => {
+                if let Some(code) = req_err.status() {
+                    if code.as_u16() >= 400 && code.as_u16() < 500 {
+                        self.display.err(&format!(
+                            "\
+                            Error encountered while connecting to the desired instance: {}\n\
+                            This is likely because the server you are trying to connect isn't a PeerTube instance.\
+                        ",
+                            code
+                        ));
+                        self.display.report_error(err,&*self.instance.host());
+                        return None;
+                    } else if code.as_u16() >= 500 {
+                        self.display.err(&format!(
+                            "\
+                            The server you are trying to connect failed to process the request: {}\n\
+                            This likely isn't a bug from peertube-viewer-rs.
+                        ",
+                            code
+                        ));
+                        self.display.report_error(err,&*self.instance.host());
+                        return None;
+                    }
+                } else {
+                    return Some(err);
+                }
+                None
+            }
+            Error::Api(ApiError::Serde(_)) => {
+                self.display.err(&format!(
+                            "\
+                            peertube-viewer-rs was not capable of understanding the response from the server\n\
+                            This is might happen if the server you are trying to connect isn't a PeerTube instance.\n\
+                            If not, it is a bug from peertube-viewer-rs"
+                        ));
+                self.display.report_error(err,&*self.instance.host());
+                return None;
+            }
+
+            _ => Some(err),
+        }
+    }
+
+    fn top_level_err(&mut self, err: Error) {
+        match &err {
+            Error::Readline(ReadlineError::Interrupted) | Error::Readline(ReadlineError::Eof) => {
+                return
+            }
+            err => {
+                self.display.err(&format!(
+                    "\
+                Unexpected error: {}\n\
+                This is likely an error with peertube-viewer-rs.\n\
+                ",
+                    err
+                ));
+                self.display.report_error(err,&*self.instance.host());
+            }
+        }
+    }
+
     pub fn run(&mut self) {
         let mut basic_rt = match runtime::Builder::new()
             .enable_all()
@@ -528,18 +591,14 @@ impl Cli {
                 let local = LocalSet::new();
                 local.run_until(self.main_loop()).await
             })
-            .unwrap_or_else(|e| match e {
-                Error::Readline(ReadlineError::Interrupted)
-                | Error::Readline(ReadlineError::Eof) => (),
-                err => self.display.err(&err),
-            });
+            .unwrap_or_else(|e| self.top_level_err(e));
     }
 }
 
 struct LoopData {
     mode: Mode,
-    query: Action,
-    changed_query: bool,
+    action: Action,
+    changed_action: bool,
     stop: bool,
 }
 
