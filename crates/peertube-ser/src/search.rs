@@ -1,35 +1,35 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use super::common::Channel;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct IdentifiedLabel {
     pub id: Option<u64>,
     pub label: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Language {
     pub id: Option<String>,
     pub label: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct ScheduledUpdate {
     pub privacy: i64,
     pub updatedAt: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct UserHistory {
     pub currentTime: i64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Video {
     pub uuid: String,
@@ -55,7 +55,7 @@ pub struct Video {
     pub privacy: IdentifiedLabel,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Videos {
     pub total: usize,

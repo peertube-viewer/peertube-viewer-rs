@@ -1,16 +1,16 @@
 use crate::common::Channel;
 use crate::search::{IdentifiedLabel, Language};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 /// Structure used to deserialize the json output from fetching a video description
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Description {
     pub description: Option<String>,
 }
 
 /// Structure used to deserialize the json output from fetching video data
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Video {
     pub uuid: String,
@@ -40,14 +40,14 @@ pub struct Video {
     pub files: Vec<File>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Resolution {
     pub id: u64,
     pub label: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct File {
     pub magnetUri: String,

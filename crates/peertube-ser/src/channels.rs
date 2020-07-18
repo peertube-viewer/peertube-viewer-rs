@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use super::common::Avatar;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Channel {
     pub id: i64,
@@ -17,7 +17,7 @@ pub struct Channel {
     pub ownerAccount: Account,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Account {
     pub id: u64,
@@ -32,7 +32,7 @@ pub struct Account {
     pub updatedAt: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Channels {
     pub total: usize,
