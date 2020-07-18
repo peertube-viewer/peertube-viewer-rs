@@ -4,7 +4,7 @@ use super::{
     config::Blocklist,
     history::{History, HistoryT},
 };
-use std::fmt;
+use std::fmt::{self, Debug};
 use termion::{color, style};
 
 use std::cmp;
@@ -304,6 +304,15 @@ impl Display {
         );
     }
 
+    pub fn continue_despite_error(&self) {
+        println!(
+            "{}{}You can continue browsing the PeerTube network{}",
+            style::Bold,
+            style::Underline,
+            style::Reset
+        );
+    }
+
     pub async fn video_info(&self, video: &Video) {
         self.line('=');
         self.print_centered(video.name());
@@ -354,6 +363,19 @@ impl Display {
         println!("rss feed      : {}", channel.rss());
         println!("atom feed     : {}", channel.atom());
         self.line('=');
+    }
+
+    pub fn report_error(&self, err: impl Debug) {
+        self.message(&format!(
+            "\
+            However, if you believe that this is a bug from peertube-viewer-rs, please file a bug report at:\n\
+            https://gitlab.com/peertube-viewer/peertube-viewer-rs/-/issues\n\
+            \n\
+            With the following information (you might want to anonymise it before sending it):\n\
+            {:?}
+",
+            err
+        ));
     }
 
     fn line(&self, c: char) {

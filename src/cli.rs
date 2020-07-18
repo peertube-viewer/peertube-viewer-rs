@@ -15,7 +15,7 @@ use crate::error::Error;
 
 use rustyline::error::ReadlineError;
 
-use peertube_api::Instance;
+use peertube_api::{error::Error as ApiError, Instance};
 
 use preloadable_list::PreloadableList;
 use preloadables::{Channels, Comments, Videos};
@@ -171,7 +171,16 @@ impl Cli {
 
         // Main loop
         while !data.stop {
-            self.one_loop(&mut data).await?;
+            if let Err(err) = self.one_loop(&mut data).await {
+                if let Some(err) = self.handle_err(err) {
+                    return Err(err);
+                } else {
+                    data.changed_action = true;
+                    data.mode = Mode::Temp;
+                    self.display.continue_despite_error();
+                    data.action = Action::Query(self.rl.readline(">> ".to_string()).await?);
+                };
+            }
         }
         Ok(())
     }
@@ -498,6 +507,41 @@ impl Cli {
             .await
             .map_err(Error::VideoLaunch)?;
         Ok(())
+    }
+
+    /// Returns None if the error was dealt with
+    fn handle_err(&mut self, err: Error) -> Option<Error> {
+        match &err {
+            Error::Api(ApiError::Reqwest(req_err)) => {
+                if let Some(code) = req_err.status() {
+                    if code.as_u16() >= 400 && code.as_u16() < 500 {
+                        self.display.err(&format!(
+                            "\
+                            Error encountered while connecting to the desired instance: {}\n\
+                            This is likely because the server you are trying to connect isn't a PeerTube instance.\
+                        ",
+                            code
+                        ));
+                        self.display.report_error(err);
+                        return None;
+                    } else if code.as_u16() >= 500 {
+                        self.display.err(&format!(
+                            "\
+                            The server you are trying to connect failed to process the request: {}\n\
+                            This likely isn't a bug from peertube-viewer-rs.
+                        ",
+                            code
+                        ));
+                        self.display.report_error(err);
+                        return None;
+                    }
+                } else {
+                    return Some(err);
+                }
+                None
+            }
+            _ => Some(err),
+        }
     }
 
     pub fn run(&mut self) {
