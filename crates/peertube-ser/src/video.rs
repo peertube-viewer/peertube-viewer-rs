@@ -14,21 +14,20 @@ pub struct Description {
 #[allow(non_snake_case)]
 pub struct Video {
     pub uuid: String,
-    pub createdAt: Option<String>,
-    pub publishedAt: Option<String>,
-    pub updatedAt: Option<String>,
-    pub originallyPublishedAt: Option<String>,
+    pub createdAt: String,
+    pub publishedAt: String,
+    pub updatedAt: String,
     pub description: Option<String>,
-    pub duration: Option<i64>,
-    pub isLocal: Option<bool>,
+    pub duration: u64,
+    pub isLocal: bool,
     pub name: String,
-    pub thumbnailPath: Option<String>,
-    pub previewPath: Option<String>,
-    pub embedPath: Option<String>,
-    pub views: Option<i64>,
-    pub likes: Option<i64>,
-    pub dislikes: Option<i64>,
-    pub nsfw: Option<bool>,
+    pub thumbnailPath: String,
+    pub previewPath: String,
+    pub embedPath: String,
+    pub views: u64,
+    pub likes: u64,
+    pub dislikes: u64,
+    pub nsfw: bool,
     pub account: Channel,
     pub channel: Channel,
     pub category: IdentifiedLabel,
@@ -44,7 +43,7 @@ pub struct Video {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Resolution {
-    pub id: i64,
+    pub id: u64,
     pub label: String,
 }
 
@@ -53,7 +52,7 @@ pub struct Resolution {
 pub struct File {
     pub magnetUri: String,
     pub resolution: Resolution,
-    pub size: i64,
+    pub size: u64,
     pub torrentUrl: String,
     pub torrentDownloadUrl: String,
     pub fileUrl: String,

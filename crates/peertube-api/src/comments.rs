@@ -13,18 +13,10 @@ impl TryFrom<peertube_ser::comments::Comment> for Comment {
     type Error = ();
     fn try_from(comment: peertube_ser::comments::Comment) -> Result<Self, ()> {
         Ok(Comment {
-            content: if let Some(t) = comment.text {
-                t
-            } else {
-                return Err(());
-            },
+            content: comment.text,
             url: comment.url,
             created_at: DateTime::parse_from_rfc3339(&comment.createdAt).ok(),
-            author: if let Some(a) = comment.account {
-                a.into()
-            } else {
-                return Err(());
-            },
+            author: comment.account.into(),
         })
     }
 }

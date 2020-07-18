@@ -5,50 +5,48 @@ use super::common::Channel;
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct IdentifiedLabel {
-    pub id: Option<i64>,
-    pub label: Option<String>,
+    pub id: Option<u64>,
+    pub label: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Language {
     pub id: Option<String>,
-    pub label: Option<String>,
+    pub label: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct ScheduledUpdate {
-    pub privacy: Option<i64>,
-    pub updatedAt: Option<String>,
+    pub privacy: i64,
+    pub updatedAt: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct UserHistory {
-    pub currentTime: Option<i64>,
+    pub currentTime: i64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Video {
-    pub uuid: Option<String>,
-    pub createdAt: Option<String>,
-    pub publishedAt: Option<String>,
-    pub updatedAt: Option<String>,
-    pub originallyPublishedAt: Option<String>,
+    pub uuid: String,
+    pub createdAt: String,
+    pub publishedAt: String,
+    pub updatedAt: String,
     pub description: Option<String>,
-    pub duration: Option<i64>,
-    pub isLocal: Option<bool>,
-    pub name: Option<String>,
-    pub thumbnailPath: Option<String>,
-    pub previewPath: Option<String>,
-    pub embedPath: Option<String>,
-    pub views: Option<i64>,
-    pub likes: Option<i64>,
-    pub dislikes: Option<i64>,
-    pub nsfw: Option<bool>,
-    pub waitTranscoding: Option<bool>,
+    pub duration: u64,
+    pub isLocal: bool,
+    pub name: String,
+    pub thumbnailPath: String,
+    pub previewPath: String,
+    pub embedPath: String,
+    pub views: u64,
+    pub likes: u64,
+    pub dislikes: u64,
+    pub nsfw: bool,
     pub account: Channel,
     pub channel: Channel,
     pub category: IdentifiedLabel,
@@ -60,7 +58,7 @@ pub struct Video {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Videos {
-    pub total: Option<i64>,
+    pub total: usize,
     pub data: Vec<Video>,
 }
 

@@ -20,14 +20,14 @@ pub struct Channel {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Account {
-    pub id: i64,
+    pub id: u64,
     pub name: String,
     pub displayName: String,
     pub description: Option<String>,
     pub host: String,
     pub Avatar: Option<Avatar>,
-    pub followingCount: i64,
-    pub followersCount: i64,
+    pub followingCount: u64,
+    pub followersCount: u64,
     pub createdAt: String,
     pub updatedAt: String,
 }
@@ -35,7 +35,7 @@ pub struct Account {
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Channels {
-    pub total: Option<i64>,
+    pub total: usize,
     pub data: Vec<Channel>,
 }
 

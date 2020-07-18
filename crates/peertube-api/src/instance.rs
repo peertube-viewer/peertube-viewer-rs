@@ -55,16 +55,12 @@ impl Instance {
 
         let mut search_res: Videos = serde_json::from_str(&query.send().await?.text().await?)?;
         let mut res = Vec::new();
+
         for video in search_res.data.drain(..) {
-            if let Some(v) = Video::maybe_from(self, video) {
-                res.push(v);
-            }
+            res.push(Video::maybe_from(self, video));
         }
 
-        let total = match search_res.total {
-            Some(c) if c > 0 => Some(c as usize),
-            _ => None,
-        };
+        let total = Some(search_res.total); // TODO remove Option here
 
         Ok((res, total))
     }
@@ -93,15 +89,10 @@ impl Instance {
         let mut video_res: Videos = serde_json::from_str(&query.send().await?.text().await?)?;
         let mut res = Vec::new();
         for video in video_res.data.drain(..) {
-            if let Some(v) = Video::maybe_from(self, video) {
-                res.push(v);
-            }
+            res.push(Video::maybe_from(self, video));
         }
 
-        let total = match video_res.total {
-            Some(c) if c > 0 => Some(c as usize),
-            _ => None,
-        };
+        let total = Some(video_res.total); // TODO remove Option here
 
         Ok((res, total))
     }
@@ -130,10 +121,7 @@ impl Instance {
             }
         }
 
-        let total = match comment_res.total {
-            Some(c) if c > 0 => Some(c as usize),
-            _ => None,
-        };
+        let total = Some(comment_res.total); // TODO remove Option here
 
         Ok((res, total))
     }
@@ -161,15 +149,10 @@ impl Instance {
         let mut search_res: Videos = serde_json::from_str(&query.send().await?.text().await?)?;
         let mut res = Vec::new();
         for video in search_res.data.drain(..) {
-            if let Some(v) = Video::maybe_from(self, video) {
-                res.push(v);
-            }
+            res.push(Video::maybe_from(self, video));
         }
 
-        let total = match search_res.total {
-            Some(c) if c > 0 => Some(c as usize),
-            _ => None,
-        };
+        let total = Some(search_res.total); // TODO remove Option here
 
         Ok((res, total))
     }
@@ -202,10 +185,7 @@ impl Instance {
             }
         }
 
-        let total = match search_res.total {
-            Some(c) if c > 0 => Some(c as usize),
-            _ => None,
-        };
+        let total = Some(search_res.total); // TODO remove Option here
 
         Ok((res, total))
     }

@@ -11,7 +11,7 @@ use peertube_ser::{search, video};
 #[derive(Clone, Debug)]
 struct File {
     magnet_uri: String,
-    resoltion_id: i64,
+    resoltion_id: u64,
     resolution: String,
     size: u64,
     torrent_url: String,
@@ -25,7 +25,7 @@ impl File {
     fn magnet_uri(&self) -> &str {
         &self.magnet_uri
     }
-    fn resoltion_id(&self) -> &i64 {
+    fn resoltion_id(&self) -> &u64 {
         &self.resoltion_id
     }
     fn resolution(&self) -> &str {
@@ -50,7 +50,7 @@ impl File {
 
 #[derive(Clone, Debug)]
 pub struct Resolution {
-    id: i64,
+    id: u64,
     label: String,
     size: u64,
 }
@@ -67,7 +67,7 @@ impl Resolution {
 
 #[allow(unused)]
 impl Resolution {
-    pub fn id(&self) -> &i64 {
+    pub fn id(&self) -> &u64 {
         &self.id
     }
     pub fn label(&self) -> &str {
@@ -180,29 +180,23 @@ impl Video {
 }
 
 impl Video {
-    pub fn maybe_from(i: &Rc<Instance>, v: search::Video) -> Option<Video> {
-        if let (Some(name), Some(uuid)) = (v.name, v.uuid) {
-            Some(Video {
-                instance: i.clone(),
-                name,
-                uuid,
-                duration: floor_default(v.duration),
-                likes: floor_default(v.likes),
-                dislikes: floor_default(v.dislikes),
-                views: floor_default(v.views),
-                nsfw: v.nsfw.unwrap_or(false),
-                published: v
-                    .publishedAt
-                    .map(|d| DateTime::parse_from_rfc3339(&d).ok())
-                    .flatten(),
-                short_desc: v.description,
-                description: Mutex::new(Description::None),
-                files: Mutex::new(None),
-                channel: v.channel.into(),
-                account: v.account.into(),
-            })
-        } else {
-            None
+    pub fn maybe_from(i: &Rc<Instance>, v: search::Video) -> Video {
+        //TODO switch to from
+        Video {
+            instance: i.clone(),
+            name: v.name,
+            uuid: v.uuid,
+            duration: v.duration,
+            likes: v.likes,
+            dislikes: v.dislikes,
+            views: v.views,
+            nsfw: v.nsfw,
+            published: DateTime::parse_from_rfc3339(&v.publishedAt).ok(),
+            short_desc: v.description,
+            description: Mutex::new(Description::None),
+            files: Mutex::new(None),
+            channel: v.channel.into(),
+            account: v.account.into(),
         }
     }
     pub fn from(i: &Rc<Instance>, mut v: video::Video) -> Video {
@@ -210,15 +204,12 @@ impl Video {
             instance: i.clone(),
             name: v.name,
             uuid: v.uuid,
-            duration: floor_default(v.duration),
-            likes: floor_default(v.likes),
-            dislikes: floor_default(v.dislikes),
-            views: floor_default(v.views),
-            nsfw: v.nsfw.unwrap_or(false),
-            published: v
-                .publishedAt
-                .map(|d| DateTime::parse_from_rfc3339(&d).ok())
-                .flatten(),
+            duration: v.duration,
+            likes: v.likes,
+            dislikes: v.dislikes,
+            views: v.views,
+            nsfw: v.nsfw,
+            published: DateTime::parse_from_rfc3339(&v.publishedAt).ok(),
             short_desc: v.description,
             description: Mutex::new(Description::None),
             files: Mutex::new(Some(v.files.drain(..).map(|v| v.into()).collect())),
@@ -329,9 +320,4 @@ impl Video {
             panic!("Resolution hasn't been fetched");
         }
     }
-}
-
-fn floor_default(i: Option<i64>) -> u64 {
-    i.map(|count| if count < 0 { 0 } else { count as u64 })
-        .unwrap_or_default()
 }

@@ -5,22 +5,22 @@ use super::common::Channel;
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Comment {
-    pub id: i64,
+    pub id: u64,
     pub url: String,
-    pub text: Option<String>,
+    pub text: String,
     pub threadId: i64,
     pub videoId: i64,
     pub createdAt: String,
     pub updatedAt: String,
     pub deleted: Option<String>,
     pub isDeleted: bool,
-    pub account: Option<Channel>,
+    pub account: Channel,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Comments {
-    pub total: Option<i64>,
+    pub total: usize,
     pub data: Vec<Comment>,
 }
 
