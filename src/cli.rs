@@ -365,36 +365,8 @@ impl Cli {
             self.rl.add_history_entry(s);
             return Ok(mode);
         } else if let Some(id) = parser::browser(s, mode.current_len()) {
+            self.open_browser(&mode, id).await?;
             self.rl.add_history_entry(s);
-            match &mode {
-                Mode::Videos(v) => {
-                    self.display.video_info(&v.current()[id - 1]).await;
-                    Command::new(self.config.browser())
-                        .arg(&v.current()[id - 1].watch_url())
-                        .spawn()
-                        .map_err(Error::BrowserLaunch)?
-                        .await
-                        .map_err(Error::BrowserLaunch)?;
-                }
-                Mode::Channels(c) => {
-                    self.display.channel_info(&c.current()[id - 1]).await;
-                    Command::new(self.config.browser())
-                        .arg(self.instance.channel_url(&c.current()[id - 1]))
-                        .spawn()
-                        .map_err(Error::BrowserLaunch)?
-                        .await
-                        .map_err(Error::BrowserLaunch)?;
-                }
-                Mode::Comments(c) => {
-                    Command::new(self.config.browser())
-                        .arg(&c.current()[id - 1].url())
-                        .spawn()
-                        .map_err(Error::BrowserLaunch)?
-                        .await
-                        .map_err(Error::BrowserLaunch)?;
-                }
-                Mode::Temp => panic!("Bad use of temp"),
-            }
             return Ok(mode);
         } else if let Some(id) = parser::comments(s, mode.current_len()) {
             self.rl.add_history_entry(s);
@@ -433,6 +405,40 @@ impl Cli {
         self.rl
             .std_in("Press enter to continue".to_string())
             .await?;
+        return Ok(());
+    }
+
+    async fn open_browser(&mut self, mode: &Mode, id: usize) -> Result<(), Error> {
+        match &mode {
+            Mode::Videos(v) => {
+                self.display.video_info(&v.current()[id - 1]).await;
+                Command::new(self.config.browser())
+                    .arg(&v.current()[id - 1].watch_url())
+                    .spawn()
+                    .map_err(Error::BrowserLaunch)?
+                    .await
+                    .map_err(Error::BrowserLaunch)?;
+            }
+            Mode::Channels(c) => {
+                self.display.channel_info(&c.current()[id - 1]).await;
+                Command::new(self.config.browser())
+                    .arg(self.instance.channel_url(&c.current()[id - 1]))
+                    .spawn()
+                    .map_err(Error::BrowserLaunch)?
+                    .await
+                    .map_err(Error::BrowserLaunch)?;
+            }
+            Mode::Comments(c) => {
+                Command::new(self.config.browser())
+                    .arg(&c.current()[id - 1].url())
+                    .spawn()
+                    .map_err(Error::BrowserLaunch)?
+                    .await
+                    .map_err(Error::BrowserLaunch)?;
+            }
+            Mode::Temp => panic!("Bad use of temp"),
+        }
+
         return Ok(());
     }
 
