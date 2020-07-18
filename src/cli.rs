@@ -361,16 +361,8 @@ impl Cli {
             mode = Mode::Videos(chandle_tmp);
             self.rl.add_history_entry(s);
         } else if let Some(id) = parser::info(s, mode.current_len()) {
+            self.info(&mode, id).await?;
             self.rl.add_history_entry(s);
-            match &mode {
-                Mode::Videos(v) => self.display.video_info(&v.current()[id - 1]).await,
-                Mode::Channels(c) => self.display.channel_info(&c.current()[id - 1]).await,
-                Mode::Comments(_) => self.display.warn(&"No additionnal info available"),
-                Mode::Temp => panic!("Bad use of temp"),
-            }
-            self.rl
-                .std_in("Press enter to continue".to_string())
-                .await?;
             return Ok(mode);
         } else if let Some(id) = parser::browser(s, mode.current_len()) {
             self.rl.add_history_entry(s);
@@ -429,6 +421,19 @@ impl Cli {
         }
 
         return Ok(mode);
+    }
+
+    async fn info(&mut self, mode: &Mode, id: usize) -> Result<(), Error> {
+        match mode {
+            Mode::Videos(v) => self.display.video_info(&v.current()[id - 1]).await,
+            Mode::Channels(c) => self.display.channel_info(&c.current()[id - 1]).await,
+            Mode::Comments(_) => self.display.warn(&"No additionnal info available"),
+            Mode::Temp => panic!("Bad use of temp"),
+        }
+        self.rl
+            .std_in("Press enter to continue".to_string())
+            .await?;
+        return Ok(());
     }
 
     async fn play_vid(&mut self, video: &peertube_api::Video) -> Result<(), Error> {
