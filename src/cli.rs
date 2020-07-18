@@ -522,7 +522,7 @@ impl Cli {
                         ",
                             code
                         ));
-                        self.display.report_error(err,&*self.instance.host());
+                        self.display.report_error(err, &*self.instance.host());
                         return None;
                     } else if code.as_u16() >= 500 {
                         self.display.err(&format!(
@@ -532,7 +532,7 @@ impl Cli {
                         ",
                             code
                         ));
-                        self.display.report_error(err,&*self.instance.host());
+                        self.display.report_error(err, &*self.instance.host());
                         return None;
                     }
                 } else {
@@ -541,14 +541,13 @@ impl Cli {
                 None
             }
             Error::Api(ApiError::Serde(_)) => {
-                self.display.err(&format!(
-                            "\
+                self.display.err(&"\
                             peertube-viewer-rs was not capable of understanding the response from the server\n\
                             This is might happen if the server you are trying to connect isn't a PeerTube instance.\n\
-                            If not, it is a bug from peertube-viewer-rs"
-                        ));
-                self.display.report_error(err,&*self.instance.host());
-                return None;
+                            If not, it is a bug from peertube-viewer-rs".to_string()
+                        );
+                self.display.report_error(err, &*self.instance.host());
+                None
             }
 
             _ => Some(err),
@@ -557,9 +556,7 @@ impl Cli {
 
     fn top_level_err(&mut self, err: Error) {
         match &err {
-            Error::Readline(ReadlineError::Interrupted) | Error::Readline(ReadlineError::Eof) => {
-                return
-            }
+            Error::Readline(ReadlineError::Interrupted) | Error::Readline(ReadlineError::Eof) => {}
             err => {
                 self.display.err(&format!(
                     "\
@@ -568,7 +565,7 @@ impl Cli {
                 ",
                     err
                 ));
-                self.display.report_error(err,&*self.instance.host());
+                self.display.report_error(err, &*self.instance.host());
             }
         }
     }
