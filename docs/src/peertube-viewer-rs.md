@@ -1,7 +1,7 @@
 peertube-viewer-rs
 ==================
 
-**peertube-viewer-rs** is a small utility to enable you to browse videos available on any [peertube](https://joinpeertube.org) instances, without having to launch a web browser.
+**peertube-viewer-rs** is a small utility to enable you to browse videos available on any [PeerTube](https://joinpeertube.org) instances, without having to launch a web browser.
 It is heavily inspired from [youtube-viewer](https://github.com/trizen/youtube-viewer).
 
 

@@ -3,14 +3,14 @@
 .TH man  "2020" "@version@" "peertube-viewer-rs manpage"
 
 .SH NAME
-peertube-viewer a simple peertube cli browser
+peertube-viewer a simple PeerTube cli browser
 
 .SH SYNOPSIS
 peertube-viewer [--player=player][--instance=instance][initial query or video url]
 
 
 .SH DESCRIPTION
-Allows you to search videos from a peertube instance with a similar interface to youtube-viewer
+Allows you to search videos from a PeerTube instance with a similar interface to youtube-viewer
 
 .B FEATURES 
 

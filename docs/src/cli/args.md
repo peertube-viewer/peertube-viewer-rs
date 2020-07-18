@@ -42,7 +42,7 @@ This is useful to get started on a config file. See [configuration](../config.md
 -   `--use-torrent`    will download the video via the torrent downloader instead of playing it.
 This requires a torrent downloader to be set (either via the corresponding option or in the configuration file)
 
--   `--use-raw-url`    the url to the video file will be passed to the player instead of the url to the web interface to watch it. It may be necessary for players without native support for peertube such as vlc. Some players (ex : mpv) may be able to show the video title in their interface if this option isn't used.
+-   `--use-raw-url`    the url to the video file will be passed to the player instead of the url to the web interface to watch it. It may be necessary for players without native support for PeerTube such as vlc. Some players (ex : mpv) may be able to show the video title in their interface if this option isn't used.
 
 
 -   `--color`    force coloring of output if it is disabled in the config file
