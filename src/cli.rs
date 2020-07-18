@@ -144,7 +144,7 @@ impl Cli {
     /// Main loop for he cli interface
     async fn main_loop(&mut self) -> Result<(), Error> {
         let mode = Mode::Temp; //Placeholder that will be changed just after anyway on the first loop run
-        let query = match self.initial_info.take() {
+        let action = match self.initial_info.take() {
             InitialInfo::Query(s) if self.is_single_url => {
                 self.play_vid(&self.instance.single_video(&s).await?)
                     .await?;
@@ -160,12 +160,12 @@ impl Cli {
             InitialInfo::Trending => Action::Query(":trending".to_string()),
             InitialInfo::None => Action::Query(self.rl.readline(">> ".to_string()).await?),
         };
-        let changed_query = true;
+        let changed_action = true;
 
         let mut data = LoopData {
             mode,
-            query,
-            changed_query,
+            action,
+            changed_action,
             stop: false,
         };
 
@@ -179,13 +179,13 @@ impl Cli {
     async fn one_loop(&mut self, data: LoopData) -> Result<LoopData, Error> {
         let LoopData {
             mut mode,
-            query,
-            changed_query,
+            action,
+            changed_action,
             stop: _,
         } = data;
 
-        if changed_query {
-            match &query {
+        if changed_action {
+            match &action {
                 Action::Query(s) => {
                     mode = self.parse_query(mode, s).await?;
                     mode.ensure_init().await?;
@@ -193,8 +193,8 @@ impl Cli {
                 Action::Quit => {
                     return Ok(LoopData {
                         mode,
-                        query,
-                        changed_query,
+                        action,
+                        changed_action,
                         stop: true,
                     })
                 }
@@ -226,7 +226,7 @@ impl Cli {
             };
         }
         match mode {
-            Mode::Videos(videos) => self.video_prompt(videos, query).await,
+            Mode::Videos(videos) => self.video_prompt(videos, action).await,
             Mode::Channels(channels) => self.channel_prompt(channels).await,
             Mode::Comments(comments) => self.comments_prompt(comments).await,
             Mode::Temp => unreachable!(),
@@ -236,7 +236,7 @@ impl Cli {
     async fn video_prompt(
         &mut self,
         mut videos: PreloadableList<Videos>,
-        query: Action,
+        action: Action,
     ) -> Result<LoopData, Error> {
         self.display
             .video_list(videos.current(), &self.history, &self.config);
@@ -260,8 +260,8 @@ impl Cli {
             action => {
                 return Ok(LoopData {
                     mode: Mode::Videos(videos),
-                    query: action,
-                    changed_query: true,
+                    action: action,
+                    changed_action: true,
                     stop: false,
                 });
             }
@@ -271,8 +271,8 @@ impl Cli {
         self.play_vid(&video).await?;
         Ok(LoopData {
             mode: Mode::Videos(videos),
-            changed_query: false,
-            query,
+            changed_action: false,
+            action,
             stop: false,
         })
     }
@@ -296,19 +296,19 @@ impl Cli {
         {
             Action::Id(id) => {
                 Ok(LoopData {
-                    query: Action::Query(format!(
+                    action: Action::Query(format!(
                         ":chandle {}",
                         channels.current()[id - 1].handle()
                     )),
                     mode: Mode::Channels(channels), // out of order to please the borrow checker
-                    changed_query: true,
+                    changed_action: true,
                     stop: false,
                 })
             }
             res => Ok(LoopData {
                 mode: Mode::Channels(channels),
-                query: res,
-                changed_query: true,
+                action: res,
+                changed_action: true,
                 stop: false,
             }),
         }
@@ -332,14 +332,14 @@ impl Cli {
         {
             Action::Id(id) => Ok(LoopData {
                 mode: Mode::Comments(comments),
-                query: Action::Query(format!(":browser {}", id)),
-                changed_query: true,
+                action: Action::Query(format!(":browser {}", id)),
+                changed_action: true,
                 stop: false,
             }),
-            query => Ok(LoopData {
+            action => Ok(LoopData {
                 mode: Mode::Comments(comments),
-                query,
-                changed_query: true,
+                action,
+                changed_action: true,
                 stop: false,
             }),
         }
@@ -538,8 +538,8 @@ impl Cli {
 
 struct LoopData {
     mode: Mode,
-    query: Action,
-    changed_query: bool,
+    action: Action,
+    changed_action: bool,
     stop: bool,
 }
 
