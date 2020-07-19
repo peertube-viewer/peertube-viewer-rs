@@ -57,7 +57,7 @@ Initial query
 
 It is possible to launch **peertube-viewer-rs** with a query.
 
-For example, `peertube-viewe-rs mastodon` will launch **peertube-viewer-rs** and immediately search for mastodon.
+For example, `peertube-viewer-rs mastodon` will launch **peertube-viewer-rs** and immediately search for mastodon.
 It is also possible to set the instance that way: `peertube-viewer-rs https://skeptikon.fr mastodon` will search for mastodon videos on the instance skeptikon.fr.
 
 You can also play a single video with its url: `peertube-viewer-rs https://peertube.social/videos/watch/baf47864-08d8-483f-8518-9a973f99aac8` will play the video.
