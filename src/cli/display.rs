@@ -211,6 +211,13 @@ impl Display {
                     if self.colors {
                         buffer.push_str(&item.display_as_style());
                     }
+                } else if item.is_wrappable() {
+                    buffer.push_str(&fill(
+                        &parts_it
+                            .next()
+                            .expect("Internal Error: parts smaller than alignement"),
+                        self.cols,
+                    ));
                 } else {
                     buffer.push_str(
                         &parts_it

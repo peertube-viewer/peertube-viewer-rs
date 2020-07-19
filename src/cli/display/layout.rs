@@ -12,6 +12,8 @@ pub trait InnerLayoutItem {
 pub enum LayoutItem<I: InnerLayoutItem> {
     Style(Box<dyn fmt::Display>),
     Alignement,
+    Text(String),
+    WrappableInner(I),
     Inner(I),
 }
 impl<D, I> LayoutItem<I>
@@ -22,6 +24,8 @@ where
         match self {
             LayoutItem::Style(_) => panic!("Internal Error: cannot display style here"),
             LayoutItem::Alignement => panic!("Internal error, trying to display an alignement"),
+            LayoutItem::Text(s) => s.clone(),
+            LayoutItem::WrappableInner(i) => i.display(data),
             LayoutItem::Inner(i) => i.display(data),
         }
     }
@@ -41,6 +45,13 @@ where
     pub fn is_style(&self) -> bool {
         matches!(self, LayoutItem::Style(_))
     }
+
+    pub fn is_wrappable(&self) -> bool {
+        match self {
+             LayoutItem::WrappableInner(_) => true,
+            _ => false,
+        }
+    }
 }
 
 pub enum VideoLayoutItem {
@@ -51,7 +62,6 @@ pub enum VideoLayoutItem {
     Views,
     Duration,
     Published,
-    String(String),
 }
 
 impl InnerLayoutItem for VideoLayoutItem {
@@ -72,7 +82,6 @@ impl InnerLayoutItem for VideoLayoutItem {
             VideoLayoutItem::Views => display_count(v.views()),
             VideoLayoutItem::Duration => pretty_duration(v.duration()),
             VideoLayoutItem::Published => pretty_date(v.published()),
-            VideoLayoutItem::String(s) => s.clone(),
         }
     }
 }
@@ -81,7 +90,6 @@ pub enum ChannelLayoutItem {
     Name,
     Host,
     Followers,
-    String(String),
 }
 
 impl InnerLayoutItem for ChannelLayoutItem {
@@ -92,7 +100,6 @@ impl InnerLayoutItem for ChannelLayoutItem {
             ChannelLayoutItem::Name => c.display_name().to_owned(),
             ChannelLayoutItem::Host => c.host().to_owned(),
             ChannelLayoutItem::Followers => display_count(c.followers()),
-            ChannelLayoutItem::String(s) => s.clone(),
         }
     }
 }
@@ -102,7 +109,6 @@ pub enum CommentLayoutItem {
     Date,
     Author,
     Host,
-    String(String),
 }
 
 impl InnerLayoutItem for CommentLayoutItem {
@@ -114,7 +120,6 @@ impl InnerLayoutItem for CommentLayoutItem {
             CommentLayoutItem::Host => c.author_host().to_owned(),
             CommentLayoutItem::Date => pretty_date(c.created_at().as_ref()),
             CommentLayoutItem::Content => remove_html(c.content()),
-            CommentLayoutItem::String(s) => s.clone(),
         }
     }
 }
@@ -126,26 +131,26 @@ pub fn default_video_layouts() -> (
     let video_layout = vec![
         LayoutItem::Style(Box::new(color::Fg(color::Blue))),
         LayoutItem::Inner(VideoLayoutItem::Name),
-        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Text(" ".to_string()),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Green))),
         LayoutItem::Inner(VideoLayoutItem::Channel),
-        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Text(" ".to_string()),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
         LayoutItem::Inner(VideoLayoutItem::Host),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Yellow))),
-        LayoutItem::Inner(VideoLayoutItem::String(" [".to_string())),
+        LayoutItem::Text(" [".to_string()),
         LayoutItem::Inner(VideoLayoutItem::Duration),
-        LayoutItem::Inner(VideoLayoutItem::String("] ".to_string())),
+        LayoutItem::Text("] ".to_string()),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Green))),
         LayoutItem::Inner(VideoLayoutItem::Views),
-        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Text(" ".to_string()),
         LayoutItem::Alignement,
         LayoutItem::Inner(VideoLayoutItem::Published),
-        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Text(" ".to_string()),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Red))),
         LayoutItem::Inner(VideoLayoutItem::Nsfw),
@@ -156,26 +161,26 @@ pub fn default_video_layouts() -> (
         LayoutItem::Style(Box::new(style::Bold)),
         LayoutItem::Inner(VideoLayoutItem::Name),
         LayoutItem::Style(Box::new(style::Reset)),
-        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Text(" ".to_string()),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Green))),
         LayoutItem::Inner(VideoLayoutItem::Channel),
-        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Text(" ".to_string()),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
         LayoutItem::Inner(VideoLayoutItem::Host),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Yellow))),
-        LayoutItem::Inner(VideoLayoutItem::String(" [".to_string())),
+        LayoutItem::Text(" [".to_string()),
         LayoutItem::Inner(VideoLayoutItem::Duration),
-        LayoutItem::Inner(VideoLayoutItem::String("] ".to_string())),
+        LayoutItem::Text("] ".to_string()),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Green))),
         LayoutItem::Inner(VideoLayoutItem::Views),
-        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Text(" ".to_string()),
         LayoutItem::Alignement,
         LayoutItem::Inner(VideoLayoutItem::Published),
-        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
+        LayoutItem::Text(" ".to_string()),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Red))),
         LayoutItem::Inner(VideoLayoutItem::Nsfw),
@@ -189,12 +194,12 @@ pub fn default_channel_layouts() -> Vec<LayoutItem<ChannelLayoutItem>> {
     vec![
         LayoutItem::Style(Box::new(color::Fg(color::Blue))),
         LayoutItem::Inner(ChannelLayoutItem::Name),
-        LayoutItem::Inner(ChannelLayoutItem::String(" ".to_string())),
+        LayoutItem::Text(" ".to_string()),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
         LayoutItem::Inner(ChannelLayoutItem::Host),
         LayoutItem::Alignement,
-        LayoutItem::Inner(ChannelLayoutItem::String(" ".to_string())),
+        LayoutItem::Text(" ".to_string()),
         LayoutItem::Style(Box::new(color::Fg(color::Green))),
         LayoutItem::Inner(ChannelLayoutItem::Followers),
         LayoutItem::Style(Box::new(color::Fg(color::Reset))),
@@ -205,18 +210,18 @@ pub fn default_comment_layouts() -> Vec<LayoutItem<CommentLayoutItem>> {
     vec![
         LayoutItem::Style(Box::new(color::Fg(color::Blue))),
         LayoutItem::Inner(CommentLayoutItem::Author),
-        LayoutItem::Inner(CommentLayoutItem::String(" ".to_string())),
+        LayoutItem::Text(" ".to_string()),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
         LayoutItem::Inner(CommentLayoutItem::Host),
         LayoutItem::Alignement,
-        LayoutItem::Inner(CommentLayoutItem::String(" ".to_string())),
+        LayoutItem::Text(" ".to_string()),
         LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
         LayoutItem::Inner(CommentLayoutItem::Date),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Reset))),
-        LayoutItem::Inner(CommentLayoutItem::String("\n".to_string())),
-        LayoutItem::Inner(CommentLayoutItem::Content),
-        LayoutItem::Inner(CommentLayoutItem::String("\n".to_string())),
+        LayoutItem::Text("\n".to_string()),
+        LayoutItem::WrappableInner(CommentLayoutItem::Content),
+        LayoutItem::Text("\n".to_string()),
     ]
 }
