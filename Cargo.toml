@@ -27,3 +27,4 @@ clap = { version = "2", features = ["yaml"] }
 
 [profile.release]
 lto="fat"
+opt-level="s"
