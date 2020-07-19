@@ -1,8 +1,19 @@
 Changelog
 =========
 
+1.6.3
+-----
+
+- Some internal changes
+- Better error messages
+
+1.6.2
+-----
+
+Replace white/blacklist by allow/blocklist.
+
 1.6.1
-=====
+-----
 
 Add command `:browser` to open items in the browser.
 
