@@ -5,7 +5,9 @@ use super::{
     history::{History, HistoryT},
 };
 use std::fmt::{self, Debug};
+use terminal_size::{terminal_size, Width};
 use termion::{color, style};
+use textwrap::fill;
 
 use std::cmp;
 use std::sync::Arc;
@@ -21,7 +23,7 @@ use helpers::*;
 
 use unicode_width::UnicodeWidthStr;
 
-const DEFAULT_COLS: usize = 20;
+const DEFAULT_COLS: usize = 80;
 
 pub struct Display {
     cols: usize,
@@ -59,9 +61,11 @@ impl<T: color::Color> fmt::Display for MaybeColor<T> {
 
 impl Display {
     pub fn new(colors: bool) -> Display {
-        let cols = termion::terminal_size()
-            .map(|(c, _r)| c as usize)
-            .unwrap_or(DEFAULT_COLS);
+        let cols = if let Some((Width(w), _)) = terminal_size() {
+            w as usize
+        } else {
+            DEFAULT_COLS
+        };
 
         let (video_layout, seen_video_layout) = default_video_layouts();
 
@@ -325,7 +329,7 @@ impl Display {
             if !d.is_empty() {
                 self.print_centered("DESCRIPTION");
                 self.line('=');
-                println!("{}", d);
+                println!("{}", fill(&d, self.cols));
                 self.line('=');
             }
         }
@@ -354,7 +358,7 @@ impl Display {
             if !d.is_empty() {
                 self.print_centered("DESCRIPTION");
                 self.line('=');
-                println!("{}", d);
+                println!("{}", fill(&d, self.cols));
                 self.line('=');
             }
         }

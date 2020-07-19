@@ -16,7 +16,8 @@ clap = { version = "2", features = ["yaml"] }
 toml = "0.5"
 unicode-width = "0.1"
 directories = "3"
-
+textwrap = "0.11"
+terminal_size = "0.1"
 
 [workspace]
 members = ["crates/peertube-api/", "crates/peertube-ser/"]
