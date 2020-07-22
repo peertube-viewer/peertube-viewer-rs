@@ -152,10 +152,14 @@ impl Cli {
             }
             InitialInfo::Query(s) => Action::Query(s),
             InitialInfo::Channels(Some(s)) => Action::Query(format!(":channels {}", s)),
-            InitialInfo::Channels(None) => Action::Query(format!(
-                ":channels {}",
-                self.rl.readline(">> ".to_string()).await?
-            )),
+            InitialInfo::Channels(None) => {
+                let query = self.rl.readline(">> ".to_string()).await?;
+                if query == ":q" {
+                    return Ok(());
+                } else {
+                    Action::Query(format!(":channels {}", query))
+                }
+            }
             InitialInfo::Handle(s) => Action::Query(format!(":chandle {}", s)),
             InitialInfo::Trending => Action::Query(":trending".to_string()),
             InitialInfo::None => Action::Query(self.rl.readline(">> ".to_string()).await?),
@@ -187,6 +191,10 @@ impl Cli {
 
     async fn one_loop(&mut self, data: &mut LoopData) -> Result<(), Error> {
         self.parse_action(data).await?;
+        if data.stop {
+            return Ok(());
+        }
+
         match &mut data.mode {
             Mode::Videos(videos) => {
                 self.video_prompt(videos, &mut data.action, &mut data.changed_action)
@@ -209,7 +217,10 @@ impl Cli {
         if data.changed_action {
             match &data.action {
                 Action::Query(s) => {
-                    self.parse_query(&mut data.mode, &s).await?;
+                    if self.parse_query(&mut data.mode, &s).await? {
+                        data.stop = true;
+                        return Ok(());
+                    }
                     data.mode.ensure_init().await?;
                 }
                 Action::Quit => {
@@ -344,8 +355,11 @@ impl Cli {
         }
     }
 
-    async fn parse_query(&mut self, mode: &mut Mode, s: &str) -> Result<(), Error> {
-        if s == ":trending" {
+    /// Returns true if the action is to stop
+    async fn parse_query(&mut self, mode: &mut Mode, s: &str) -> Result<bool, Error> {
+        if s == ":q" {
+            return Ok(true);
+        } else if s == ":trending" {
             let trending_tmp =
                 PreloadableList::new(Videos::new_trending(self.instance.clone()), SEARCH_TOTAL);
             *mode = Mode::Videos(trending_tmp);
@@ -364,15 +378,15 @@ impl Cli {
         } else if let Some(id) = parser::info(s, mode.current_len()) {
             self.info(&mode, id).await?;
             self.rl.add_history_entry(s);
-            return Ok(());
+            return Ok(false);
         } else if let Some(id) = parser::browser(s, mode.current_len()) {
             self.open_browser(mode, id).await?;
             self.rl.add_history_entry(s);
-            return Ok(());
+            return Ok(false);
         } else if let Some(id) = parser::comments(s, mode.current_len()) {
             self.comments(mode, id).await?;
             self.rl.add_history_entry(s);
-            return Ok(());
+            return Ok(false);
         } else {
             self.rl.add_history_entry(&s);
             let search_tmp =
@@ -380,7 +394,7 @@ impl Cli {
             *mode = Mode::Videos(search_tmp);
         }
 
-        Ok(())
+        Ok(false)
     }
 
     async fn comments(&mut self, mode: &mut Mode, id: usize) -> Result<(), Error> {
