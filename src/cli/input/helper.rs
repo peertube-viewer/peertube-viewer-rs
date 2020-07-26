@@ -1,10 +1,10 @@
 use crate::cli::parser::info;
 
+use rustyline::hint::HistoryHinter;
 use std::sync::mpsc::{channel, Receiver, Sender};
 
 use rustyline::{
-    completion::Completer, highlight::Highlighter, hint::Hinter, line_buffer::LineBuffer,
-    validate::Validator, Context,
+    completion::Completer, highlight::Highlighter, hint::Hinter, validate::Validator, Context,
 };
 
 /// Message to interact between the editor and the runtime
@@ -25,6 +25,7 @@ pub enum Message {
 pub struct Helper {
     sender: Sender<Message>,
     high_limit: Option<usize>,
+    hinter: HistoryHinter,
 }
 
 impl Helper {
@@ -36,6 +37,7 @@ impl Helper {
             Helper {
                 sender: tx,
                 high_limit: None,
+                hinter: HistoryHinter {},
             },
         )
     }
@@ -43,12 +45,10 @@ impl Helper {
     pub fn set_limit(&mut self, lim: Option<usize>) {
         self.high_limit = lim;
     }
-}
 
-impl Hinter for Helper {
-    fn hint(&self, line: &str, _: usize, _: &Context) -> Option<String> {
+    fn message(&self, line: &str) {
         if line.is_empty() {
-            return None;
+            return;
         }
 
         if line == ":n" {
@@ -64,8 +64,13 @@ impl Hinter for Helper {
                 self.sender.send(Message::Number(num)).unwrap();
             }
         }
+    }
+}
 
-        None
+impl Hinter for Helper {
+    fn hint(&self, line: &str, pos: usize, ctx: &Context) -> Option<String> {
+        self.message(line);
+        self.hinter.hint(line, pos, ctx)
     }
 }
 
@@ -73,10 +78,6 @@ impl Validator for Helper {}
 
 impl Completer for Helper {
     type Candidate = String;
-
-    fn update(&self, _line: &mut LineBuffer, _start: usize, _elected: &str) {
-        unreachable!()
-    }
 }
 
 impl Highlighter for Helper {}
