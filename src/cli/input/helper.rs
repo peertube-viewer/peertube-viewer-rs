@@ -1,10 +1,16 @@
-use crate::cli::parser::info;
+use crate::cli::parser::{info, COMMANDS};
 
-use rustyline::hint::HistoryHinter;
+use termion::{color, style};
+
+use std::borrow::Cow;
 use std::sync::mpsc::{channel, Receiver, Sender};
 
 use rustyline::{
-    completion::Completer, highlight::Highlighter, hint::Hinter, validate::Validator, Context,
+    completion::Completer,
+    highlight::Highlighter,
+    hint::{Hinter, HistoryHinter},
+    validate::Validator,
+    Context,
 };
 
 /// Message to interact between the editor and the runtime
@@ -80,5 +86,43 @@ impl Completer for Helper {
     type Candidate = String;
 }
 
-impl Highlighter for Helper {}
+impl Highlighter for Helper {
+    fn highlight_prompt<'b, 's: 'b, 'p: 'b>(&'s self, prompt: &'p str, _: bool) -> Cow<'b, str> {
+        Cow::Owned(format!("{}{}{}", style::Bold, prompt, style::Reset))
+    }
+
+    fn highlight<'l>(&self, line: &'l str, _: usize) -> Cow<'l, str> {
+        if !line.is_empty() && line.starts_with(":") {
+            if let Some(idx) = line.find(' ') {
+                if let Ok(_) = COMMANDS.binary_search(&&line[..idx]) {
+                    return Cow::Owned(format!(
+                        "{}{}{}{}{}{}{}",
+                        style::Bold,
+                        color::Fg(color::Green),
+                        &line[..idx],
+                        style::Reset,
+                        style::Bold,
+                        &line[idx..],
+                        style::Reset,
+                    ));
+                }
+            } else {
+                if let Ok(_) = COMMANDS.binary_search(&line) {
+                    return Cow::Owned(format!(
+                        "{}{}{}{}",
+                        style::Bold,
+                        color::Fg(color::Green),
+                        line,
+                        style::Reset,
+                    ));
+                }
+            }
+        }
+        Cow::Owned(format!("{}{}{}", style::Bold, line, style::Reset))
+    }
+
+    fn highlight_char(&self, _: &str, _: usize) -> bool {
+        true
+    }
+}
 impl rustyline::Helper for Helper {}

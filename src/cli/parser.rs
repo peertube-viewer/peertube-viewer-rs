@@ -1,3 +1,14 @@
+pub const COMMANDS: [&str; 7] = [
+    //Sorted list of available commands
+    ":browser",
+    ":chandle",
+    ":channels",
+    ":comments",
+    ":info",
+    ":quit",
+    ":trending",
+];
+
 pub fn channels(input: &str) -> Option<&str> {
     if input.starts_with(":channels ") {
         Some(clean_spaces(&input[10..])).flatten()
