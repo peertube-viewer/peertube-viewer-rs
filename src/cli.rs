@@ -506,9 +506,8 @@ impl Cli {
     /// Returns None if the error was dealt with
     fn handle_err(&mut self, err: Error) -> Option<Error> {
         match &err {
-            Error::Api(ApiError::Ureq(req_err)) => {
-                let code = req_err.status();
-                if code >= 400 && code < 500 {
+            Error::Api(ApiError::Status(code)) => {
+                if *code >= 400 && *code < 500 {
                     self.display.err(&format!(
                             "\
                             Error encountered while connecting to the desired instance: {}\n\
@@ -518,7 +517,7 @@ impl Cli {
                         ));
                     self.display.report_error(err, &*self.instance.host());
                     return None;
-                } else if code >= 500 {
+                } else if *code >= 500 {
                     self.display.err(&format!(
                             "\
                             The server you are trying to connect failed to process the request: {}\n\

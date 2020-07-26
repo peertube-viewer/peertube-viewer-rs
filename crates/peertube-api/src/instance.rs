@@ -21,6 +21,14 @@ pub struct Instance {
     local: bool,
 }
 
+fn status_or_error(res: ureq::Response) -> error::Result<ureq::Response> {
+    if res.error() {
+        Err(error::Error::Status(res.status()))
+    } else {
+        Ok(res)
+    }
+}
+
 impl Instance {
     pub fn new(host: String, include_nsfw: bool, local: bool) -> Arc<Instance> {
         Arc::new(Instance {
@@ -50,7 +58,8 @@ impl Instance {
             req.query("filter", "local");
         }
 
-        let mut search_res: Videos = DeJson::deserialize_json(&req.call().into_string()?)?; //TODO reput error for status
+        let mut search_res: Videos =
+            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?; //TODO reput error for status
         let mut res = Vec::new();
 
         for video in search_res.data.drain(..) {
@@ -80,7 +89,8 @@ impl Instance {
             req.query("filter", "local");
         }
 
-        let mut video_res: Videos = DeJson::deserialize_json(&req.call().into_string()?)?; //TODO reput error for status
+        let mut video_res: Videos =
+            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?; //TODO reput error for status
         let mut res = Vec::new();
         for video in video_res.data.drain(..) {
             res.push(Video::from_search(self, video));
@@ -104,7 +114,8 @@ impl Instance {
         req.query("count", &nb.to_string())
             .query("start", &offset.to_string());
 
-        let mut comment_res: Comments = DeJson::deserialize_json(&req.call().into_string()?)?; //TODO reput error for status
+        let mut comment_res: Comments =
+            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?; //TODO reput error for status
         let mut res = Vec::new();
         for comment in comment_res.data.drain(..) {
             if let Ok(c) = Comment::try_from(comment) {
@@ -134,7 +145,8 @@ impl Instance {
             req.query("filter", "local");
         }
 
-        let mut search_res: Videos = DeJson::deserialize_json(&req.call().into_string()?)?; //TODO reput error for status
+        let mut search_res: Videos =
+            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?; //TODO reput error for status
         let mut res = Vec::new();
         for video in search_res.data.drain(..) {
             res.push(Video::from_search(self, video));
@@ -162,7 +174,8 @@ impl Instance {
             req.query("filter", "local");
         }
 
-        let mut search_res: Channels = DeJson::deserialize_json(&req.call().into_string()?)?; //TODO reput error for status
+        let mut search_res: Channels =
+            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?; //TODO reput error for status
         let mut res = Vec::new();
         for video in search_res.data.drain(..) {
             if let Some(v) = Channel::maybe_from(video, self.host.clone()) {
@@ -182,7 +195,7 @@ impl Instance {
         let mut req = ureq::get(&url);
         Ok(Video::from_full(
             self,
-            DeJson::deserialize_json(&req.call().into_string()?)?, //TODO reput error for status
+            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?, //TODO reput error for status
         ))
     }
 
@@ -194,7 +207,8 @@ impl Instance {
         url.push_str("/description");
 
         let mut req = ureq::get(&url);
-        let desc: Description = DeJson::deserialize_json(&req.call().into_string()?)?; //TODO reput error for status
+        let desc: Description =
+            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?; //TODO reput error for status
         Ok(desc.description)
     }
 
@@ -205,7 +219,8 @@ impl Instance {
         url.push_str(uuid);
 
         let mut req = ureq::get(&url);
-        let video: FullVideo = DeJson::deserialize_json(&req.call().into_string()?)?; //TODO reput error for status
+        let video: FullVideo =
+            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?; //TODO reput error for status
         Ok(video.files)
     }
 

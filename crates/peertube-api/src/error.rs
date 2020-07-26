@@ -5,6 +5,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug)]
 pub enum Error {
     Ureq(ureq::Error),
+    Status(u16),
     Io(io::Error),
     Serde(nanoserde::DeJsonErr),
 }
@@ -13,6 +14,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::Ureq(err) => write!(f, "Connexion error: {}", err),
+            Error::Status(s) => write!(f, "Connexion error: ERROR {}", s),
             Error::Io(err) => write!(f, "Connexion error: {}", err),
             Error::Serde(err) => write!(f, "Deserialisation error: {}", err),
         }
@@ -25,6 +27,7 @@ impl error::Error for Error {
             Error::Ureq(err) => Some(err),
             Error::Io(err) => Some(err),
             Error::Serde(err) => Some(err),
+            Error::Status(_) => None,
         }
     }
 }
