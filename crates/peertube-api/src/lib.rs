@@ -1,9 +1,3 @@
-extern crate chrono;
-extern crate peertube_ser;
-extern crate reqwest;
-extern crate serde_json;
-extern crate tokio;
-
 pub mod channels;
 mod comments;
 mod common;

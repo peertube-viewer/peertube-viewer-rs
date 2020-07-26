@@ -5,7 +5,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug)]
 pub enum Error {
     Reqwest(reqwest::Error),
-    Serde(serde_json::error::Error),
+    Serde(nanoserde::DeJsonErr),
 }
 
 impl fmt::Display for Error {
@@ -32,8 +32,8 @@ impl From<reqwest::Error> for Error {
     }
 }
 
-impl From<serde_json::error::Error> for Error {
-    fn from(err: serde_json::error::Error) -> Self {
+impl From<nanoserde::DeJsonErr> for Error {
+    fn from(err: nanoserde::DeJsonErr) -> Self {
         Error::Serde(err)
     }
 }

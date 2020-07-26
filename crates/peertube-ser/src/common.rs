@@ -1,6 +1,6 @@
-use serde::Deserialize;
+use nanoserde::DeJson;
 
-#[derive(Deserialize, Debug)]
+#[derive(DeJson, Debug)]
 #[allow(non_snake_case)]
 pub struct Avatar {
     pub path: String,
@@ -8,7 +8,7 @@ pub struct Avatar {
     pub updatedAt: Option<String>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(DeJson, Debug)]
 #[allow(non_snake_case)]
 pub struct Channel {
     pub id: i64,

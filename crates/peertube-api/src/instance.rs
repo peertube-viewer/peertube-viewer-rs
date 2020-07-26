@@ -1,6 +1,7 @@
 use std::convert::TryFrom;
 use std::rc::Rc;
 
+use nanoserde::DeJson;
 use reqwest::Client;
 
 use peertube_ser::channels::Channels;
@@ -54,7 +55,7 @@ impl Instance {
         }
 
         let mut search_res: Videos =
-            serde_json::from_str(&query.send().await?.error_for_status()?.text().await?)?;
+            DeJson::deserialize_json(&query.send().await?.error_for_status()?.text().await?)?;
         let mut res = Vec::new();
 
         for video in search_res.data.drain(..) {
@@ -86,7 +87,7 @@ impl Instance {
         }
 
         let mut video_res: Videos =
-            serde_json::from_str(&query.send().await?.error_for_status()?.text().await?)?;
+            DeJson::deserialize_json(&query.send().await?.error_for_status()?.text().await?)?;
         let mut res = Vec::new();
         for video in video_res.data.drain(..) {
             res.push(Video::from_search(self, video));
@@ -112,7 +113,7 @@ impl Instance {
             .query(&[("count", &nb.to_string()), ("start", &offset.to_string())]);
 
         let mut comment_res: Comments =
-            serde_json::from_str(&query.send().await?.error_for_status()?.text().await?)?;
+            DeJson::deserialize_json(&query.send().await?.error_for_status()?.text().await?)?;
         let mut res = Vec::new();
         for comment in comment_res.data.drain(..) {
             if let Ok(c) = Comment::try_from(comment) {
@@ -144,7 +145,7 @@ impl Instance {
         }
 
         let mut search_res: Videos =
-            serde_json::from_str(&query.send().await?.error_for_status()?.text().await?)?;
+            DeJson::deserialize_json(&query.send().await?.error_for_status()?.text().await?)?;
         let mut res = Vec::new();
         for video in search_res.data.drain(..) {
             res.push(Video::from_search(self, video));
@@ -174,7 +175,7 @@ impl Instance {
         }
 
         let mut search_res: Channels =
-            serde_json::from_str(&query.send().await?.error_for_status()?.text().await?)?;
+            DeJson::deserialize_json(&query.send().await?.error_for_status()?.text().await?)?;
         let mut res = Vec::new();
         for video in search_res.data.drain(..) {
             if let Some(v) = Channel::maybe_from(video, self.host.clone()) {
@@ -192,7 +193,7 @@ impl Instance {
         url.push_str(uuid);
         Ok(Video::from_full(
             self,
-            serde_json::from_str::<FullVideo>(&*self.client.get(&url).send().await?.text().await?)?,
+            DeJson::deserialize_json(&*self.client.get(&url).send().await?.text().await?)?,
         ))
     }
 
@@ -207,7 +208,7 @@ impl Instance {
         url.push_str("/description");
 
         let desc: Description =
-            serde_json::from_str(&*self.client.get(&url).send().await?.text().await?)?;
+            DeJson::deserialize_json(&*self.client.get(&url).send().await?.text().await?)?;
         Ok(desc.description)
     }
 
@@ -218,7 +219,7 @@ impl Instance {
         url.push_str(uuid);
 
         let video: FullVideo =
-            serde_json::from_str(&*self.client.get(&url).send().await?.text().await?)?;
+            DeJson::deserialize_json(&*self.client.get(&url).send().await?.text().await?)?;
         Ok(video.files)
     }
 
