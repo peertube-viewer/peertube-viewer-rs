@@ -1,13 +1,13 @@
-use std::{future::Future, pin::Pin, rc::Rc};
-use tokio::task::{spawn_local, JoinHandle};
+use std::sync::Arc;
+use std::thread::{spawn, JoinHandle};
 
 type Loading<D, E> = JoinHandle<Result<(Vec<D>, usize), E>>;
 
 pub struct PreloadableList<L: AsyncLoader> {
-    loaded: Vec<Vec<Rc<L::Data>>>,
+    loaded: Vec<Vec<Arc<L::Data>>>,
     loading: Option<Loading<L::Data, L::Error>>,
 
-    loader: L,
+    loader: Arc<L>,
     current: usize,
     offset: usize,
     step: usize,
@@ -16,15 +16,15 @@ pub struct PreloadableList<L: AsyncLoader> {
 
 impl<L, D, E> PreloadableList<L>
 where
-    L: AsyncLoader<Data = D, Error = E>,
-    D: 'static,
-    E: 'static,
+    L: AsyncLoader<Data = D, Error = E> + Send + Sync + 'static,
+    D: 'static + Send,
+    E: 'static + Send,
 {
     pub fn new(loader: L, step: usize) -> PreloadableList<L> {
         PreloadableList {
             loaded: Vec::new(),
             loading: None,
-            loader,
+            loader: Arc::new(loader),
             current: 0,
             offset: 0,
             step,
@@ -32,15 +32,15 @@ where
         }
     }
 
-    pub async fn ensure_init(&mut self) -> Result<(), E> {
+    pub fn ensure_init(&mut self) -> Result<(), E> {
         if self.loaded.is_empty() {
-            self.next().await.map(|_| ())
+            self.next().map(|_| ())
         } else {
             Ok(())
         }
     }
 
-    pub async fn next(&mut self) -> Result<&[Rc<D>], E> {
+    pub fn next(&mut self) -> Result<&[Arc<D>], E> {
         if !self.loaded.is_empty() {
             self.offset += self.loaded[self.current].len();
             self.current += 1;
@@ -48,18 +48,18 @@ where
         if self.loaded.len() <= self.current {
             let temp;
             if let Some(handle) = self.loading.take() {
-                temp = handle.await.unwrap()?;
+                temp = handle.join().unwrap()?;
             } else {
-                temp = self.loader.data(self.step, self.offset).await?;
+                temp = self.loader.data(self.step, self.offset)?;
             }
             let (data, new_total) = temp;
-            self.loaded.push(data.into_iter().map(Rc::new).collect());
+            self.loaded.push(data.into_iter().map(Arc::new).collect());
             self.total = new_total;
         }
         Ok(&self.loaded[self.current])
     }
 
-    pub fn prev(&mut self) -> &Vec<Rc<D>> {
+    pub fn prev(&mut self) -> &Vec<Arc<D>> {
         if self.current >= 1 {
             self.current -= 1;
             self.offset -= self.loaded[self.current].len();
@@ -69,15 +69,11 @@ where
 
     pub fn preload_next(&mut self) {
         if self.loaded.len() <= self.current + 1 && self.loading.is_none() {
-            self.loading = Some(spawn_local(
-                self.loader
-                    .data(self.step, self.offset + self.loaded[self.current].len()),
-            ));
+            let step = self.step;
+            let offset = self.offset + self.loaded[self.current].len();
+            let loader = self.loader.clone();
+            self.loading = Some(spawn(move || loader.data(step, offset)));
         }
-    }
-
-    pub fn loader_mut(&mut self) -> &mut L {
-        &mut self.loader
     }
 
     pub fn loader(&self) -> &L {
@@ -89,7 +85,7 @@ where
         self.loader.item(data_cloned);
     }
 
-    pub fn current(&self) -> &[Rc<D>] {
+    pub fn current(&self) -> &[Arc<D>] {
         &self.loaded[self.current]
     }
 
@@ -114,20 +110,10 @@ where
     }
 }
 
-pub trait AsyncLoader {
-    type Data: 'static;
-    type Error: 'static;
+pub trait AsyncLoader: Send + Sync + 'static {
+    type Data: 'static + Send;
+    type Error: 'static + Send;
 
-    // This should be an async trait but they are not stable yet.
-    // The async-trait crate provides some of the required features but can't require the produced
-    // future to be 'static
-    //
-    // To understand what's happening here check the docs for async-trait https://docs.rs/async-trait/0.1.33/async_trait/
-    #[allow(clippy::type_complexity)]
-    fn data(
-        &mut self,
-        step: usize,
-        offset: usize,
-    ) -> Pin<Box<dyn 'static + Future<Output = Result<(Vec<Self::Data>, usize), Self::Error>>>>;
-    fn item(&self, _: Rc<Self::Data>) {}
+    fn data(&self, step: usize, offset: usize) -> Result<(Vec<Self::Data>, usize), Self::Error>;
+    fn item(&self, _: Arc<Self::Data>) {}
 }

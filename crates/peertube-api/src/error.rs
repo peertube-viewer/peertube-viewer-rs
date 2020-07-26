@@ -1,17 +1,19 @@
-use std::{error, fmt};
+use std::{error, fmt, io};
 
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub enum Error {
-    Reqwest(reqwest::Error),
+    Ureq(ureq::Error),
+    Io(io::Error),
     Serde(nanoserde::DeJsonErr),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::Reqwest(err) => write!(f, "Connexion error: {}", err),
+            Error::Ureq(err) => write!(f, "Connexion error: {}", err),
+            Error::Io(err) => write!(f, "Connexion error: {}", err),
             Error::Serde(err) => write!(f, "Deserialisation error: {}", err),
         }
     }
@@ -20,15 +22,22 @@ impl fmt::Display for Error {
 impl error::Error for Error {
     fn source(&self) -> Option<&(dyn error::Error + 'static)> {
         match self {
-            Error::Reqwest(err) => Some(err),
+            Error::Ureq(err) => Some(err),
+            Error::Io(err) => Some(err),
             Error::Serde(err) => Some(err),
         }
     }
 }
 
-impl From<reqwest::Error> for Error {
-    fn from(err: reqwest::Error) -> Self {
-        Error::Reqwest(err)
+impl From<ureq::Error> for Error {
+    fn from(err: ureq::Error) -> Self {
+        Error::Ureq(err)
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(err: io::Error) -> Self {
+        Error::Io(err)
     }
 }
 
