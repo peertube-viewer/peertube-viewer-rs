@@ -37,7 +37,7 @@ pub fn channels(input: &str) -> Option<&str> {
 }
 
 pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
-    if !input.starts_with(":") {
+    if !input.starts_with(':') {
         return Ok(ParsedQuery::Query(input));
     }
 

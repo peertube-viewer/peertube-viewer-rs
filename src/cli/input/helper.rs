@@ -88,7 +88,7 @@ impl Completer for Helper {
 
 fn green_then_bold(line: &str) -> Cow<'_, str> {
     if let Some(idx) = line.find(' ') {
-        return Cow::Owned(format!(
+        Cow::Owned(format!(
             "{}{}{}{}{}{}{}",
             style::Bold,
             color::Fg(color::Green),
@@ -97,21 +97,21 @@ fn green_then_bold(line: &str) -> Cow<'_, str> {
             style::Bold,
             &line[idx..],
             style::Reset,
-        ));
+        ))
     } else {
-        return Cow::Owned(format!(
+        Cow::Owned(format!(
             "{}{}{}{}",
             style::Bold,
             color::Fg(color::Green),
             line,
             style::Reset,
-        ));
+        ))
     }
 }
 
 fn green_then_red(line: &str) -> Cow<'_, str> {
     if let Some(idx) = line.find(' ') {
-        return Cow::Owned(format!(
+        Cow::Owned(format!(
             "{}{}{}{}{}{}",
             style::Bold,
             color::Fg(color::Green),
@@ -119,40 +119,40 @@ fn green_then_red(line: &str) -> Cow<'_, str> {
             color::Fg(color::Red),
             &line[idx..],
             style::Reset,
-        ));
+        ))
     } else {
-        return Cow::Owned(format!(
+        Cow::Owned(format!(
             "{}{}{}{}",
             style::Bold,
             color::Fg(color::Green),
             line,
             style::Reset,
-        ));
+        ))
     }
 }
 
 fn yellow(line: &str) -> Cow<'_, str> {
-    return Cow::Owned(format!(
+    Cow::Owned(format!(
         "{}{}{}{}",
         style::Bold,
         color::Fg(color::Yellow),
         line,
         style::Reset,
-    ));
+    ))
 }
 
 fn red(line: &str) -> Cow<'_, str> {
-    return Cow::Owned(format!(
+    Cow::Owned(format!(
         "{}{}{}{}",
         style::Bold,
         color::Fg(color::Red),
         line,
         style::Reset,
-    ));
+    ))
 }
 
 fn bold(line: &str) -> Cow<'_, str> {
-    return Cow::Owned(format!("{}{}{}", style::Bold, line, style::Reset,));
+    Cow::Owned(format!("{}{}{}", style::Bold, line, style::Reset,))
 }
 
 impl Highlighter for Helper {
