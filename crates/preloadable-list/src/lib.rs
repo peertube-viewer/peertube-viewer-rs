@@ -34,13 +34,13 @@ where
 
     pub fn ensure_init(&mut self) -> Result<(), E> {
         if self.loaded.is_empty() {
-            self.next().map(|_| ())
+            self.try_next().map(|_| ())
         } else {
             Ok(())
         }
     }
 
-    pub fn next(&mut self) -> Result<&[Arc<D>], E> {
+    pub fn try_next(&mut self) -> Result<&[Arc<D>], E> {
         if !self.loaded.is_empty() {
             self.offset += self.loaded[self.current].len();
             self.current += 1;

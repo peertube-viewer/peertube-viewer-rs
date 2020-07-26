@@ -223,13 +223,13 @@ impl Cli {
                 }
                 Action::Next => match &mut data.mode {
                     Mode::Videos(search) => {
-                        search.next()?;
+                        search.try_next()?;
                     }
                     Mode::Channels(channels) => {
-                        channels.next()?;
+                        channels.try_next()?;
                     }
                     Mode::Comments(comments) => {
-                        comments.next()?;
+                        comments.try_next()?;
                     }
                     Mode::Temp => unreachable!(),
                 },
@@ -516,7 +516,7 @@ impl Cli {
                             code
                         ));
                     self.display.report_error(err, &*self.instance.host());
-                    return None;
+                    None
                 } else if *code >= 500 {
                     self.display.err(&format!(
                             "\
@@ -526,9 +526,9 @@ impl Cli {
                             code
                         ));
                     self.display.report_error(err, &*self.instance.host());
-                    return None;
+                    None
                 } else {
-                    return Some(err);
+                    Some(err)
                 }
             }
             Error::Api(ApiError::Serde(_)) => {

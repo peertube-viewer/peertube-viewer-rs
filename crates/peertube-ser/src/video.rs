@@ -1,3 +1,5 @@
+#![allow(clippy::redundant_pattern_matching)] // Suppress warnings caused by nanoserde
+
 use crate::common::Channel;
 use crate::search::{IdentifiedLabel, Language};
 use nanoserde::DeJson;

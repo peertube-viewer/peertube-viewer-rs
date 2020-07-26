@@ -1,3 +1,5 @@
+#![allow(clippy::redundant_pattern_matching)] // Suppress warnings caused by nanoserde
+
 use nanoserde::DeJson;
 
 use super::common::Channel;
