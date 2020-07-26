@@ -1,7 +1,10 @@
 use peertube_api::{channels::Channel, error, Comment, Instance, Video};
 use preloadable_list::AsyncLoader;
-use std::{future::Future, pin::Pin, rc::Rc};
-use tokio::task::spawn_local;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
+use std::thread::spawn;
 
 #[derive(Clone)]
 enum VideoMode {
@@ -11,38 +14,38 @@ enum VideoMode {
 }
 
 pub struct Videos {
-    instance: Rc<Instance>,
+    instance: Arc<Instance>,
     mode: VideoMode,
-    preload_res: bool,
+    preload_res: AtomicBool,
 }
 
 impl Videos {
-    pub fn new_search(instance: Rc<Instance>, query: &str) -> Videos {
+    pub fn new_search(instance: Arc<Instance>, query: &str) -> Videos {
         Videos {
             instance,
-            preload_res: false,
+            preload_res: AtomicBool::new(false),
             mode: VideoMode::Search(query.to_owned()),
         }
     }
 
-    pub fn new_channel(instance: Rc<Instance>, handle: &str) -> Videos {
+    pub fn new_channel(instance: Arc<Instance>, handle: &str) -> Videos {
         Videos {
             instance,
-            preload_res: false,
+            preload_res: AtomicBool::new(false),
             mode: VideoMode::Channel(handle.to_owned()),
         }
     }
 
-    pub fn new_trending(instance: Rc<Instance>) -> Videos {
+    pub fn new_trending(instance: Arc<Instance>) -> Videos {
         Videos {
             instance,
-            preload_res: false,
+            preload_res: AtomicBool::new(false),
             mode: VideoMode::Trending,
         }
     }
 
-    pub fn preload_res(&mut self, should: bool) {
-        self.preload_res = should;
+    pub fn preload_res(&self, should: bool) {
+        self.preload_res.store(should, Ordering::SeqCst);
     }
 
     pub fn name(&self) -> &'static str {
@@ -58,44 +61,31 @@ impl AsyncLoader for Videos {
     type Data = Video;
     type Error = error::Error;
 
-    #[allow(clippy::type_complexity)]
-    fn data(
-        &mut self,
-        step: usize,
-        offset: usize,
-    ) -> Pin<Box<dyn 'static + Future<Output = Result<(Vec<Video>, usize), error::Error>>>> {
-        let instance_cl = self.instance.clone();
-        let mode_cl = self.mode.clone();
-        Box::pin(async move {
-            match mode_cl {
-                VideoMode::Search(query) => instance_cl.search_videos(&query, step, offset).await,
-                VideoMode::Channel(handle) => {
-                    instance_cl.channel_videos(&handle, step, offset).await
-                }
-                VideoMode::Trending => instance_cl.trending_videos(step, offset).await,
-            }
-        })
+    fn data(&self, step: usize, offset: usize) -> Result<(Vec<Self::Data>, usize), Self::Error> {
+        match &self.mode {
+            VideoMode::Search(query) => self.instance.search_videos(&query, step, offset),
+            VideoMode::Channel(handle) => self.instance.channel_videos(&handle, step, offset),
+            VideoMode::Trending => self.instance.trending_videos(step, offset),
+        }
     }
 
-    fn item(&self, vid: Rc<Video>) {
-        if self.preload_res {
+    fn item(&self, vid: Arc<Video>) {
+        if self.preload_res.load(Ordering::SeqCst) {
             let cl2 = vid.clone();
             #[allow(unused_must_use)]
-            spawn_local(async move {
-                cl2.load_resolutions().await;
-            });
+            spawn(move || cl2.load_resolutions());
         }
-        spawn_local(async move { vid.load_description().await });
+        spawn(move || vid.load_description());
     }
 }
 
 pub struct Channels {
-    instance: Rc<Instance>,
+    instance: Arc<Instance>,
     query: String,
 }
 
 impl Channels {
-    pub fn new(instance: Rc<Instance>, query: &str) -> Channels {
+    pub fn new(instance: Arc<Instance>, query: &str) -> Channels {
         Channels {
             instance,
             query: query.to_owned(),
@@ -104,7 +94,7 @@ impl Channels {
 }
 
 pub struct Comments {
-    instance: Rc<Instance>,
+    instance: Arc<Instance>,
     video_uuid: String,
 }
 
@@ -112,20 +102,13 @@ impl AsyncLoader for Channels {
     type Data = Channel;
     type Error = error::Error;
 
-    #[allow(clippy::type_complexity)]
-    fn data(
-        &mut self,
-        step: usize,
-        offset: usize,
-    ) -> Pin<Box<dyn 'static + Future<Output = Result<(Vec<Channel>, usize), error::Error>>>> {
-        let instance_cl = self.instance.clone();
-        let query_cl = self.query.clone();
-        Box::pin(async move { instance_cl.search_channels(&query_cl, step, offset).await })
+    fn data(&self, step: usize, offset: usize) -> Result<(Vec<Channel>, usize), error::Error> {
+        self.instance.search_channels(&self.query, step, offset)
     }
 }
 
 impl Comments {
-    pub fn new(instance: Rc<Instance>, video_uuid: &str) -> Comments {
+    pub fn new(instance: Arc<Instance>, video_uuid: &str) -> Comments {
         Comments {
             instance,
             video_uuid: video_uuid.to_owned(),
@@ -137,14 +120,7 @@ impl AsyncLoader for Comments {
     type Data = Comment;
     type Error = error::Error;
 
-    #[allow(clippy::type_complexity)]
-    fn data(
-        &mut self,
-        step: usize,
-        offset: usize,
-    ) -> Pin<Box<dyn 'static + Future<Output = Result<(Vec<Comment>, usize), error::Error>>>> {
-        let instance_cl = self.instance.clone();
-        let video_uuid_cl = self.video_uuid.clone();
-        Box::pin(async move { instance_cl.comments(&video_uuid_cl, step, offset).await })
+    fn data(&self, step: usize, offset: usize) -> Result<(Vec<Comment>, usize), error::Error> {
+        self.instance.comments(&self.video_uuid, step, offset)
     }
 }

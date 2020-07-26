@@ -1,5 +1,6 @@
 use crate::cli::parser::info;
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
+
+use std::sync::mpsc::{channel, Receiver, Sender};
 
 use rustyline::{
     completion::Completer, highlight::Highlighter, hint::Hinter, line_buffer::LineBuffer,
@@ -22,15 +23,16 @@ pub enum Message {
 }
 
 pub struct Helper {
-    sender: UnboundedSender<Message>,
+    sender: Sender<Message>,
     high_limit: Option<usize>,
 }
 
 impl Helper {
-    pub fn new() -> (UnboundedReceiver<Message>, Helper) {
-        let (tx, rx) = unbounded_channel();
+    pub fn new() -> (Receiver<Message>, Sender<Message>, Helper) {
+        let (tx, rx) = channel();
         (
             rx,
+            tx.clone(),
             Helper {
                 sender: tx,
                 high_limit: None,

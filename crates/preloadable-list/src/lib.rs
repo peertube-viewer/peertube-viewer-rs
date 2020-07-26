@@ -110,7 +110,7 @@ where
     }
 }
 
-pub trait AsyncLoader {
+pub trait AsyncLoader: Send + Sync + 'static {
     type Data: 'static + Send;
     type Error: 'static + Send;
 

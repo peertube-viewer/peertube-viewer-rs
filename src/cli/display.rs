@@ -8,7 +8,7 @@ use std::fmt::{self, Debug};
 use termion::{color, style};
 
 use std::cmp;
-use std::rc::Rc;
+use std::sync::Arc;
 
 mod layout;
 use layout::{
@@ -78,7 +78,7 @@ impl Display {
     /// Display a list of video results
     pub fn video_list(
         &self,
-        videos: &[Rc<Video>],
+        videos: &[Arc<Video>],
         history: &History,
         blocklist: &impl Blocklist<Video>,
     ) {
@@ -91,7 +91,7 @@ impl Display {
         );
     }
 
-    pub fn channel_list(&self, channels: &[Rc<Channel>], _: &History, _: &impl Blocklist<Video>) {
+    pub fn channel_list(&self, channels: &[Arc<Channel>], _: &History, _: &impl Blocklist<Video>) {
         self.list(
             channels,
             &(),
@@ -101,7 +101,7 @@ impl Display {
         );
     }
 
-    pub fn comment_list(&self, comments: &[Rc<Comment>]) {
+    pub fn comment_list(&self, comments: &[Arc<Comment>]) {
         self.list(
             comments,
             &(),
@@ -113,7 +113,7 @@ impl Display {
 
     fn list<I, D, B, H>(
         &self,
-        contents: &[Rc<D>],
+        contents: &[Arc<D>],
         history: &H,
         blocklist: &B,
         layout: &[LayoutItem<I>],
@@ -313,11 +313,11 @@ impl Display {
         );
     }
 
-    pub async fn video_info(&self, video: &Video) {
+    pub fn video_info(&self, video: &Video) {
         self.line('=');
         self.print_centered(video.name());
         self.line('=');
-        if let Ok(Some(d)) = video.description().await {
+        if let Ok(Some(d)) = video.description() {
             if !d.is_empty() {
                 self.print_centered("DESCRIPTION");
                 self.line('=');
@@ -342,7 +342,7 @@ impl Display {
         self.line('=');
     }
 
-    pub async fn channel_info(&self, channel: &Channel) {
+    pub fn channel_info(&self, channel: &Channel) {
         self.line('=');
         self.print_centered(channel.display_name());
         self.line('=');

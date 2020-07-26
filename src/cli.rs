@@ -21,12 +21,10 @@ use preloadable_list::PreloadableList;
 use preloadables::{Channels, Comments, Videos};
 
 use std::fs::create_dir;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use directories::ProjectDirs;
-use tokio::process::Command;
-use tokio::runtime;
-use tokio::task::LocalSet;
+use std::process::Command;
 
 const SEARCH_TOTAL: usize = 20;
 
@@ -36,7 +34,7 @@ pub struct Cli {
     dirs: Option<ProjectDirs>,
     rl: Editor,
     display: Display,
-    instance: Rc<Instance>,
+    instance: Arc<Instance>,
     initial_info: InitialInfo,
     is_single_url: bool,
 }
@@ -142,18 +140,17 @@ impl Cli {
     }
 
     /// Main loop for he cli interface
-    async fn main_loop(&mut self) -> Result<(), Error> {
+    fn main_loop(&mut self) -> Result<(), Error> {
         let mode = Mode::Temp; //Placeholder that will be changed just after anyway on the first loop run
         let action = match self.initial_info.take() {
             InitialInfo::Query(s) if self.is_single_url => {
-                self.play_vid(&self.instance.single_video(&s).await?)
-                    .await?;
+                self.play_vid(&self.instance.single_video(&s)?)?;
                 return Ok(());
             }
             InitialInfo::Query(s) => Action::Query(s),
             InitialInfo::Channels(Some(s)) => Action::Query(format!(":channels {}", s)),
             InitialInfo::Channels(None) => {
-                let query = self.rl.readline(">> ".to_string()).await?;
+                let query = self.rl.readline(">> ".to_string())?;
                 if query == ":q" {
                     return Ok(());
                 } else {
@@ -162,7 +159,7 @@ impl Cli {
             }
             InitialInfo::Handle(s) => Action::Query(format!(":chandle {}", s)),
             InitialInfo::Trending => Action::Query(":trending".to_string()),
-            InitialInfo::None => Action::Query(self.rl.readline(">> ".to_string()).await?),
+            InitialInfo::None => Action::Query(self.rl.readline(">> ".to_string())?),
         };
         let changed_action = true;
 
@@ -175,53 +172,50 @@ impl Cli {
 
         // Main loop
         while !data.stop {
-            if let Err(err) = self.one_loop(&mut data).await {
+            if let Err(err) = self.one_loop(&mut data) {
                 if let Some(err) = self.handle_err(err) {
                     return Err(err);
                 } else {
                     data.changed_action = true;
                     data.mode = Mode::Temp;
                     self.display.continue_despite_error();
-                    data.action = Action::Query(self.rl.readline(">> ".to_string()).await?);
+                    data.action = Action::Query(self.rl.readline(">> ".to_string())?);
                 };
             }
         }
         Ok(())
     }
 
-    async fn one_loop(&mut self, data: &mut LoopData) -> Result<(), Error> {
-        self.parse_action(data).await?;
+    fn one_loop(&mut self, data: &mut LoopData) -> Result<(), Error> {
+        self.parse_action(data)?;
         if data.stop {
             return Ok(());
         }
 
         match &mut data.mode {
             Mode::Videos(videos) => {
-                self.video_prompt(videos, &mut data.action, &mut data.changed_action)
-                    .await?
+                self.video_prompt(videos, &mut data.action, &mut data.changed_action)?
             }
             Mode::Channels(channels) => {
-                self.channel_prompt(channels, &mut data.action, &mut data.changed_action)
-                    .await?
+                self.channel_prompt(channels, &mut data.action, &mut data.changed_action)?
             }
             Mode::Comments(comments) => {
-                self.comments_prompt(comments, &mut data.action, &mut data.changed_action)
-                    .await?
+                self.comments_prompt(comments, &mut data.action, &mut data.changed_action)?
             }
             Mode::Temp => unreachable!(),
         };
         Ok(())
     }
 
-    async fn parse_action(&mut self, data: &mut LoopData) -> Result<(), Error> {
+    fn parse_action(&mut self, data: &mut LoopData) -> Result<(), Error> {
         if data.changed_action {
             match &data.action {
                 Action::Query(s) => {
-                    if self.parse_query(&mut data.mode, &s).await? {
+                    if self.parse_query(&mut data.mode, &s)? {
                         data.stop = true;
                         return Ok(());
                     }
-                    data.mode.ensure_init().await?;
+                    data.mode.ensure_init()?;
                 }
                 Action::Quit => {
                     data.stop = true;
@@ -229,13 +223,13 @@ impl Cli {
                 }
                 Action::Next => match &mut data.mode {
                     Mode::Videos(search) => {
-                        search.next().await?;
+                        search.next()?;
                     }
                     Mode::Channels(channels) => {
-                        channels.next().await?;
+                        channels.next()?;
                     }
                     Mode::Comments(comments) => {
-                        comments.next().await?;
+                        comments.next()?;
                     }
                     Mode::Temp => unreachable!(),
                 },
@@ -257,7 +251,7 @@ impl Cli {
         Ok(())
     }
 
-    async fn video_prompt(
+    fn video_prompt(
         &mut self,
         videos: &mut PreloadableList<Videos>,
         action: &mut Action,
@@ -271,12 +265,11 @@ impl Cli {
             videos.offset(),
             videos.current_len(),
         );
-
         videos
-            .loader_mut()
+            .loader()
             .preload_res(self.config.select_quality() || self.config.use_raw_url());
         let choice;
-        match self.rl.autoload_readline(">> ".to_string(), videos).await? {
+        match self.rl.autoload_readline(">> ".to_string(), videos)? {
             Action::Id(id) => choice = id,
             new_action => {
                 *action = new_action;
@@ -286,12 +279,12 @@ impl Cli {
         };
 
         let video = videos.current()[choice - 1].clone();
-        self.play_vid(&video).await?;
+        self.play_vid(&video)?;
         *changed_action = false;
         Ok(())
     }
 
-    async fn channel_prompt(
+    fn channel_prompt(
         &mut self,
         channels: &mut PreloadableList<Channels>,
         action: &mut Action,
@@ -305,11 +298,7 @@ impl Cli {
             channels.offset(),
             channels.current_len(),
         );
-        match self
-            .rl
-            .autoload_readline(">> ".to_string(), channels)
-            .await?
-        {
+        match self.rl.autoload_readline(">> ".to_string(), channels)? {
             Action::Id(id) => {
                 *action =
                     Action::Query(format!(":chandle {}", channels.current()[id - 1].handle()));
@@ -324,7 +313,7 @@ impl Cli {
         }
     }
 
-    async fn comments_prompt(
+    fn comments_prompt(
         &mut self,
         comments: &mut PreloadableList<Comments>,
         action: &mut Action,
@@ -337,11 +326,7 @@ impl Cli {
             comments.offset(),
             comments.current_len(),
         );
-        match self
-            .rl
-            .autoload_readline(">> ".to_string(), comments)
-            .await?
-        {
+        match self.rl.autoload_readline(">> ".to_string(), comments)? {
             Action::Id(id) => {
                 *action = Action::Query(format!(":browser {}", id));
                 *changed_action = true;
@@ -356,7 +341,7 @@ impl Cli {
     }
 
     /// Returns true if the action is to stop
-    async fn parse_query(&mut self, mode: &mut Mode, s: &str) -> Result<bool, Error> {
+    fn parse_query(&mut self, mode: &mut Mode, s: &str) -> Result<bool, Error> {
         if s == ":q" {
             return Ok(true);
         } else if s == ":trending" {
@@ -376,15 +361,15 @@ impl Cli {
             *mode = Mode::Videos(chandle_tmp);
             self.rl.add_history_entry(s);
         } else if let Some(id) = parser::info(s, mode.current_len()) {
-            self.info(&mode, id).await?;
+            self.info(&mode, id)?;
             self.rl.add_history_entry(s);
             return Ok(false);
         } else if let Some(id) = parser::browser(s, mode.current_len()) {
-            self.open_browser(mode, id).await?;
+            self.open_browser(mode, id)?;
             self.rl.add_history_entry(s);
             return Ok(false);
         } else if let Some(id) = parser::comments(s, mode.current_len()) {
-            self.comments(mode, id).await?;
+            self.comments(mode, id)?;
             self.rl.add_history_entry(s);
             return Ok(false);
         } else {
@@ -397,10 +382,10 @@ impl Cli {
         Ok(false)
     }
 
-    async fn comments(&mut self, mode: &mut Mode, id: usize) -> Result<(), Error> {
+    fn comments(&mut self, mode: &mut Mode, id: usize) -> Result<(), Error> {
         match mode {
             Mode::Videos(v) => {
-                self.display.video_info(&v.current()[id - 1]).await;
+                self.display.video_info(&v.current()[id - 1]);
                 let comments_tmp = PreloadableList::new(
                     Comments::new(self.instance.clone(), v.current()[id - 1].uuid()),
                     SEARCH_TOTAL,
@@ -414,37 +399,35 @@ impl Cli {
         Ok(())
     }
 
-    async fn info(&mut self, mode: &Mode, id: usize) -> Result<(), Error> {
+    fn info(&mut self, mode: &Mode, id: usize) -> Result<(), Error> {
         match mode {
-            Mode::Videos(v) => self.display.video_info(&v.current()[id - 1]).await,
-            Mode::Channels(c) => self.display.channel_info(&c.current()[id - 1]).await,
+            Mode::Videos(v) => self.display.video_info(&v.current()[id - 1]),
+            Mode::Channels(c) => self.display.channel_info(&c.current()[id - 1]),
             Mode::Comments(_) => self.display.warn(&"No additionnal info available"),
             Mode::Temp => panic!("Bad use of temp"),
         }
-        self.rl
-            .std_in("Press enter to continue".to_string())
-            .await?;
+        self.rl.std_in("Press enter to continue".to_string())?;
         Ok(())
     }
 
-    async fn open_browser(&mut self, mode: &Mode, id: usize) -> Result<(), Error> {
+    fn open_browser(&mut self, mode: &Mode, id: usize) -> Result<(), Error> {
         match &mode {
             Mode::Videos(v) => {
-                self.display.video_info(&v.current()[id - 1]).await;
+                self.display.video_info(&v.current()[id - 1]);
                 Command::new(self.config.browser())
                     .arg(&v.current()[id - 1].watch_url())
                     .spawn()
                     .map_err(Error::BrowserLaunch)?
-                    .await
+                    .wait()
                     .map_err(Error::BrowserLaunch)?;
             }
             Mode::Channels(c) => {
-                self.display.channel_info(&c.current()[id - 1]).await;
+                self.display.channel_info(&c.current()[id - 1]);
                 Command::new(self.config.browser())
                     .arg(self.instance.channel_url(&c.current()[id - 1]))
                     .spawn()
                     .map_err(Error::BrowserLaunch)?
-                    .await
+                    .wait()
                     .map_err(Error::BrowserLaunch)?;
             }
             Mode::Comments(c) => {
@@ -452,7 +435,7 @@ impl Cli {
                     .arg(&c.current()[id - 1].url())
                     .spawn()
                     .map_err(Error::BrowserLaunch)?
-                    .await
+                    .wait()
                     .map_err(Error::BrowserLaunch)?;
             }
             Mode::Temp => panic!("Bad use of temp"),
@@ -461,26 +444,23 @@ impl Cli {
         Ok(())
     }
 
-    async fn play_vid(&mut self, video: &peertube_api::Video) -> Result<(), Error> {
+    fn play_vid(&mut self, video: &peertube_api::Video) -> Result<(), Error> {
         // Resolution selection
-        self.display.video_info(&video).await;
+        self.display.video_info(&video);
         if self.config.is_blocked(video.host()).is_some() {
             self.display.err(&"This video is from a blocked instance.");
-            let confirm = self
-                .rl
-                .readline("Play it anyway ? [y/N]: ".to_string())
-                .await?;
+            let confirm = self.rl.readline("Play it anyway ? [y/N]: ".to_string())?;
             if confirm != "y" && confirm != "Y" {
                 return Ok(());
             }
         }
         let video_url = if self.config.select_quality() {
-            let resolutions = video.resolutions().await?;
+            let resolutions = video.resolutions()?;
             let nb_resolutions = resolutions.len();
             self.display.resolutions(resolutions);
             let choice;
             loop {
-                match self.rl.readline(">> ".to_string()).await?.parse::<usize>() {
+                match self.rl.readline(">> ".to_string())?.parse::<usize>() {
                     Ok(id) if id <= nb_resolutions && id > 0 => {
                         choice = id;
                         break;
@@ -498,16 +478,16 @@ impl Cli {
                 }
             }
             if self.config.use_torrent() {
-                video.torrent_url(choice - 1).await
+                video.torrent_url(choice - 1)
             } else {
-                video.resolution_url(choice - 1).await
+                video.resolution_url(choice - 1)
             }
         } else if self.config.use_torrent() {
-            video.load_resolutions().await?;
-            video.torrent_url(0).await
+            video.load_resolutions()?;
+            video.torrent_url(0)
         } else if self.config.use_raw_url() {
-            video.load_resolutions().await?;
-            video.resolution_url(0).await
+            video.load_resolutions()?;
+            video.resolution_url(0)
         } else {
             video.watch_url()
         };
@@ -518,7 +498,7 @@ impl Cli {
             .arg(video_url)
             .spawn()
             .map_err(Error::VideoLaunch)?
-            .await
+            .wait()
             .map_err(Error::VideoLaunch)?;
         Ok(())
     }
@@ -526,33 +506,31 @@ impl Cli {
     /// Returns None if the error was dealt with
     fn handle_err(&mut self, err: Error) -> Option<Error> {
         match &err {
-            Error::Api(ApiError::Reqwest(req_err)) => {
-                if let Some(code) = req_err.status() {
-                    if code.as_u16() >= 400 && code.as_u16() < 500 {
-                        self.display.err(&format!(
+            Error::Api(ApiError::Ureq(req_err)) => {
+                let code = req_err.status();
+                if code >= 400 && code < 500 {
+                    self.display.err(&format!(
                             "\
                             Error encountered while connecting to the desired instance: {}\n\
                             This is likely because the server you are trying to connect isn't a PeerTube instance.\
                         ",
                             code
                         ));
-                        self.display.report_error(err, &*self.instance.host());
-                        return None;
-                    } else if code.as_u16() >= 500 {
-                        self.display.err(&format!(
+                    self.display.report_error(err, &*self.instance.host());
+                    return None;
+                } else if code >= 500 {
+                    self.display.err(&format!(
                             "\
                             The server you are trying to connect failed to process the request: {}\n\
                             This likely isn't a bug from peertube-viewer-rs.
                         ",
                             code
                         ));
-                        self.display.report_error(err, &*self.instance.host());
-                        return None;
-                    }
+                    self.display.report_error(err, &*self.instance.host());
+                    return None;
                 } else {
                     return Some(err);
                 }
-                None
             }
             Error::Api(ApiError::Serde(_)) => {
                 self.display.err(&"\
@@ -585,24 +563,7 @@ impl Cli {
     }
 
     pub fn run(&mut self) {
-        let mut basic_rt = match runtime::Builder::new()
-            .enable_all()
-            .basic_scheduler()
-            .build()
-        {
-            Ok(rt) => rt,
-            Err(e) => {
-                self.display.err(&Error::RuntimeInit(e));
-                return;
-            }
-        };
-
-        basic_rt
-            .block_on(async {
-                let local = LocalSet::new();
-                local.run_until(self.main_loop()).await
-            })
-            .unwrap_or_else(|e| self.top_level_err(e));
+        self.main_loop().unwrap_or_else(|e| self.top_level_err(e));
     }
 }
 
@@ -630,11 +591,11 @@ impl Mode {
         }
     }
 
-    pub async fn ensure_init(&mut self) -> Result<(), Error> {
+    pub fn ensure_init(&mut self) -> Result<(), Error> {
         match self {
-            Mode::Videos(v) => Ok(v.ensure_init().await?),
-            Mode::Channels(c) => Ok(c.ensure_init().await?),
-            Mode::Comments(c) => Ok(c.ensure_init().await?),
+            Mode::Videos(v) => Ok(v.ensure_init()?),
+            Mode::Channels(c) => Ok(c.ensure_init()?),
+            Mode::Comments(c) => Ok(c.ensure_init()?),
             Mode::Temp => panic!("Bad use of temp"),
         }
     }

@@ -5,116 +5,94 @@ pub use helper::Message;
 
 use crate::error;
 
-use std::pin::Pin;
+use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
-use tokio::sync::mpsc::UnboundedReceiver;
+use std::thread::spawn;
 
 use std::io::{self, Write};
 use std::path::PathBuf;
-use tokio::task::{spawn_blocking, JoinHandle};
 
 use rustyline::config::{Builder, EditMode};
 
 use preloadable_list::{AsyncLoader, PreloadableList};
 
-use futures::{
-    future::{Fuse, FutureExt}, // for `.fuse()`
-    pin_mut,
-    select,
-};
-
 pub struct HelpedHandle<'editor> {
-    rx: &'editor mut UnboundedReceiver<Message>,
-    editor_handle: Fuse<JoinHandle<rustyline::Result<String>>>,
+    rx: &'editor mut Receiver<Message>,
 }
 
 impl<'editor> HelpedHandle<'editor> {
-    pub async fn next(&mut self) -> Message {
-        let recv_fut = self.rx.recv().fuse();
-        let mut ed = Pin::new(&mut self.editor_handle);
-        pin_mut!(recv_fut);
-        select! {
-            msg = recv_fut => msg.unwrap(),
-            res = ed => Message::Over(res.expect("Readline thread panicked")),
-        }
+    pub fn next(&mut self) -> Message {
+        self.rx.recv().unwrap()
     }
 }
 
 pub struct Editor {
-    rx: UnboundedReceiver<Message>,
+    rx: Receiver<Message>,
+    tx: Sender<Message>,
     rl: Arc<Mutex<rustyline::Editor<Helper>>>,
 }
 
 impl Editor {
     pub fn new(edit_mode: EditMode) -> Editor {
-        let (rx, h) = Helper::new();
+        let (rx, tx, h) = Helper::new();
         let mut rl = rustyline::Editor::with_config(Builder::new().edit_mode(edit_mode).build());
         rl.set_helper(Some(h));
         Editor {
             rx,
+            tx,
             rl: Arc::new(Mutex::new(rl)),
         }
     }
 
-    pub async fn readline(&mut self, prompt: String) -> rustyline::Result<String> {
-        let rl_cloned = self.rl.clone();
-        spawn_blocking(move || {
-            let mut ed = rl_cloned.lock().unwrap();
-            loop {
-                match ed.readline(&prompt) {
-                    Ok(l) if l != "" => return Ok(l),
-                    Ok(_) => continue,
-                    e @ Err(_) => return e,
-                }
+    pub fn readline(&mut self, prompt: String) -> rustyline::Result<String> {
+        let mut guard = self.rl.lock().unwrap();
+        loop {
+            match guard.readline(&prompt) {
+                Ok(l) if l != "" => return Ok(l),
+                Ok(_) => continue,
+                e @ Err(_) => return e,
             }
-        })
-        .await
-        .expect("readline thread panicked")
+        }
     }
 
-    pub async fn std_in(&mut self, prompt: String) -> Result<String, error::Error> {
-        spawn_blocking(move || {
-            print!("{}", prompt);
-            io::stdout().flush().expect("Unable to print to stdout");
-            let mut res = String::new();
-            io::stdin()
-                .read_line(&mut res)
-                .map(|_| res)
-                .map_err(error::Error::Stdin)
-        })
-        .await
-        .expect("readline thread panicked")
+    pub fn std_in(&mut self, prompt: String) -> Result<String, error::Error> {
+        print!("{}", prompt);
+        io::stdout().flush().expect("Unable to print to stdout");
+        let mut res = String::new();
+        io::stdin()
+            .read_line(&mut res)
+            .map(|_| res)
+            .map_err(error::Error::Stdin)
     }
 
     pub fn helped_readline(&mut self, prompt: String, limit: Option<usize>) -> HelpedHandle<'_> {
         let rl_cloned = self.rl.clone();
-        HelpedHandle {
-            rx: &mut self.rx,
-            editor_handle: spawn_blocking(move || {
-                let mut ed = rl_cloned.lock().unwrap();
-                if let Some(h) = ed.helper_mut() {
-                    h.set_limit(limit)
-                };
-                loop {
-                    match ed.readline(&prompt) {
-                        Ok(l) if l != "" => return Ok(l),
-                        Ok(_) => continue,
-                        e @ Err(_) => return e,
-                    }
+        let tx_cloned = self.tx.clone();
+        spawn(move || {
+            let mut ed = rl_cloned.lock().unwrap();
+            if let Some(h) = ed.helper_mut() {
+                h.set_limit(limit)
+            };
+            loop {
+                match ed.readline(&prompt) {
+                    Ok(l) if l != "" => tx_cloned.send(Message::Over(Ok(l))).unwrap(),
+                    Ok(_) => continue,
+                    e @ Err(_) => tx_cloned.send(Message::Over(e)).unwrap(),
                 }
-            })
-            .fuse(),
-        }
+                break;
+            }
+        });
+        HelpedHandle { rx: &mut self.rx }
     }
 
-    pub async fn autoload_readline<Loader: AsyncLoader>(
+    pub fn autoload_readline<Loader: AsyncLoader>(
         &mut self,
         prompt: String,
         list: &mut PreloadableList<Loader>,
     ) -> rustyline::Result<Action> {
         let mut handle = self.helped_readline(prompt, Some(list.current().len()));
         loop {
-            match handle.next().await {
+            match handle.next() {
                 Message::Over(res) => {
                     let s = res?;
                     if s == ":n" {
