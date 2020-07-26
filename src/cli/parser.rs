@@ -9,11 +9,78 @@ pub const COMMANDS: [&str; 7] = [
     ":trending",
 ];
 
+pub enum ParsedQuery<'input> {
+    Channels(&'input str),
+    Chandle(&'input str),
+    Info(usize),
+    Comments(usize),
+    Browser(usize),
+    Query(&'input str),
+    Quit,
+    Trending,
+}
+
+pub enum ParseError {
+    UnexpectedArgs,
+    UnknownCommand,
+    MissingArgs,
+    IncompleteCommand(Vec<&'static str>),
+}
+
 pub fn channels(input: &str) -> Option<&str> {
     if input.starts_with(":channels ") {
         Some(clean_spaces(&input[10..])).flatten()
     } else {
         None
+    }
+}
+
+pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
+    if !input.starts_with(":") {
+        return Ok(ParsedQuery::Query(input));
+    }
+
+    if input.starts_with(":chandle ") {
+        Ok(ParsedQuery::Chandle(
+            clean_spaces(&input[9..]).ok_or(ParseError::MissingArgs)?,
+        ))
+    } else if input.starts_with(":channels ") {
+        Ok(ParsedQuery::Channels(
+            clean_spaces(&input[10..]).ok_or(ParseError::MissingArgs)?,
+        ))
+    } else if input.starts_with(":comments ") {
+        Ok(ParsedQuery::Channels(
+            clean_spaces(&input[9..]).ok_or(ParseError::MissingArgs)?,
+        ))
+    } else if input.starts_with(":browser ") {
+        Ok(ParsedQuery::Channels(
+            clean_spaces(&input[8..]).ok_or(ParseError::MissingArgs)?,
+        ))
+    } else if input.starts_with(":info ") {
+        Ok(ParsedQuery::Channels(
+            clean_spaces(&input[6..]).ok_or(ParseError::MissingArgs)?,
+        ))
+    } else if input == ":trending" {
+        Ok(ParsedQuery::Trending)
+    } else if input.starts_with(":trending ") {
+        Err(ParseError::UnexpectedArgs)
+    } else if input == ":q" || input == ":quit" {
+        Ok(ParsedQuery::Quit)
+    } else if input.starts_with(":q ") || input.starts_with(":quit ") {
+        Err(ParseError::UnexpectedArgs)
+    } else {
+        let starts = COMMANDS.iter().fold(Vec::new(), |mut acc, cmd| {
+            if cmd.starts_with(input) {
+                acc.push(*cmd);
+            }
+            acc
+        });
+
+        if !starts.is_empty() {
+            Err(ParseError::IncompleteCommand(starts))
+        } else {
+            Err(ParseError::UnknownCommand)
+        }
     }
 }
 
