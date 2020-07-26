@@ -1,4 +1,4 @@
-use crate::cli::parser::{info, COMMANDS};
+use crate::cli::parser::{info, parse, ParseError, ParsedQuery};
 
 use termion::{color, style};
 
@@ -86,39 +86,95 @@ impl Completer for Helper {
     type Candidate = String;
 }
 
+fn green_then_bold(line: &str) -> Cow<'_, str> {
+    if let Some(idx) = line.find(' ') {
+        return Cow::Owned(format!(
+            "{}{}{}{}{}{}{}",
+            style::Bold,
+            color::Fg(color::Green),
+            &line[..idx],
+            style::Reset,
+            style::Bold,
+            &line[idx..],
+            style::Reset,
+        ));
+    } else {
+        return Cow::Owned(format!(
+            "{}{}{}{}",
+            style::Bold,
+            color::Fg(color::Green),
+            line,
+            style::Reset,
+        ));
+    }
+}
+
+fn green_then_red(line: &str) -> Cow<'_, str> {
+    if let Some(idx) = line.find(' ') {
+        return Cow::Owned(format!(
+            "{}{}{}{}{}{}",
+            style::Bold,
+            color::Fg(color::Green),
+            &line[..idx],
+            color::Fg(color::Red),
+            &line[idx..],
+            style::Reset,
+        ));
+    } else {
+        return Cow::Owned(format!(
+            "{}{}{}{}",
+            style::Bold,
+            color::Fg(color::Green),
+            line,
+            style::Reset,
+        ));
+    }
+}
+
+fn yellow(line: &str) -> Cow<'_, str> {
+    return Cow::Owned(format!(
+        "{}{}{}{}",
+        style::Bold,
+        color::Fg(color::Yellow),
+        line,
+        style::Reset,
+    ));
+}
+
+fn red(line: &str) -> Cow<'_, str> {
+    return Cow::Owned(format!(
+        "{}{}{}{}",
+        style::Bold,
+        color::Fg(color::Red),
+        line,
+        style::Reset,
+    ));
+}
+
+fn bold(line: &str) -> Cow<'_, str> {
+    return Cow::Owned(format!("{}{}{}", style::Bold, line, style::Reset,));
+}
+
 impl Highlighter for Helper {
     fn highlight_prompt<'b, 's: 'b, 'p: 'b>(&'s self, prompt: &'p str, _: bool) -> Cow<'b, str> {
         Cow::Owned(format!("{}{}{}", style::Bold, prompt, style::Reset))
     }
 
     fn highlight<'l>(&self, line: &'l str, _: usize) -> Cow<'l, str> {
-        if !line.is_empty() && line.starts_with(":") {
-            if let Some(idx) = line.find(' ') {
-                if let Ok(_) = COMMANDS.binary_search(&&line[..idx]) {
-                    return Cow::Owned(format!(
-                        "{}{}{}{}{}{}{}",
-                        style::Bold,
-                        color::Fg(color::Green),
-                        &line[..idx],
-                        style::Reset,
-                        style::Bold,
-                        &line[idx..],
-                        style::Reset,
-                    ));
-                }
-            } else {
-                if let Ok(_) = COMMANDS.binary_search(&line) {
-                    return Cow::Owned(format!(
-                        "{}{}{}{}",
-                        style::Bold,
-                        color::Fg(color::Green),
-                        line,
-                        style::Reset,
-                    ));
-                }
-            }
+        match parse(line) {
+            Ok(ParsedQuery::Channels(_)) => green_then_bold(line),
+            Ok(ParsedQuery::Chandle(_)) => green_then_bold(line),
+            Ok(ParsedQuery::Info(_)) => green_then_bold(line),
+            Ok(ParsedQuery::Comments(_)) => green_then_bold(line),
+            Ok(ParsedQuery::Browser(_)) => green_then_bold(line),
+            Ok(ParsedQuery::Query(_)) => bold(line),
+            Ok(ParsedQuery::Quit) => green_then_bold(line),
+            Ok(ParsedQuery::Trending) => green_then_bold(line),
+            Err(ParseError::UnexpectedArgs) | Err(ParseError::BadArgType) => green_then_red(line),
+            Err(ParseError::UnknownCommand) => red(line),
+            Err(ParseError::MissingArgs) => yellow(line),
+            Err(ParseError::IncompleteCommand(_)) => yellow(line),
         }
-        Cow::Owned(format!("{}{}{}", style::Bold, line, style::Reset))
     }
 
     fn highlight_char(&self, _: &str, _: usize) -> bool {

@@ -24,6 +24,7 @@ pub enum ParseError {
     UnexpectedArgs,
     UnknownCommand,
     MissingArgs,
+    BadArgType,
     IncompleteCommand(Vec<&'static str>),
 }
 
@@ -49,16 +50,25 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
             clean_spaces(&input[10..]).ok_or(ParseError::MissingArgs)?,
         ))
     } else if input.starts_with(":comments ") {
-        Ok(ParsedQuery::Channels(
-            clean_spaces(&input[9..]).ok_or(ParseError::MissingArgs)?,
+        Ok(ParsedQuery::Comments(
+            clean_spaces(&input[9..])
+                .ok_or(ParseError::MissingArgs)?
+                .parse()
+                .map_err(|_| ParseError::BadArgType)?,
         ))
     } else if input.starts_with(":browser ") {
-        Ok(ParsedQuery::Channels(
-            clean_spaces(&input[8..]).ok_or(ParseError::MissingArgs)?,
+        Ok(ParsedQuery::Browser(
+            clean_spaces(&input[8..])
+                .ok_or(ParseError::MissingArgs)?
+                .parse()
+                .map_err(|_| ParseError::BadArgType)?,
         ))
     } else if input.starts_with(":info ") {
-        Ok(ParsedQuery::Channels(
-            clean_spaces(&input[6..]).ok_or(ParseError::MissingArgs)?,
+        Ok(ParsedQuery::Info(
+            clean_spaces(&input[6..])
+                .ok_or(ParseError::MissingArgs)?
+                .parse()
+                .map_err(|_| ParseError::BadArgType)?,
         ))
     } else if input == ":trending" {
         Ok(ParsedQuery::Trending)
