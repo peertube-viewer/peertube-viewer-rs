@@ -1,7 +1,6 @@
 use chrono::{DateTime, FixedOffset};
-use tokio::sync::Mutex;
-
-use std::rc::Rc;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 use crate::common::Channel;
 use crate::error;
@@ -116,7 +115,7 @@ impl Description {
 
 /// Handle to a video
 pub struct Video {
-    instance: Rc<Instance>,
+    instance: Arc<Instance>,
     name: String,
     uuid: String,
     duration: u64,
@@ -180,7 +179,7 @@ impl Video {
 }
 
 impl Video {
-    pub fn from_search(i: &Rc<Instance>, v: search::Video) -> Video {
+    pub fn from_search(i: &Arc<Instance>, v: search::Video) -> Video {
         Video {
             instance: i.clone(),
             name: v.name,
@@ -198,7 +197,7 @@ impl Video {
             account: v.account.into(),
         }
     }
-    pub fn from_full(i: &Rc<Instance>, mut v: video::Video) -> Video {
+    pub fn from_full(i: &Arc<Instance>, mut v: video::Video) -> Video {
         Video {
             instance: i.clone(),
             name: v.name,
@@ -229,10 +228,10 @@ impl Video {
     /// Get the full description
     /// During the lifetime of the struct, the description will be fetched only once and the result
     /// is stored and re-used
-    pub async fn description(&self) -> error::Result<Option<String>> {
-        let mut guard = self.description.lock().await;
+    pub fn description(&self) -> error::Result<Option<String>> {
+        let mut guard = self.description.lock().unwrap();
         if guard.is_none() {
-            *guard = match self.fetch_description().await? {
+            *guard = match self.fetch_description()? {
                 Some(s) => Description::Fetched(s),
                 None => Description::FetchedNone,
             };
@@ -240,18 +239,18 @@ impl Video {
         Ok(guard.to_option())
     }
 
-    async fn fetch_description(&self) -> error::Result<Option<String>> {
-        self.instance.video_description(&self.uuid).await
+    fn fetch_description(&self) -> error::Result<Option<String>> {
+        self.instance.video_description(&self.uuid)
     }
 
     /// Fetch the description but don't return it to avoid an unnecessary copy
     /// The result is store withing the struct
     ///
     /// Used to asynchronously load the description for later use
-    pub async fn load_description(&self) -> error::Result<()> {
-        let mut guard = self.description.lock().await;
+    pub fn load_description(&self) -> error::Result<()> {
+        let mut guard = self.description.lock().unwrap();
         if guard.is_none() {
-            *guard = match self.fetch_description().await? {
+            *guard = match self.fetch_description()? {
                 Some(s) => Description::Fetched(s),
                 None => Description::FetchedNone,
             };
@@ -263,19 +262,18 @@ impl Video {
     /// The result is store withing the struct
     ///
     /// Used to asynchronously load the resolutions for later use
-    pub async fn load_resolutions(&self) -> error::Result<()> {
-        let mut guard = self.files.lock().await;
+    pub fn load_resolutions(&self) -> error::Result<()> {
+        let mut guard = self.files.lock().unwrap();
         if guard.is_none() {
-            *guard = Some(self.fetch_files().await?);
+            *guard = Some(self.fetch_files()?);
         }
         Ok(())
     }
 
-    async fn fetch_files(&self) -> error::Result<Vec<File>> {
+    fn fetch_files(&self) -> error::Result<Vec<File>> {
         Ok(self
             .instance
-            .video_complete(&self.uuid)
-            .await?
+            .video_complete(&self.uuid)?
             .drain(..)
             .map(|v| v.into())
             .collect())
@@ -284,10 +282,10 @@ impl Video {
     /// Get the available resolutions
     /// During the lifetime of the struct, the resolutions will be fetched only once and the result
     /// is stored and re-used
-    pub async fn resolutions(&self) -> error::Result<Vec<Resolution>> {
-        let mut guard = self.files.lock().await;
+    pub fn resolutions(&self) -> error::Result<Vec<Resolution>> {
+        let mut guard = self.files.lock().unwrap();
         if guard.is_none() {
-            *guard = Some(self.fetch_files().await?);
+            *guard = Some(self.fetch_files()?);
         }
 
         let resolutions = guard
@@ -301,8 +299,8 @@ impl Video {
     }
 
     /// Get a url for a given resolution
-    pub async fn resolution_url(&self, id: usize) -> String {
-        let guard = self.files.lock().await;
+    pub fn resolution_url(&self, id: usize) -> String {
+        let guard = self.files.lock().unwrap();
         if let Some(res) = guard.as_ref() {
             res[id].download_url.clone()
         } else {
@@ -311,8 +309,8 @@ impl Video {
     }
 
     /// Get a torrent url for a given resolution
-    pub async fn torrent_url(&self, id: usize) -> String {
-        let guard = self.files.lock().await;
+    pub fn torrent_url(&self, id: usize) -> String {
+        let guard = self.files.lock().unwrap();
         if let Some(res) = guard.as_ref() {
             res[id].torrent_download_url.clone()
         } else {
