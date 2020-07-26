@@ -1,6 +1,6 @@
 use tokio::task::{spawn_local, JoinHandle};
 
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::error::{self, Error};
 use crate::Instance;
@@ -9,10 +9,10 @@ use crate::Video;
 
 type Loading = JoinHandle<Result<(Vec<Video>, Option<usize>), Error>>;
 pub struct TrendingList {
-    instance: Rc<Instance>,
+    instance: Arc<Instance>,
 
     preload_res: bool,
-    loaded: Vec<Vec<Rc<Video>>>,
+    loaded: Vec<Vec<Arc<Video>>>,
     loading: Option<Loading>,
     current: usize,
     step: usize,
@@ -20,7 +20,7 @@ pub struct TrendingList {
 }
 
 impl TrendingList {
-    pub fn new(instance: Rc<Instance>, step: usize) -> TrendingList {
+    pub fn new(instance: Arc<Instance>, step: usize) -> TrendingList {
         TrendingList {
             instance,
             loaded: Vec::new(),
@@ -34,7 +34,7 @@ impl TrendingList {
 }
 
 impl TrendingList {
-    pub async fn next_videos(&mut self) -> error::Result<&Vec<Rc<Video>>> {
+    pub async fn next_videos(&mut self) -> error::Result<&Vec<Arc<Video>>> {
         if !self.loaded.is_empty() {
             self.current += 1;
         }
@@ -49,7 +49,7 @@ impl TrendingList {
                     .await?;
             }
             let (videos, new_total) = temp;
-            self.loaded.push(videos.into_iter().map(Rc::new).collect());
+            self.loaded.push(videos.into_iter().map(Arc::new).collect());
             self.total = new_total.or(self.total);
         }
         Ok(&self.loaded[self.current])
@@ -59,14 +59,14 @@ impl TrendingList {
         self.preload_res = should;
     }
 
-    pub fn prev(&mut self) -> &Vec<Rc<Video>> {
+    pub fn prev(&mut self) -> &Vec<Arc<Video>> {
         self.current -= 1;
         &self.loaded[self.current]
     }
 }
 
 impl PreloadableList for TrendingList {
-    type Current = Vec<Rc<Video>>;
+    type Current = Vec<Arc<Video>>;
 
     fn preload_next(&mut self) {
         if self.loaded.len() <= self.current + 1 && self.loading.is_none() {
@@ -91,7 +91,7 @@ impl PreloadableList for TrendingList {
         }
     }
 
-    fn current(&self) -> &Vec<Rc<Video>> {
+    fn current(&self) -> &Vec<Arc<Video>> {
         &self.loaded[self.current]
     }
 
