@@ -170,6 +170,8 @@ impl Highlighter for Helper {
             Ok(ParsedQuery::Query(_)) => bold(line),
             Ok(ParsedQuery::Quit) => green_then_bold(line),
             Ok(ParsedQuery::Trending) => green_then_bold(line),
+            Ok(ParsedQuery::Previous) => green_then_bold(line),
+            Ok(ParsedQuery::Next) => green_then_bold(line),
             Err(ParseError::UnexpectedArgs) | Err(ParseError::BadArgType) => green_then_red(line),
             Err(ParseError::UnknownCommand) => red(line),
             Err(ParseError::MissingArgs) => yellow(line),

@@ -1,10 +1,15 @@
-pub const COMMANDS: [&str; 7] = [
+pub const COMMANDS: [&str; 12] = [
     //Sorted list of available commands
     ":browser",
     ":chandle",
     ":channels",
     ":comments",
     ":info",
+    ":n",
+    ":next",
+    ":p",
+    ":previous",
+    ":q",
     ":quit",
     ":trending",
 ];
@@ -17,6 +22,8 @@ pub enum ParsedQuery<'input> {
     Browser(usize),
     Query(&'input str),
     Quit,
+    Next,
+    Previous,
     Trending,
 }
 
@@ -76,6 +83,10 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
         Err(ParseError::UnexpectedArgs)
     } else if input == ":q" || input == ":quit" {
         Ok(ParsedQuery::Quit)
+    } else if input == ":p" || input == ":previous" {
+        Ok(ParsedQuery::Previous)
+    } else if input == ":n" || input == ":next" {
+        Ok(ParsedQuery::Next)
     } else if input.starts_with(":q ") || input.starts_with(":quit ") {
         Err(ParseError::UnexpectedArgs)
     } else {
