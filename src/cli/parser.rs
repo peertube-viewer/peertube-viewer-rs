@@ -14,6 +14,17 @@ pub const COMMANDS: [&str; 12] = [
     ":trending",
 ];
 
+const NO_ARGS_CMDS_WITH_SPACE: [&str; 7] = [
+    ":n ",
+    ":next ",
+    ":p ",
+    ":previous ",
+    ":q ",
+    ":quit ",
+    ":trending ",
+];
+
+#[derive(Debug)]
 pub enum ParsedQuery<'input> {
     Channels(&'input str),
     Chandle(&'input str),
@@ -27,6 +38,7 @@ pub enum ParsedQuery<'input> {
     Trending,
 }
 
+#[derive(Debug)]
 pub enum ParseError {
     UnexpectedArgs,
     UnknownCommand,
@@ -36,8 +48,8 @@ pub enum ParseError {
 }
 
 pub fn channels(input: &str) -> Option<&str> {
-    if input.starts_with(":channels ") {
-        Some(clean_spaces(&input[10..])).flatten()
+    if input.starts_with(":channels") {
+        Some(clean_spaces(&input[9..])).flatten()
     } else {
         None
     }
@@ -48,48 +60,67 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
         return Ok(ParsedQuery::Query(input));
     }
 
-    if input.starts_with(":chandle ") {
+    if input.starts_with(":chandle ") || input == ":chandle" {
         Ok(ParsedQuery::Chandle(
-            clean_spaces(&input[9..]).ok_or(ParseError::MissingArgs)?,
+            input
+                .get(8..)
+                .map(clean_spaces)
+                .flatten()
+                .ok_or(ParseError::MissingArgs)?,
         ))
-    } else if input.starts_with(":channels ") {
+    } else if input.starts_with(":channels ") || input == ":channels" {
         Ok(ParsedQuery::Channels(
-            clean_spaces(&input[10..]).ok_or(ParseError::MissingArgs)?,
+            input
+                .get(9..)
+                .map(clean_spaces)
+                .flatten()
+                .ok_or(ParseError::MissingArgs)?,
         ))
-    } else if input.starts_with(":comments ") {
+    } else if input.starts_with(":comments ") || input == ":comments" {
         Ok(ParsedQuery::Comments(
-            clean_spaces(&input[9..])
+            input
+                .get(8..)
+                .map(clean_spaces)
+                .flatten()
                 .ok_or(ParseError::MissingArgs)?
                 .parse()
                 .map_err(|_| ParseError::BadArgType)?,
         ))
-    } else if input.starts_with(":browser ") {
+    } else if input.starts_with(":browser ") || input == ":browser" {
         Ok(ParsedQuery::Browser(
-            clean_spaces(&input[8..])
+            input
+                .get(8..)
+                .map(clean_spaces)
+                .flatten()
                 .ok_or(ParseError::MissingArgs)?
                 .parse()
                 .map_err(|_| ParseError::BadArgType)?,
         ))
-    } else if input.starts_with(":info ") {
+    } else if input.starts_with(":info ") || input == ":info" {
         Ok(ParsedQuery::Info(
-            clean_spaces(&input[6..])
+            input
+                .get(5..)
+                .map(clean_spaces)
+                .flatten()
                 .ok_or(ParseError::MissingArgs)?
                 .parse()
                 .map_err(|_| ParseError::BadArgType)?,
         ))
     } else if input == ":trending" {
         Ok(ParsedQuery::Trending)
-    } else if input.starts_with(":trending ") {
-        Err(ParseError::UnexpectedArgs)
     } else if input == ":q" || input == ":quit" {
         Ok(ParsedQuery::Quit)
     } else if input == ":p" || input == ":previous" {
         Ok(ParsedQuery::Previous)
     } else if input == ":n" || input == ":next" {
         Ok(ParsedQuery::Next)
-    } else if input.starts_with(":q ") || input.starts_with(":quit ") {
-        Err(ParseError::UnexpectedArgs)
     } else {
+        for cmd in &NO_ARGS_CMDS_WITH_SPACE {
+            if input.starts_with(cmd) {
+                return Err(ParseError::UnexpectedArgs);
+            }
+        }
+
         let starts = COMMANDS.iter().fold(Vec::new(), |mut acc, cmd| {
             if cmd.starts_with(input) {
                 acc.push(*cmd);

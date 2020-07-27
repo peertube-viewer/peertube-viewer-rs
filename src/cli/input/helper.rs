@@ -177,6 +177,16 @@ fn yellow(line: &str) -> Cow<'_, str> {
     ))
 }
 
+fn cyan(line: &str) -> Cow<'_, str> {
+    Cow::Owned(format!(
+        "{}{}{}{}",
+        style::Bold,
+        color::Fg(color::Cyan),
+        line,
+        style::Reset,
+    ))
+}
+
 fn red(line: &str) -> Cow<'_, str> {
     Cow::Owned(format!(
         "{}{}{}{}",
@@ -210,7 +220,7 @@ impl Highlighter for Helper {
             Ok(ParsedQuery::Next) => green_then_bold(line),
             Err(ParseError::UnexpectedArgs) | Err(ParseError::BadArgType) => green_then_red(line),
             Err(ParseError::UnknownCommand) => red(line),
-            Err(ParseError::MissingArgs) => yellow(line),
+            Err(ParseError::MissingArgs) => cyan(line),
             Err(ParseError::IncompleteCommand(_)) => yellow(line),
         }
     }
