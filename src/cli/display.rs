@@ -33,9 +33,19 @@ pub struct Display {
 }
 
 #[derive(Debug)]
-enum MaybeColor<T: color::Color> {
+pub enum MaybeColor<T: color::Color> {
     No,
     Fg(color::Fg<T>),
+}
+
+/// Abstract removing colors
+/// This should always be used instead of termions colors for displaying output
+pub fn fg_color<C: color::Color>(c: C, use_color: bool) -> MaybeColor<C> {
+    if use_color {
+        MaybeColor::Fg(color::Fg(c))
+    } else {
+        MaybeColor::No
+    }
 }
 
 impl<T: color::Color> fmt::Display for MaybeColor<T> {
@@ -62,16 +72,6 @@ impl Display {
             seen_video_layout,
             channel_layout: default_channel_layouts(),
             comment_layout: default_comment_layouts(),
-        }
-    }
-
-    /// Abstract removing colors
-    /// This should always be used instead of termions colors for displaying output
-    fn fg_color<C: color::Color>(&self, c: C) -> MaybeColor<C> {
-        if self.colors {
-            MaybeColor::Fg(color::Fg(c))
-        } else {
-            MaybeColor::No
         }
     }
 
@@ -178,9 +178,9 @@ impl Display {
             if let Some(reason) = blocklist.is_blocked(&contents[id]) {
                 buffer.push_str(&format!(
                     "{}{}{}\n",
-                    self.fg_color(color::Red),
+                    fg_color(color::Red, self.colors),
                     reason,
-                    self.fg_color(color::Reset)
+                    fg_color(color::Reset, self.colors)
                 ));
                 continue;
             }
@@ -268,22 +268,22 @@ impl Display {
     pub fn err<T: fmt::Display>(&self, err: &T) {
         println!(
             "{}{}{}{}{}",
-            self.fg_color(color::Red),
+            fg_color(color::Red, self.colors),
             style::Bold,
             err,
             style::Reset,
-            self.fg_color(color::Reset)
+            fg_color(color::Reset, self.colors)
         );
     }
 
     pub fn warn<T: fmt::Display>(&self, warn: &T) {
         println!(
             "{}{}{}{}{}",
-            self.fg_color(color::Yellow),
+            fg_color(color::Yellow, self.colors),
             style::Bold,
             warn,
             style::Reset,
-            self.fg_color(color::Reset)
+            fg_color(color::Reset, self.colors)
         );
     }
 
@@ -337,7 +337,7 @@ impl Display {
         println!("host     : {}", video.host());
         println!("url      : {}", video.watch_url());
         if video.nsfw() {
-            println!("{}nsfw{}", self.fg_color(color::Red), style::Reset,);
+            println!("{}nsfw{}", fg_color(color::Red, self.colors), style::Reset,);
         }
         self.line('=');
     }

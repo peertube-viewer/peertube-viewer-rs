@@ -58,7 +58,7 @@ impl Cli {
         let mut history = History::new();
 
         let dirs = ProjectDirs::from("", "peertube-viewer-rs", "peertube-viewer-rs");
-        let mut rl = Editor::new(config.edit_mode());
+        let mut rl = Editor::new(config.edit_mode(), config.colors());
 
         // Loads the history if available
         if let Some(d) = dirs.as_ref() {

@@ -1,3 +1,4 @@
+use crate::cli::display::fg_color;
 use crate::cli::parser::{info, parse, ParseError, ParsedQuery};
 
 use termion::{color, style};
@@ -31,10 +32,11 @@ pub enum Message {
 pub struct Helper {
     sender: Sender<Message>,
     high_limit: Option<usize>,
+    use_color: bool,
 }
 
 impl Helper {
-    pub fn new() -> (Receiver<Message>, Sender<Message>, Helper) {
+    pub fn new(use_color: bool) -> (Receiver<Message>, Sender<Message>, Helper) {
         let (tx, rx) = channel();
         (
             rx,
@@ -42,6 +44,7 @@ impl Helper {
             Helper {
                 sender: tx,
                 high_limit: None,
+                use_color,
             },
         )
     }
@@ -122,12 +125,12 @@ impl Completer for Helper {
     }
 }
 
-fn green_then_bold(line: &str) -> Cow<'_, str> {
+fn green_then_bold(line: &str, use_colors: bool) -> Cow<'_, str> {
     if let Some(idx) = line.find(' ') {
         Cow::Owned(format!(
             "{}{}{}{}{}{}{}",
             style::Bold,
-            color::Fg(color::Green),
+            fg_color(color::Green, use_colors),
             &line[..idx],
             style::Reset,
             style::Bold,
@@ -138,21 +141,21 @@ fn green_then_bold(line: &str) -> Cow<'_, str> {
         Cow::Owned(format!(
             "{}{}{}{}",
             style::Bold,
-            color::Fg(color::Green),
+            fg_color(color::Green, use_colors),
             line,
             style::Reset,
         ))
     }
 }
 
-fn green_then_red(line: &str) -> Cow<'_, str> {
+fn green_then_red(line: &str, use_colors: bool) -> Cow<'_, str> {
     if let Some(idx) = line.find(' ') {
         Cow::Owned(format!(
             "{}{}{}{}{}{}",
             style::Bold,
-            color::Fg(color::Green),
+            fg_color(color::Green, use_colors),
             &line[..idx],
-            color::Fg(color::Red),
+            fg_color(color::Red, use_colors),
             &line[idx..],
             style::Reset,
         ))
@@ -160,38 +163,38 @@ fn green_then_red(line: &str) -> Cow<'_, str> {
         Cow::Owned(format!(
             "{}{}{}{}",
             style::Bold,
-            color::Fg(color::Green),
+            fg_color(color::Green, use_colors),
             line,
             style::Reset,
         ))
     }
 }
 
-fn yellow(line: &str) -> Cow<'_, str> {
+fn yellow(line: &str, use_colors: bool) -> Cow<'_, str> {
     Cow::Owned(format!(
         "{}{}{}{}",
         style::Bold,
-        color::Fg(color::Yellow),
+        fg_color(color::Yellow, use_colors),
         line,
         style::Reset,
     ))
 }
 
-fn cyan(line: &str) -> Cow<'_, str> {
+fn cyan(line: &str, use_colors: bool) -> Cow<'_, str> {
     Cow::Owned(format!(
         "{}{}{}{}",
         style::Bold,
-        color::Fg(color::Cyan),
+        fg_color(color::Cyan, use_colors),
         line,
         style::Reset,
     ))
 }
 
-fn red(line: &str) -> Cow<'_, str> {
+fn red(line: &str, use_colors: bool) -> Cow<'_, str> {
     Cow::Owned(format!(
         "{}{}{}{}",
         style::Bold,
-        color::Fg(color::Red),
+        fg_color(color::Red, use_colors),
         line,
         style::Reset,
     ))
@@ -208,20 +211,22 @@ impl Highlighter for Helper {
 
     fn highlight<'l>(&self, line: &'l str, _: usize) -> Cow<'l, str> {
         match parse(line) {
-            Ok(ParsedQuery::Channels(_)) => green_then_bold(line),
-            Ok(ParsedQuery::Chandle(_)) => green_then_bold(line),
-            Ok(ParsedQuery::Info(_)) => green_then_bold(line),
-            Ok(ParsedQuery::Comments(_)) => green_then_bold(line),
-            Ok(ParsedQuery::Browser(_)) => green_then_bold(line),
+            Ok(ParsedQuery::Channels(_)) => green_then_bold(line, self.use_color),
+            Ok(ParsedQuery::Chandle(_)) => green_then_bold(line, self.use_color),
+            Ok(ParsedQuery::Info(_)) => green_then_bold(line, self.use_color),
+            Ok(ParsedQuery::Comments(_)) => green_then_bold(line, self.use_color),
+            Ok(ParsedQuery::Browser(_)) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Query(_)) => bold(line),
-            Ok(ParsedQuery::Quit) => green_then_bold(line),
-            Ok(ParsedQuery::Trending) => green_then_bold(line),
-            Ok(ParsedQuery::Previous) => green_then_bold(line),
-            Ok(ParsedQuery::Next) => green_then_bold(line),
-            Err(ParseError::UnexpectedArgs) | Err(ParseError::BadArgType) => green_then_red(line),
-            Err(ParseError::UnknownCommand) => red(line),
-            Err(ParseError::MissingArgs) => cyan(line),
-            Err(ParseError::IncompleteCommand(_)) => yellow(line),
+            Ok(ParsedQuery::Quit) => green_then_bold(line, self.use_color),
+            Ok(ParsedQuery::Trending) => green_then_bold(line, self.use_color),
+            Ok(ParsedQuery::Previous) => green_then_bold(line, self.use_color),
+            Ok(ParsedQuery::Next) => green_then_bold(line, self.use_color),
+            Err(ParseError::UnexpectedArgs) | Err(ParseError::BadArgType) => {
+                green_then_red(line, self.use_color)
+            }
+            Err(ParseError::UnknownCommand) => red(line, self.use_color),
+            Err(ParseError::MissingArgs) => cyan(line, self.use_color),
+            Err(ParseError::IncompleteCommand(_)) => yellow(line, self.use_color),
         }
     }
 

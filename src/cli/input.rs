@@ -33,8 +33,8 @@ pub struct Editor {
 }
 
 impl Editor {
-    pub fn new(edit_mode: EditMode) -> Editor {
-        let (rx, tx, h) = Helper::new();
+    pub fn new(edit_mode: EditMode, use_color: bool) -> Editor {
+        let (rx, tx, h) = Helper::new(use_color);
         let mut rl = rustyline::Editor::with_config(Builder::new().edit_mode(edit_mode).build());
         rl.set_helper(Some(h));
         Editor {
