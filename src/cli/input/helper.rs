@@ -6,9 +6,9 @@ use std::borrow::Cow;
 use std::sync::mpsc::{channel, Receiver, Sender};
 
 use rustyline::{
-    completion::Completer,
+    completion::{Candidate, Completer},
     highlight::Highlighter,
-    hint::{Hinter, HistoryHinter},
+    hint::Hinter,
     validate::Validator,
     Context,
 };
@@ -31,7 +31,6 @@ pub enum Message {
 pub struct Helper {
     sender: Sender<Message>,
     high_limit: Option<usize>,
-    hinter: HistoryHinter,
 }
 
 impl Helper {
@@ -43,7 +42,6 @@ impl Helper {
             Helper {
                 sender: tx,
                 high_limit: None,
-                hinter: HistoryHinter {},
             },
         )
     }
@@ -76,14 +74,52 @@ impl Helper {
 impl Hinter for Helper {
     fn hint(&self, line: &str, pos: usize, ctx: &Context) -> Option<String> {
         self.message(line);
-        self.hinter.hint(line, pos, ctx)
+        if let Ok((0, cmds)) = self.complete(line, pos, ctx) {
+            if !cmds.is_empty() {
+                return Some(cmds[0].0[pos..].to_string());
+            }
+        }
+
+        None
     }
 }
 
 impl Validator for Helper {}
 
+pub struct CompletionCandidate(&'static str);
+
+impl Candidate for CompletionCandidate {
+    fn display(&self) -> &str {
+        self.0
+    }
+
+    fn replacement(&self) -> &str {
+        self.0
+    }
+}
+
 impl Completer for Helper {
-    type Candidate = String;
+    type Candidate = CompletionCandidate;
+
+    fn complete(
+        &self,
+        line: &str,
+        pos: usize,
+        _ctx: &Context,
+    ) -> rustyline::Result<(usize, Vec<CompletionCandidate>)> {
+        if pos == 0 {
+            return Ok((0, vec![]));
+        }
+
+        if let Err(ParseError::IncompleteCommand(cmds)) = parse(line) {
+            Ok((
+                0,
+                cmds.into_iter().map(|i| CompletionCandidate(i)).collect(),
+            ))
+        } else {
+            Ok((0, vec![]))
+        }
+    }
 }
 
 fn green_then_bold(line: &str) -> Cow<'_, str> {
