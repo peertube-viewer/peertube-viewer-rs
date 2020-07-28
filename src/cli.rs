@@ -10,6 +10,7 @@ use config::{Blocklist, Config, InitialInfo};
 use display::Display;
 use history::History;
 use input::{Action, Editor};
+use parser::{parse, parse_first, ParseError, ParsedQuery};
 
 use crate::error::Error;
 
@@ -332,41 +333,54 @@ impl Cli {
 
     /// Returns true if the action is to stop
     fn parse_query(&mut self, mode: &mut Mode, s: &str) -> Result<bool, Error> {
-        if s == ":q" {
-            return Ok(true);
-        } else if s == ":trending" {
-            let trending_tmp =
-                PreloadableList::new(Videos::new_trending(self.instance.clone()), SEARCH_TOTAL);
-            *mode = Mode::Videos(trending_tmp);
-        } else if let Some(q) = parser::channels(&s) {
-            let channels_tmp =
-                PreloadableList::new(Channels::new(self.instance.clone(), q), SEARCH_TOTAL);
-            *mode = Mode::Channels(channels_tmp);
-            self.rl.add_history_entry(s);
-        } else if let Some(handle) = parser::chandle(s) {
-            let chandle_tmp = PreloadableList::new(
-                Videos::new_channel(self.instance.clone(), handle),
-                SEARCH_TOTAL,
-            );
-            *mode = Mode::Videos(chandle_tmp);
-            self.rl.add_history_entry(s);
-        } else if let Some(id) = parser::info(s, mode.current_len()) {
-            self.info(&mode, id)?;
-            self.rl.add_history_entry(s);
-            return Ok(false);
-        } else if let Some(id) = parser::browser(s, mode.current_len()) {
-            self.open_browser(mode, id)?;
-            self.rl.add_history_entry(s);
-            return Ok(false);
-        } else if let Some(id) = parser::comments(s, mode.current_len()) {
-            self.comments(mode, id)?;
-            self.rl.add_history_entry(s);
-            return Ok(false);
+        let parsed = if mode.is_temp() {
+            parser::parse(s)
         } else {
-            self.rl.add_history_entry(&s);
-            let search_tmp =
-                PreloadableList::new(Videos::new_search(self.instance.clone(), &s), SEARCH_TOTAL);
-            *mode = Mode::Videos(search_tmp);
+            parser::parse_first(s)
+        };
+
+        match parsed {
+            Ok(ParsedQuery::Quit) => return Ok(true),
+            Ok(ParsedQuery::Trending) => {
+                let trending_tmp =
+                    PreloadableList::new(Videos::new_trending(self.instance.clone()), SEARCH_TOTAL);
+                *mode = Mode::Videos(trending_tmp);
+            }
+            Ok(ParsedQuery::Channels(q)) => {
+                let channels_tmp =
+                    PreloadableList::new(Channels::new(self.instance.clone(), q), SEARCH_TOTAL);
+                *mode = Mode::Channels(channels_tmp);
+                self.rl.add_history_entry(s);
+            }
+            Ok(ParsedQuery::Chandle(handle)) => {
+                let chandle_tmp = PreloadableList::new(
+                    Videos::new_channel(self.instance.clone(), handle),
+                    SEARCH_TOTAL,
+                );
+                *mode = Mode::Videos(chandle_tmp);
+                self.rl.add_history_entry(s);
+            }
+            Ok(ParsedQuery::Info(id)) => {
+                self.info(&mode, id)?;
+                self.rl.add_history_entry(s);
+            }
+            Ok(ParsedQuery::Browser(id)) => {
+                self.open_browser(mode, id)?;
+                self.rl.add_history_entry(s);
+            }
+            Ok(ParsedQuery::Comments(id)) => {
+                self.comments(mode, id)?;
+                self.rl.add_history_entry(s);
+            }
+            Ok(ParsedQuery::Query(_)) => {
+                self.rl.add_history_entry(&s);
+                let search_tmp = PreloadableList::new(
+                    Videos::new_search(self.instance.clone(), &s),
+                    SEARCH_TOTAL,
+                );
+                *mode = Mode::Videos(search_tmp);
+            }
+            _ => unimplemented!(),
         }
 
         Ok(false)
@@ -577,6 +591,14 @@ impl Mode {
             Mode::Channels(c) => c.current().len(),
             Mode::Comments(c) => c.current().len(),
             Mode::Temp => 0,
+        }
+    }
+
+    pub fn is_temp(&self) -> bool {
+        if let Mode::Temp = self {
+            true
+        } else {
+            false
         }
     }
 

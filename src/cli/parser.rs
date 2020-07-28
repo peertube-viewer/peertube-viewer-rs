@@ -54,8 +54,25 @@ pub enum ParseError {
     UnexpectedArgs,
     UnknownCommand,
     MissingArgs,
+    ArgTooHigh,
     BadArgType,
     IncompleteCommand(Vec<&'static str>),
+}
+
+pub fn filter_high_ids(
+    parsed: Result<ParsedQuery, ParseError>,
+    max: usize,
+) -> Result<ParsedQuery, ParseError> {
+    match &parsed {
+        Ok(ParsedQuery::Info(id))
+        | Ok(ParsedQuery::Comments(id))
+        | Ok(ParsedQuery::Browser(id))
+            if *id > max =>
+        {
+            Err(ParseError::ArgTooHigh)
+        }
+        _ => parsed,
+    }
 }
 
 pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {

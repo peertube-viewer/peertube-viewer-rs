@@ -1,5 +1,5 @@
 use crate::cli::display::fg_color;
-use crate::cli::parser::{info, parse, parse_first, ParseError, ParsedQuery};
+use crate::cli::parser::{filter_high_ids, info, parse, parse_first, ParseError, ParsedQuery};
 
 use termion::{color, style};
 
@@ -216,11 +216,15 @@ impl Highlighter for Helper {
     }
 
     fn highlight<'l>(&self, line: &'l str, _: usize) -> Cow<'l, str> {
-        let parsed = if self.first {
-            parse(line)
-        } else {
+        let mut parsed = if self.first {
             parse_first(line)
+        } else {
+            parse(line)
         };
+
+        if let Some(max) = self.high_limit {
+            parsed = filter_high_ids(parsed, max);
+        }
         match parsed {
             Ok(ParsedQuery::Channels(_)) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Chandle(_)) => green_then_bold(line, self.use_color),
@@ -232,9 +236,9 @@ impl Highlighter for Helper {
             Ok(ParsedQuery::Trending) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Previous) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Next) => green_then_bold(line, self.use_color),
-            Err(ParseError::UnexpectedArgs) | Err(ParseError::BadArgType) => {
-                green_then_red(line, self.use_color)
-            }
+            Err(ParseError::UnexpectedArgs)
+            | Err(ParseError::BadArgType)
+            | Err(ParseError::ArgTooHigh) => green_then_red(line, self.use_color),
             Err(ParseError::UnknownCommand) => red(line, self.use_color),
             Err(ParseError::MissingArgs) => cyan(line, self.use_color),
             Err(ParseError::IncompleteCommand(_)) => yellow(line, self.use_color),
