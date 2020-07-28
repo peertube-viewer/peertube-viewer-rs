@@ -78,9 +78,7 @@ impl Cli {
         // If the initial query is a url, connect to the corresponding instance
         let mut is_single_url = false;
         let instance_domain = match &initial_info {
-            InitialInfo::Query(s) | InitialInfo::Channels(Some(s))
-                if s.starts_with("http://") || s.starts_with("https://") =>
-            {
+            InitialInfo::Query(s) if s.starts_with("http://") || s.starts_with("https://") => {
                 match s.split('/').nth(2) {
                     Some(domain) => {
                         let instance_temp =
@@ -148,18 +146,10 @@ impl Cli {
                 return Ok(());
             }
             InitialInfo::Query(s) => Action::Query(s),
-            InitialInfo::Channels(Some(s)) => Action::Query(format!(":channels {}", s)),
-            InitialInfo::Channels(None) => {
-                let query = self.rl.readline(">> ".to_string())?;
-                if query == ":q" {
-                    return Ok(());
-                } else {
-                    Action::Query(format!(":channels {}", query))
-                }
-            }
+            InitialInfo::Channels(s) => Action::Query(format!(":channels {}", s)),
             InitialInfo::Handle(s) => Action::Query(format!(":chandle {}", s)),
             InitialInfo::Trending => Action::Query(":trending".to_string()),
-            InitialInfo::None => Action::Query(self.rl.readline(">> ".to_string())?),
+            InitialInfo::None => Action::Query(self.rl.first_readline(">> ".to_string())?),
         };
         let changed_action = true;
 

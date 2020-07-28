@@ -1,5 +1,5 @@
 use crate::cli::display::fg_color;
-use crate::cli::parser::{info, parse, ParseError, ParsedQuery};
+use crate::cli::parser::{info, parse, parse_first, ParseError, ParsedQuery};
 
 use termion::{color, style};
 
@@ -33,6 +33,7 @@ pub struct Helper {
     sender: Sender<Message>,
     high_limit: Option<usize>,
     use_color: bool,
+    first: bool,
 }
 
 impl Helper {
@@ -45,6 +46,7 @@ impl Helper {
                 sender: tx,
                 high_limit: None,
                 use_color,
+                first: false,
             },
         )
     }
@@ -71,6 +73,10 @@ impl Helper {
                 self.sender.send(Message::Number(num)).unwrap();
             }
         }
+    }
+
+    pub fn set_first(&mut self, first: bool) {
+        self.first = first;
     }
 }
 
@@ -210,7 +216,12 @@ impl Highlighter for Helper {
     }
 
     fn highlight<'l>(&self, line: &'l str, _: usize) -> Cow<'l, str> {
-        match parse(line) {
+        let parsed = if self.first {
+            parse(line)
+        } else {
+            parse_first(line)
+        };
+        match parsed {
             Ok(ParsedQuery::Channels(_)) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Chandle(_)) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Info(_)) => green_then_bold(line, self.use_color),

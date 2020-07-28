@@ -40,6 +40,7 @@ args:
     - channels:
         long: channels
         conflicts_with: trending
+        takes_value: true
         help: will start searching video channels
 
     - chandle:

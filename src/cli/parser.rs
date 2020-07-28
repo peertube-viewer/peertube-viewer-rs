@@ -1,4 +1,4 @@
-pub const COMMANDS: [&str; 12] = [
+const COMMANDS: [&str; 12] = [
     //Sorted list of available commands
     ":browser",
     ":chandle",
@@ -13,6 +13,17 @@ pub const COMMANDS: [&str; 12] = [
     ":quit",
     ":trending",
 ];
+
+const COMMANDS_FIRST: [&str; 5] = [
+    //Sorted list of available commands
+    ":chandle",
+    ":channels",
+    ":q",
+    ":quit",
+    ":trending",
+];
+
+const NO_ARGS_FIRST_CMDS_WITH_SPACE: [&str; 3] = [":q ", ":quit ", ":trending "];
 
 const NO_ARGS_CMDS_WITH_SPACE: [&str; 7] = [
     ":n ",
@@ -45,14 +56,6 @@ pub enum ParseError {
     MissingArgs,
     BadArgType,
     IncompleteCommand(Vec<&'static str>),
-}
-
-pub fn channels(input: &str) -> Option<&str> {
-    if input.starts_with(":channels") {
-        Some(clean_spaces(&input[9..])).flatten()
-    } else {
-        None
-    }
 }
 
 pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
@@ -115,6 +118,53 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
     } else if input == ":n" || input == ":next" {
         Ok(ParsedQuery::Next)
     } else {
+        for cmd in &NO_ARGS_FIRST_CMDS_WITH_SPACE {
+            if input.starts_with(cmd) {
+                return Err(ParseError::UnexpectedArgs);
+            }
+        }
+
+        let starts = COMMANDS_FIRST.iter().fold(Vec::new(), |mut acc, cmd| {
+            if cmd.starts_with(input) {
+                acc.push(*cmd);
+            }
+            acc
+        });
+
+        if !starts.is_empty() {
+            Err(ParseError::IncompleteCommand(starts))
+        } else {
+            Err(ParseError::UnknownCommand)
+        }
+    }
+}
+
+pub fn parse_first(input: &str) -> Result<ParsedQuery, ParseError> {
+    if !input.starts_with(':') {
+        return Ok(ParsedQuery::Query(input));
+    }
+
+    if input.starts_with(":chandle ") || input == ":chandle" {
+        Ok(ParsedQuery::Chandle(
+            input
+                .get(8..)
+                .map(clean_spaces)
+                .flatten()
+                .ok_or(ParseError::MissingArgs)?,
+        ))
+    } else if input.starts_with(":channels ") || input == ":channels" {
+        Ok(ParsedQuery::Channels(
+            input
+                .get(9..)
+                .map(clean_spaces)
+                .flatten()
+                .ok_or(ParseError::MissingArgs)?,
+        ))
+    } else if input == ":trending" {
+        Ok(ParsedQuery::Trending)
+    } else if input == ":q" || input == ":quit" {
+        Ok(ParsedQuery::Quit)
+    } else {
         for cmd in &NO_ARGS_CMDS_WITH_SPACE {
             if input.starts_with(cmd) {
                 return Err(ParseError::UnexpectedArgs);
@@ -133,6 +183,14 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
         } else {
             Err(ParseError::UnknownCommand)
         }
+    }
+}
+
+pub fn channels(input: &str) -> Option<&str> {
+    if input.starts_with(":channels") {
+        Some(clean_spaces(&input[9..])).flatten()
+    } else {
+        None
     }
 }
 

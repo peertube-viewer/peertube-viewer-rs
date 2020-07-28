@@ -1,9 +1,8 @@
 mod helper;
 
+use crate::error;
 use helper::Helper;
 pub use helper::Message;
-
-use crate::error;
 
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
@@ -49,8 +48,32 @@ impl Editor {
         loop {
             match guard.readline(&prompt) {
                 Ok(l) if l != "" => return Ok(l),
+
                 Ok(_) => continue,
                 e @ Err(_) => return e,
+            }
+        }
+    }
+    pub fn first_readline(&mut self, prompt: String) -> rustyline::Result<String> {
+        let mut guard = self.rl.lock().unwrap();
+        if let Some(h) = guard.helper_mut() {
+            h.set_first(true);
+        };
+        loop {
+            match guard.readline(&prompt) {
+                Ok(l) if l != "" => {
+                    if let Some(h) = guard.helper_mut() {
+                        h.set_first(false);
+                    }
+                    return Ok(l);
+                }
+                Ok(_) => continue,
+                e @ Err(_) => {
+                    if let Some(h) = guard.helper_mut() {
+                        h.set_first(false);
+                    }
+                    return e;
+                }
             }
         }
     }
