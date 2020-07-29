@@ -9,8 +9,8 @@ pub use config::ConfigLoadError;
 use config::{Blocklist, Config, InitialInfo};
 use display::Display;
 use history::History;
-use input::{Action, Editor};
-use parser::{parse, parse_first, ParseError, ParsedQuery};
+use input::Editor;
+use parser::ParsedQuery;
 
 use crate::error::Error;
 
@@ -146,11 +146,11 @@ impl Cli {
                 self.play_vid(&self.instance.single_video(&s)?)?;
                 return Ok(());
             }
-            InitialInfo::Query(s) => Action::Query(s),
-            InitialInfo::Channels(s) => Action::Query(format!(":channels {}", s)),
-            InitialInfo::Handle(s) => Action::Query(format!(":chandle {}", s)),
-            InitialInfo::Trending => Action::Query(":trending".to_string()),
-            InitialInfo::None => Action::Query(self.rl.first_readline(">> ".to_string())?),
+            InitialInfo::Query(s) => ParsedQuery::Query(s),
+            InitialInfo::Channels(s) => ParsedQuery::Channels(s),
+            InitialInfo::Handle(s) => ParsedQuery::Chandle(s),
+            InitialInfo::Trending => ParsedQuery::Trending,
+            InitialInfo::None => self.rl.first_readline(">> ".to_string())?,
         };
         let changed_action = true;
 
@@ -170,7 +170,7 @@ impl Cli {
                     data.changed_action = true;
                     data.mode = Mode::Temp;
                     self.display.continue_despite_error();
-                    data.action = Action::Query(self.rl.readline(">> ".to_string())?);
+                    data.action = self.rl.readline(">> ".to_string(), None)?;
                 };
             }
         }
@@ -201,18 +201,18 @@ impl Cli {
     fn parse_action(&mut self, data: &mut LoopData) -> Result<(), Error> {
         if data.changed_action {
             match &data.action {
-                Action::Query(s) => {
+                ParsedQuery::Query(s) => {
                     if self.parse_query(&mut data.mode, &s)? {
                         data.stop = true;
                         return Ok(());
                     }
                     data.mode.ensure_init()?;
                 }
-                Action::Quit => {
+                ParsedQuery::Quit => {
                     data.stop = true;
                     return Ok(());
                 }
-                Action::Next => match &mut data.mode {
+                ParsedQuery::Next => match &mut data.mode {
                     Mode::Videos(search) => {
                         search.try_next()?;
                     }
@@ -224,7 +224,7 @@ impl Cli {
                     }
                     Mode::Temp => unreachable!(),
                 },
-                Action::Prev => match &mut data.mode {
+                ParsedQuery::Previous => match &mut data.mode {
                     Mode::Videos(search) => {
                         search.prev();
                     }
@@ -245,7 +245,7 @@ impl Cli {
     fn video_prompt(
         &mut self,
         videos: &mut PreloadableList<Videos>,
-        action: &mut Action,
+        action: &mut ParsedQuery,
         changed_action: &mut bool,
     ) -> Result<(), Error> {
         self.display
@@ -261,7 +261,7 @@ impl Cli {
             .preload_res(self.config.select_quality() || self.config.use_raw_url());
         let choice;
         match self.rl.autoload_readline(">> ".to_string(), videos)? {
-            Action::Id(id) => choice = id,
+            ParsedQuery::Id(id) => choice = id,
             new_action => {
                 *action = new_action;
                 *changed_action = true;
@@ -278,7 +278,7 @@ impl Cli {
     fn channel_prompt(
         &mut self,
         channels: &mut PreloadableList<Channels>,
-        action: &mut Action,
+        action: &mut ParsedQuery,
         changed_action: &mut bool,
     ) -> Result<(), Error> {
         self.display
@@ -290,9 +290,8 @@ impl Cli {
             channels.current_len(),
         );
         match self.rl.autoload_readline(">> ".to_string(), channels)? {
-            Action::Id(id) => {
-                *action =
-                    Action::Query(format!(":chandle {}", channels.current()[id - 1].handle()));
+            ParsedQuery::Id(id) => {
+                *action = ParsedQuery::Chandle(channels.current()[id - 1].handle());
                 *changed_action = true;
                 Ok(())
             }
@@ -307,7 +306,7 @@ impl Cli {
     fn comments_prompt(
         &mut self,
         comments: &mut PreloadableList<Comments>,
-        action: &mut Action,
+        action: &mut ParsedQuery,
         changed_action: &mut bool,
     ) -> Result<(), Error> {
         self.display.comment_list(comments.current());
@@ -318,8 +317,8 @@ impl Cli {
             comments.current_len(),
         );
         match self.rl.autoload_readline(">> ".to_string(), comments)? {
-            Action::Id(id) => {
-                *action = Action::Query(format!(":browser {}", id));
+            ParsedQuery::Id(id) => {
+                *action = ParsedQuery::Browser(id);
                 *changed_action = true;
                 Ok(())
             }
@@ -348,13 +347,13 @@ impl Cli {
             }
             Ok(ParsedQuery::Channels(q)) => {
                 let channels_tmp =
-                    PreloadableList::new(Channels::new(self.instance.clone(), q), SEARCH_TOTAL);
+                    PreloadableList::new(Channels::new(self.instance.clone(), &q), SEARCH_TOTAL);
                 *mode = Mode::Channels(channels_tmp);
                 self.rl.add_history_entry(s);
             }
             Ok(ParsedQuery::Chandle(handle)) => {
                 let chandle_tmp = PreloadableList::new(
-                    Videos::new_channel(self.instance.clone(), handle),
+                    Videos::new_channel(self.instance.clone(), &handle),
                     SEARCH_TOTAL,
                 );
                 *mode = Mode::Videos(chandle_tmp);
@@ -453,7 +452,7 @@ impl Cli {
         self.display.video_info(&video);
         if self.config.is_blocked(video.host()).is_some() {
             self.display.err(&"This video is from a blocked instance.");
-            let confirm = self.rl.readline("Play it anyway ? [y/N]: ".to_string())?;
+            let confirm = self.rl.std_in("Play it anyway ? [y/N]: ".to_string())?;
             if confirm != "y" && confirm != "Y" {
                 return Ok(());
             }
@@ -464,21 +463,15 @@ impl Cli {
             self.display.resolutions(resolutions);
             let choice;
             loop {
-                match self.rl.readline(">> ".to_string())?.parse::<usize>() {
-                    Ok(id) if id <= nb_resolutions && id > 0 => {
+                match self
+                    .rl
+                    .readline_id(">> ".to_string(), Some(nb_resolutions))?
+                {
+                    ParsedQuery::Id(id) => {
                         choice = id;
                         break;
                     }
-                    Ok(0) => self
-                        .display
-                        .message("0 is not a valid choice for a resolution"),
-                    Ok(_) => self.display.message(&format!(
-                        "Choice must be inferior to the number of available resolutions: {}",
-                        nb_resolutions
-                    )),
-                    Err(_) => self
-                        .display
-                        .message("Enter a number to select the resolution"),
+                    _ => unreachable!(),
                 }
             }
             if self.config.use_torrent() {
@@ -572,7 +565,7 @@ impl Cli {
 
 struct LoopData {
     mode: Mode,
-    action: Action,
+    action: ParsedQuery,
     changed_action: bool,
     stop: bool,
 }

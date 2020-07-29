@@ -1,8 +1,8 @@
 mod helper;
 
 use crate::error;
-use helper::Helper;
 pub use helper::Message;
+use helper::{Helper, Stade};
 
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
@@ -13,6 +13,7 @@ use std::path::PathBuf;
 
 use rustyline::config::{Builder, EditMode};
 
+use super::parser::{filter_high_ids, parse, parse_first, parse_id, ParsedQuery};
 use preloadable_list::{AsyncLoader, PreloadableList};
 
 pub struct HelpedHandle<'editor> {
@@ -43,36 +44,73 @@ impl Editor {
         }
     }
 
-    pub fn readline(&mut self, prompt: String) -> rustyline::Result<String> {
+    pub fn readline(
+        &mut self,
+        prompt: String,
+        limit: Option<usize>,
+    ) -> rustyline::Result<ParsedQuery> {
         let mut guard = self.rl.lock().unwrap();
+        if let Some(h) = guard.helper_mut() {
+            h.set_limit(limit)
+        };
         loop {
             match guard.readline(&prompt) {
-                Ok(l) if l != "" => return Ok(l),
-
-                Ok(_) => continue,
-                e @ Err(_) => return e,
+                Ok(l) => {
+                    if let Ok(q) = parse(&l) {
+                        return Ok(q);
+                    }
+                    continue;
+                }
+                Err(e) => return Err(e),
             }
         }
     }
-    pub fn first_readline(&mut self, prompt: String) -> rustyline::Result<String> {
+
+    pub fn readline_id(
+        &mut self,
+        prompt: String,
+        limit: Option<usize>,
+    ) -> rustyline::Result<ParsedQuery> {
         let mut guard = self.rl.lock().unwrap();
         if let Some(h) = guard.helper_mut() {
-            h.set_first(true);
+            h.set_limit(limit);
+            h.set_stade(Stade::IdOnly);
+        }
+        loop {
+            match guard.readline(&prompt) {
+                Ok(l) => {
+                    if let Ok(q) = parse_id(&l) {
+                        return Ok(q);
+                    }
+                    continue;
+                }
+                Err(e) => return Err(e),
+            }
+        }
+    }
+
+    pub fn first_readline(&mut self, prompt: String) -> rustyline::Result<ParsedQuery> {
+        let mut guard = self.rl.lock().unwrap();
+        if let Some(h) = guard.helper_mut() {
+            h.set_stade(Stade::First);
         };
         loop {
             match guard.readline(&prompt) {
                 Ok(l) if l != "" => {
-                    if let Some(h) = guard.helper_mut() {
-                        h.set_first(false);
+                    if let Ok(q) = parse_first(&l) {
+                        if let Some(h) = guard.helper_mut() {
+                            h.set_stade(Stade::Normal);
+                        }
+                        return Ok(q);
                     }
-                    return Ok(l);
+                    continue;
                 }
                 Ok(_) => continue,
-                e @ Err(_) => {
+                Err(e) => {
                     if let Some(h) = guard.helper_mut() {
-                        h.set_first(false);
+                        h.set_stade(Stade::Normal);
                     }
-                    return e;
+                    return Err(e);
                 }
             }
         }
@@ -98,9 +136,24 @@ impl Editor {
             };
             loop {
                 match ed.readline(&prompt) {
-                    Ok(l) if l != "" => tx_cloned.send(Message::Over(Ok(l))).unwrap(),
-                    Ok(_) => continue,
-                    e @ Err(_) => tx_cloned.send(Message::Over(e)).unwrap(),
+                    Ok(line) => {
+                        let parsed = if let Some(l) = limit {
+                            filter_high_ids(parse(&line), l)
+                        } else {
+                            parse(&line)
+                        };
+                        if let Ok(p) = parsed {
+                            tx_cloned.send(Message::Over(Ok(p))).unwrap();
+                            if let Some(h) = ed.helper_mut() {
+                                h.set_limit(None)
+                            };
+                            break;
+                        } else {
+                            // TODO add an error message
+                            continue;
+                        }
+                    }
+                    Err(e) => tx_cloned.send(Message::Over(Err(e))).unwrap(),
                 }
                 break;
             }
@@ -112,36 +165,19 @@ impl Editor {
         &mut self,
         prompt: String,
         list: &mut PreloadableList<Loader>,
-    ) -> rustyline::Result<Action> {
+    ) -> rustyline::Result<ParsedQuery> {
         let mut handle = self.helped_readline(prompt, Some(list.current().len()));
         loop {
             match handle.next() {
                 Message::Over(res) => {
-                    let s = res?;
-                    if s == ":n" {
-                        return Ok(Action::Next);
-                    } else if s == ":p" {
-                        return Ok(Action::Prev);
-                    } else if s == ":q" {
-                        return Ok(Action::Quit);
-                    }
-                    match s.parse::<usize>() {
-                        Ok(id) if id > 0 && id <= list.current_len() => {
-                            return Ok(Action::Id(id));
-                        }
-                        Err(_) | Ok(_) => {
-                            return Ok(Action::Query(s));
-                        }
+                    return res;
+                }
+                Message::Unfinnished(ParsedQuery::Next) => list.preload_next(),
+                Message::Unfinnished(p) => {
+                    if let Some(id) = p.should_preload() {
+                        list.preload_id(id - 1);
                     }
                 }
-
-                Message::Number(id) => {
-                    list.preload_id(id - 1);
-                }
-                Message::CommandNext => {
-                    list.preload_next();
-                }
-                Message::CommandPrev => {}
             }
         }
     }
@@ -160,13 +196,4 @@ impl Editor {
         let mut ed = self.rl.lock().unwrap();
         ed.add_history_entry(entry)
     }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum Action {
-    Next,
-    Prev,
-    Quit,
-    Id(usize),
-    Query(String),
 }

@@ -36,17 +36,27 @@ const NO_ARGS_CMDS_WITH_SPACE: [&str; 7] = [
 ];
 
 #[derive(Debug)]
-pub enum ParsedQuery<'input> {
-    Channels(&'input str),
-    Chandle(&'input str),
+pub enum ParsedQuery {
+    Channels(String),
+    Chandle(String),
     Info(usize),
     Comments(usize),
     Browser(usize),
-    Query(&'input str),
+    Query(String),
+    Id(usize),
     Quit,
     Next,
     Previous,
     Trending,
+}
+
+impl ParsedQuery {
+    pub fn should_preload(&self) -> Option<usize> {
+        match *self {
+            ParsedQuery::Info(id) | ParsedQuery::Comments(id) | ParsedQuery::Id(id) => Some(id),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -55,7 +65,10 @@ pub enum ParseError {
     UnknownCommand,
     MissingArgs,
     ArgTooHigh,
+    IdZero,
     BadArgType,
+    ExpectId,
+    Empty,
     IncompleteCommand(Vec<&'static str>),
 }
 
@@ -67,17 +80,31 @@ pub fn filter_high_ids(
         Ok(ParsedQuery::Info(id))
         | Ok(ParsedQuery::Comments(id))
         | Ok(ParsedQuery::Browser(id))
+        | Ok(ParsedQuery::Id(id))
             if *id > max =>
         {
             Err(ParseError::ArgTooHigh)
+        }
+        Ok(ParsedQuery::Info(id))
+        | Ok(ParsedQuery::Comments(id))
+        | Ok(ParsedQuery::Browser(id))
+        | Ok(ParsedQuery::Id(id))
+            if *id == 0 =>
+        {
+            Err(ParseError::IdZero)
         }
         _ => parsed,
     }
 }
 
 pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
-    if !input.starts_with(':') {
-        return Ok(ParsedQuery::Query(input));
+    if input.is_empty() {
+        return Err(ParseError::Empty);
+    }
+    if let Ok(id) = input.parse::<usize>() {
+        return Ok(ParsedQuery::Id(id));
+    } else if !input.starts_with(':') {
+        return Ok(ParsedQuery::Query(input.to_string()));
     }
 
     if input.starts_with(":chandle ") || input == ":chandle" {
@@ -86,7 +113,8 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
                 .get(8..)
                 .map(clean_spaces)
                 .flatten()
-                .ok_or(ParseError::MissingArgs)?,
+                .ok_or(ParseError::MissingArgs)?
+                .to_string(),
         ))
     } else if input.starts_with(":channels ") || input == ":channels" {
         Ok(ParsedQuery::Channels(
@@ -94,7 +122,8 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
                 .get(9..)
                 .map(clean_spaces)
                 .flatten()
-                .ok_or(ParseError::MissingArgs)?,
+                .ok_or(ParseError::MissingArgs)?
+                .to_string(),
         ))
     } else if input.starts_with(":comments ") || input == ":comments" {
         Ok(ParsedQuery::Comments(
@@ -103,6 +132,7 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
                 .map(clean_spaces)
                 .flatten()
                 .ok_or(ParseError::MissingArgs)?
+                .to_string()
                 .parse()
                 .map_err(|_| ParseError::BadArgType)?,
         ))
@@ -113,6 +143,7 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
                 .map(clean_spaces)
                 .flatten()
                 .ok_or(ParseError::MissingArgs)?
+                .to_string()
                 .parse()
                 .map_err(|_| ParseError::BadArgType)?,
         ))
@@ -123,6 +154,7 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
                 .map(clean_spaces)
                 .flatten()
                 .ok_or(ParseError::MissingArgs)?
+                .to_string()
                 .parse()
                 .map_err(|_| ParseError::BadArgType)?,
         ))
@@ -157,8 +189,13 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
 }
 
 pub fn parse_first(input: &str) -> Result<ParsedQuery, ParseError> {
-    if !input.starts_with(':') {
-        return Ok(ParsedQuery::Query(input));
+    if input.is_empty() {
+        return Err(ParseError::Empty);
+    }
+    if let Ok(id) = input.parse::<usize>() {
+        return Ok(ParsedQuery::Id(id));
+    } else if !input.starts_with(':') {
+        return Ok(ParsedQuery::Query(input.to_string()));
     }
 
     if input.starts_with(":chandle ") || input == ":chandle" {
@@ -167,7 +204,8 @@ pub fn parse_first(input: &str) -> Result<ParsedQuery, ParseError> {
                 .get(8..)
                 .map(clean_spaces)
                 .flatten()
-                .ok_or(ParseError::MissingArgs)?,
+                .ok_or(ParseError::MissingArgs)?
+                .to_string(),
         ))
     } else if input.starts_with(":channels ") || input == ":channels" {
         Ok(ParsedQuery::Channels(
@@ -175,7 +213,8 @@ pub fn parse_first(input: &str) -> Result<ParsedQuery, ParseError> {
                 .get(9..)
                 .map(clean_spaces)
                 .flatten()
-                .ok_or(ParseError::MissingArgs)?,
+                .ok_or(ParseError::MissingArgs)?
+                .to_string(),
         ))
     } else if input == ":trending" {
         Ok(ParsedQuery::Trending)
@@ -203,20 +242,15 @@ pub fn parse_first(input: &str) -> Result<ParsedQuery, ParseError> {
     }
 }
 
-pub fn channels(input: &str) -> Option<&str> {
-    if input.starts_with(":channels") {
-        Some(clean_spaces(&input[9..])).flatten()
-    } else {
-        None
+pub fn parse_id(input: &str) -> Result<ParsedQuery, ParseError> {
+    if input.is_empty() {
+        return Err(ParseError::Empty);
     }
-}
+    if let Ok(id) = input.parse::<usize>() {
+        return Ok(ParsedQuery::Id(id));
+    }
 
-pub fn chandle(input: &str) -> Option<&str> {
-    if input.starts_with(":chandle ") {
-        Some(clean_spaces(&input[9..])).flatten()
-    } else {
-        None
-    }
+    return Err(ParseError::ExpectId);
 }
 
 pub fn clean_spaces(input: &str) -> Option<&str> {
@@ -239,106 +273,9 @@ pub fn clean_spaces(input: &str) -> Option<&str> {
     }
 }
 
-pub fn info(input: &str, max: usize) -> Option<usize> {
-    if input.starts_with(":info ") {
-        let res = clean_spaces(&input[6..])?.parse().ok()?;
-        if 0 < res && res <= max {
-            Some(res)
-        } else {
-            None
-        }
-    } else {
-        None
-    }
-}
-
-pub fn comments(input: &str, max: usize) -> Option<usize> {
-    if input.starts_with(":comments ") {
-        let res = clean_spaces(&input[9..])?.parse().ok()?;
-        if 0 < res && res <= max {
-            Some(res)
-        } else {
-            None
-        }
-    } else {
-        None
-    }
-}
-
-pub fn browser(input: &str, max: usize) -> Option<usize> {
-    if input.starts_with(":browser ") {
-        let res = clean_spaces(&input[8..])?.parse().ok()?;
-        if 0 < res && res <= max {
-            Some(res)
-        } else {
-            None
-        }
-    } else {
-        None
-    }
-}
-
 #[cfg(test)]
 mod parser {
     use super::*;
-
-    #[test]
-    fn test_channels() {
-        assert_eq!(channels("eaz"), None);
-        assert_eq!(channels(":channels"), None);
-        assert_eq!(channels(":channels "), None);
-        assert_eq!(channels(":channels test"), Some("test"));
-        assert_eq!(channels(":channels test "), Some("test"));
-        assert_eq!(channels(":channels  test"), Some("test"));
-        assert_eq!(channels(":channels  test "), Some("test"));
-    }
-
-    #[test]
-    fn test_chandle() {
-        assert_eq!(chandle("eaz"), None);
-        assert_eq!(chandle(":chandle"), None);
-        assert_eq!(chandle(":chandle "), None);
-        assert_eq!(chandle(":chandle test"), Some("test"));
-        assert_eq!(chandle(":chandle test "), Some("test"));
-        assert_eq!(chandle(":chandle  test"), Some("test"));
-        assert_eq!(chandle(":chandle  test "), Some("test"));
-    }
-
-    #[test]
-    fn test_info() {
-        assert_eq!(info("eaz", 20), None);
-        assert_eq!(info(":info", 20), None);
-        assert_eq!(info(":info ", 20), None);
-        assert_eq!(info(":info 18", 20), Some(18));
-        assert_eq!(info(":info 20 ", 20), Some(20));
-        assert_eq!(info(":info  21", 20), None);
-        assert_eq!(info(":info  0 ", 20), None);
-        assert_eq!(info(":info  1", 20), Some(1));
-    }
-
-    #[test]
-    fn test_comments() {
-        assert_eq!(comments("eaz", 20), None);
-        assert_eq!(comments(":comments", 20), None);
-        assert_eq!(comments(":comments ", 20), None);
-        assert_eq!(comments(":comments 18", 20), Some(18));
-        assert_eq!(comments(":comments 20 ", 20), Some(20));
-        assert_eq!(comments(":comments  21", 20), None);
-        assert_eq!(comments(":comments  0 ", 20), None);
-        assert_eq!(comments(":comments  1", 20), Some(1));
-    }
-
-    #[test]
-    fn test_browser() {
-        assert_eq!(browser("eaz", 20), None);
-        assert_eq!(browser(":browser", 20), None);
-        assert_eq!(browser(":browser ", 20), None);
-        assert_eq!(browser(":browser 18", 20), Some(18));
-        assert_eq!(browser(":browser 20 ", 20), Some(20));
-        assert_eq!(browser(":browser  21", 20), None);
-        assert_eq!(browser(":browser  0 ", 20), None);
-        assert_eq!(browser(":browser  1", 20), Some(1));
-    }
 
     #[test]
     fn test_spaces() {

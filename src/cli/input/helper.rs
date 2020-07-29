@@ -1,5 +1,5 @@
 use crate::cli::display::fg_color;
-use crate::cli::parser::{filter_high_ids, info, parse, parse_first, ParseError, ParsedQuery};
+use crate::cli::parser::{filter_high_ids, parse, parse_first, parse_id, ParseError, ParsedQuery};
 
 use termion::{color, style};
 
@@ -17,23 +17,22 @@ use rustyline::{
 /// Message to interact between the editor and the runtime
 #[derive(Debug)]
 pub enum Message {
-    /// Input completed
-    Over(rustyline::Result<String>),
+    Over(rustyline::Result<ParsedQuery>),
+    Unfinnished(ParsedQuery),
+}
 
-    /// typed :n
-    CommandNext,
-    /// typed :p
-    CommandPrev,
-
-    /// typed a number (guaranteed to be bellow the set limit)
-    Number(usize),
+#[derive(PartialEq)]
+pub enum Stade {
+    First,
+    IdOnly,
+    Normal,
 }
 
 pub struct Helper {
     sender: Sender<Message>,
     high_limit: Option<usize>,
     use_color: bool,
-    first: bool,
+    stade: Stade,
 }
 
 impl Helper {
@@ -46,7 +45,7 @@ impl Helper {
                 sender: tx,
                 high_limit: None,
                 use_color,
-                first: false,
+                stade: Stade::First,
             },
         )
     }
@@ -56,27 +55,27 @@ impl Helper {
     }
 
     fn message(&self, line: &str) {
-        if line.is_empty() {
-            return;
-        }
-
-        if line == ":n" {
-            self.sender.send(Message::CommandNext).unwrap();
-        } else if line == ":p" {
-            self.sender.send(Message::CommandPrev).unwrap();
-        } else if let (Ok(num), Some(limit)) = (line.parse(), self.high_limit) {
-            if num <= limit && num > 0 {
-                self.sender.send(Message::Number(num)).unwrap();
-            }
-        } else if let Some(limit) = self.high_limit {
-            if let Some(num) = info(&line, limit) {
-                self.sender.send(Message::Number(num)).unwrap();
-            }
+        if let Ok(p) = parse(line) {
+            self.sender.send(Message::Unfinnished(p)).unwrap();
         }
     }
 
-    pub fn set_first(&mut self, first: bool) {
-        self.first = first;
+    pub fn parse(&self, line: &str) -> Result<ParsedQuery, ParseError> {
+        let parsed = match self.stade {
+            Stade::First => parse_first(line),
+            Stade::IdOnly => parse_id(line),
+            Stade::Normal => parse(line),
+        };
+
+        if let Some(max) = self.high_limit {
+            filter_high_ids(parsed, max)
+        } else {
+            parsed
+        }
+    }
+
+    pub fn set_stade(&mut self, stade: Stade) {
+        self.stade = stade;
     }
 }
 
@@ -120,7 +119,7 @@ impl Completer for Helper {
             return Ok((0, vec![]));
         }
 
-        if let Err(ParseError::IncompleteCommand(cmds)) = parse(line) {
+        if let Err(ParseError::IncompleteCommand(cmds)) = self.parse(line) {
             Ok((
                 0,
                 cmds.into_iter().map(|i| CompletionCandidate(i)).collect(),
@@ -216,22 +215,14 @@ impl Highlighter for Helper {
     }
 
     fn highlight<'l>(&self, line: &'l str, _: usize) -> Cow<'l, str> {
-        let mut parsed = if self.first {
-            parse_first(line)
-        } else {
-            parse(line)
-        };
-
-        if let Some(max) = self.high_limit {
-            parsed = filter_high_ids(parsed, max);
-        }
-        match parsed {
+        match self.parse(line) {
             Ok(ParsedQuery::Channels(_)) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Chandle(_)) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Info(_)) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Comments(_)) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Browser(_)) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Query(_)) => bold(line),
+            Ok(ParsedQuery::Id(_)) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Quit) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Trending) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Previous) => green_then_bold(line, self.use_color),
@@ -239,8 +230,11 @@ impl Highlighter for Helper {
             Err(ParseError::UnexpectedArgs)
             | Err(ParseError::BadArgType)
             | Err(ParseError::ArgTooHigh) => green_then_red(line, self.use_color),
-            Err(ParseError::UnknownCommand) => red(line, self.use_color),
+            Err(ParseError::UnknownCommand)
+            | Err(ParseError::ExpectId)
+            | Err(ParseError::IdZero) => red(line, self.use_color),
             Err(ParseError::MissingArgs) => cyan(line, self.use_color),
+            Err(ParseError::Empty) => Cow::Borrowed(line),
             Err(ParseError::IncompleteCommand(_)) => yellow(line, self.use_color),
         }
     }
