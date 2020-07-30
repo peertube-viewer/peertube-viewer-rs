@@ -236,7 +236,7 @@ impl Cli {
                     }
                     Mode::Temp => unreachable!(),
                 },
-                _ => unreachable!(),
+                _ => unimplemented!(),
             };
         }
         Ok(())

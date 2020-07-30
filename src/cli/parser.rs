@@ -81,7 +81,7 @@ pub fn filter_high_ids(
         | Ok(ParsedQuery::Comments(id))
         | Ok(ParsedQuery::Browser(id))
         | Ok(ParsedQuery::Id(id))
-            if *id > max =>
+            if *id >= max =>
         {
             Err(ParseError::ArgTooHigh)
         }

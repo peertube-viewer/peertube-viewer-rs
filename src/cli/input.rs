@@ -56,7 +56,12 @@ impl Editor {
         loop {
             match guard.readline(&prompt) {
                 Ok(l) => {
-                    if let Ok(q) = parse(&l) {
+                    let parsed = if let Some(id) = limit {
+                        filter_high_ids(parse(&l), id)
+                    } else {
+                        parse(&l)
+                    };
+                    if let Ok(q) = parsed {
                         return Ok(q);
                     }
                     continue;
@@ -166,7 +171,7 @@ impl Editor {
         prompt: String,
         list: &mut PreloadableList<Loader>,
     ) -> rustyline::Result<ParsedQuery> {
-        let mut handle = self.helped_readline(prompt, Some(list.current().len()));
+        let mut handle = self.helped_readline(prompt, Some(list.current().len() + 1));
         loop {
             match handle.next() {
                 Message::Over(res) => {
