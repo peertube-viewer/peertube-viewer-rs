@@ -195,16 +195,8 @@ impl Config {
             InitialInfo::Trending
         } else if let Some(handle) = cli_args.value_of("chandle") {
             InitialInfo::Handle(handle.to_owned())
-        } else if let Some(query) = cli_args.value_of("channels") {
-            let query_owned = format!(
-                "{} {}",
-                query,
-                cli_args
-                    .values_of("initial-query")
-                    .map(concat)
-                    .unwrap_or_else(String::new)
-            );
-            InitialInfo::Channels(query_owned)
+        } else if let Some(s) = cli_args.values_of("channels").map(concat) {
+            InitialInfo::Channels(s)
         } else if let Some(s) = cli_args.values_of("initial-query").map(concat) {
             InitialInfo::Query(s)
         } else {
