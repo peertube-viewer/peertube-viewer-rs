@@ -271,12 +271,18 @@ impl Video {
     }
 
     fn fetch_files(&self) -> error::Result<Vec<File>> {
-        Ok(self
+        let files: Vec<File> = self
             .instance
             .video_complete(&self.uuid)?
             .drain(..)
             .map(|v| v.into())
-            .collect())
+            .collect();
+
+        if files.is_empty() {
+            return Err(error::Error::NoContent);
+        }
+
+        Ok(files)
     }
 
     /// Get the available resolutions
