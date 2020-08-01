@@ -192,13 +192,9 @@ pub fn parse_first(input: &str) -> Result<ParsedQuery, ParseError> {
     if input.is_empty() {
         return Err(ParseError::Empty);
     }
-    if let Ok(id) = input.parse::<usize>() {
-        return Ok(ParsedQuery::Id(id));
-    } else if !input.starts_with(':') {
-        return Ok(ParsedQuery::Query(input.to_string()));
-    }
-
-    if input.starts_with(":chandle ") || input == ":chandle" {
+    if !input.starts_with(':') {
+        Ok(ParsedQuery::Query(input.to_string()))
+    } else if input.starts_with(":chandle ") || input == ":chandle" {
         Ok(ParsedQuery::Chandle(
             input
                 .get(8..)

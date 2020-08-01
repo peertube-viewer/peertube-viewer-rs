@@ -183,6 +183,8 @@ impl Cli {
             return Ok(());
         }
 
+        data.mode.ensure_init()?;
+
         match &mut data.mode {
             Mode::Videos(videos) => {
                 self.video_prompt(videos, &mut data.action, &mut data.changed_action)?
@@ -202,11 +204,12 @@ impl Cli {
         if data.changed_action {
             match &data.action {
                 ParsedQuery::Query(s) => {
-                    if self.parse_query(&mut data.mode, &s)? {
-                        data.stop = true;
-                        return Ok(());
-                    }
-                    data.mode.ensure_init()?;
+                    self.rl.add_history_entry(&s);
+                    let search_tmp = PreloadableList::new(
+                        Videos::new_search(self.instance.clone(), &s),
+                        SEARCH_TOTAL,
+                    );
+                    data.mode = Mode::Videos(search_tmp);
                 }
                 ParsedQuery::Quit => {
                     data.stop = true;
@@ -236,7 +239,43 @@ impl Cli {
                     }
                     Mode::Temp => unreachable!(),
                 },
-                _ => unimplemented!(),
+                ParsedQuery::Trending => {
+                    let trending_tmp = PreloadableList::new(
+                        Videos::new_trending(self.instance.clone()),
+                        SEARCH_TOTAL,
+                    );
+                    data.mode = Mode::Videos(trending_tmp);
+                    self.rl.add_history_entry(":trending");
+                }
+                ParsedQuery::Channels(q) => {
+                    let channels_tmp = PreloadableList::new(
+                        Channels::new(self.instance.clone(), &q),
+                        SEARCH_TOTAL,
+                    );
+                    data.mode = Mode::Channels(channels_tmp);
+                    self.rl.add_history_entry(&format!(":channels {}", q));
+                }
+                ParsedQuery::Chandle(handle) => {
+                    let chandle_tmp = PreloadableList::new(
+                        Videos::new_channel(self.instance.clone(), &handle),
+                        SEARCH_TOTAL,
+                    );
+                    data.mode = Mode::Videos(chandle_tmp);
+                    self.rl.add_history_entry(&format!(":chandle {}", handle));
+                }
+                ParsedQuery::Info(id) => {
+                    self.info(&data.mode, *id)?;
+                    self.rl.add_history_entry(&format!(":info {}", id));
+                }
+                ParsedQuery::Browser(id) => {
+                    self.open_browser(&data.mode, *id)?;
+                    self.rl.add_history_entry(&format!(":browser {}", id));
+                }
+                ParsedQuery::Comments(id) => {
+                    self.comments(&mut data.mode, *id)?;
+                    self.rl.add_history_entry(&format!(":comments {}", id));
+                }
+                ParsedQuery::Id(_) => unreachable!(),
             };
         }
         Ok(())
@@ -328,61 +367,6 @@ impl Cli {
                 Ok(())
             }
         }
-    }
-
-    /// Returns true if the action is to stop
-    fn parse_query(&mut self, mode: &mut Mode, s: &str) -> Result<bool, Error> {
-        let parsed = if mode.is_temp() {
-            parser::parse(s)
-        } else {
-            parser::parse_first(s)
-        };
-
-        match parsed {
-            Ok(ParsedQuery::Quit) => return Ok(true),
-            Ok(ParsedQuery::Trending) => {
-                let trending_tmp =
-                    PreloadableList::new(Videos::new_trending(self.instance.clone()), SEARCH_TOTAL);
-                *mode = Mode::Videos(trending_tmp);
-            }
-            Ok(ParsedQuery::Channels(q)) => {
-                let channels_tmp =
-                    PreloadableList::new(Channels::new(self.instance.clone(), &q), SEARCH_TOTAL);
-                *mode = Mode::Channels(channels_tmp);
-                self.rl.add_history_entry(s);
-            }
-            Ok(ParsedQuery::Chandle(handle)) => {
-                let chandle_tmp = PreloadableList::new(
-                    Videos::new_channel(self.instance.clone(), &handle),
-                    SEARCH_TOTAL,
-                );
-                *mode = Mode::Videos(chandle_tmp);
-                self.rl.add_history_entry(s);
-            }
-            Ok(ParsedQuery::Info(id)) => {
-                self.info(&mode, id)?;
-                self.rl.add_history_entry(s);
-            }
-            Ok(ParsedQuery::Browser(id)) => {
-                self.open_browser(mode, id)?;
-                self.rl.add_history_entry(s);
-            }
-            Ok(ParsedQuery::Comments(id)) => {
-                self.comments(mode, id)?;
-                self.rl.add_history_entry(s);
-            }
-            Ok(ParsedQuery::Query(_)) => {
-                self.rl.add_history_entry(&s);
-                let search_tmp = PreloadableList::new(
-                    Videos::new_search(self.instance.clone(), &s),
-                    SEARCH_TOTAL,
-                );
-                *mode = Mode::Videos(search_tmp);
-            }
-            _ => unimplemented!(),
-        }
-
-        Ok(false)
     }
 
     fn comments(&mut self, mode: &mut Mode, id: usize) -> Result<(), Error> {
@@ -578,15 +562,6 @@ enum Mode {
 }
 
 impl Mode {
-    pub fn current_len(&self) -> usize {
-        match self {
-            Mode::Videos(v) => v.current().len(),
-            Mode::Channels(c) => c.current().len(),
-            Mode::Comments(c) => c.current().len(),
-            Mode::Temp => 0,
-        }
-    }
-
     pub fn is_temp(&self) -> bool {
         if let Mode::Temp = self {
             true
