@@ -7,8 +7,8 @@ Changelog
 - Syntax highlighting in the prompt
 - Tab completion in the prompt
 
-- Havled compile times
-- Havled binary size
+- Halved compile times
+- Halved binary size
 
 1.6.3
 -----

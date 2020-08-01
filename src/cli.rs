@@ -523,7 +523,7 @@ impl Cli {
             }
             Error::Api(ApiError::NoContent) => {
                 self.display.err(&"\
-                            peertube-viewer-rs was no content is available for this video\n\
+                            No content seems to be available for this video\n\
                             This is might happen if video you are trying to play comes from a instance that is down\n\
                             If not, it is a bug from peertube-viewer-rs".to_string()
                         );
