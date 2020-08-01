@@ -562,14 +562,6 @@ enum Mode {
 }
 
 impl Mode {
-    pub fn is_temp(&self) -> bool {
-        if let Mode::Temp = self {
-            true
-        } else {
-            false
-        }
-    }
-
     pub fn ensure_init(&mut self) -> Result<(), Error> {
         match self {
             Mode::Videos(v) => Ok(v.ensure_init()?),

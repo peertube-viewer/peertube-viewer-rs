@@ -229,12 +229,12 @@ impl Highlighter for Helper {
             Ok(ParsedQuery::Trending) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Previous) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Next) => green_then_bold(line, self.use_color),
-            Err(ParseError::UnexpectedArgs) | Err(ParseError::BadArgType) => {
-                green_then_red(line, self.use_color)
-            }
+            Err(ParseError::UnexpectedArgs)
+            | Err(ParseError::BadArgType)
+            | Err(ParseError::ArgTooHigh) => green_then_red(line, self.use_color),
             Err(ParseError::UnknownCommand)
-            | Err(ParseError::ArgTooHigh)
             | Err(ParseError::ExpectId)
+            | Err(ParseError::IdTooHigh)
             | Err(ParseError::IdZero) => red(line, self.use_color),
             Err(ParseError::MissingArgs) => cyan(line, self.use_color),
             Err(ParseError::Empty) => Cow::Borrowed(line),

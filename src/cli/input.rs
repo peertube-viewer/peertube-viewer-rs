@@ -137,7 +137,8 @@ impl Editor {
         spawn(move || {
             let mut ed = rl_cloned.lock().unwrap();
             if let Some(h) = ed.helper_mut() {
-                h.set_limit(limit)
+                h.set_limit(limit);
+                h.set_stade(Stade::Normal);
             };
             loop {
                 match ed.readline(&prompt) {

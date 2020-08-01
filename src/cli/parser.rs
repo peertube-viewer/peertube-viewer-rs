@@ -65,6 +65,7 @@ pub enum ParseError {
     UnknownCommand,
     MissingArgs,
     ArgTooHigh,
+    IdTooHigh,
     IdZero,
     BadArgType,
     ExpectId,
@@ -80,11 +81,11 @@ pub fn filter_high_ids(
         Ok(ParsedQuery::Info(id))
         | Ok(ParsedQuery::Comments(id))
         | Ok(ParsedQuery::Browser(id))
-        | Ok(ParsedQuery::Id(id))
             if *id >= max =>
         {
             Err(ParseError::ArgTooHigh)
         }
+        Ok(ParsedQuery::Id(id)) if *id >= max => Err(ParseError::IdTooHigh),
         Ok(ParsedQuery::Info(id))
         | Ok(ParsedQuery::Comments(id))
         | Ok(ParsedQuery::Browser(id))
@@ -128,7 +129,7 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
     } else if input.starts_with(":comments ") || input == ":comments" {
         Ok(ParsedQuery::Comments(
             input
-                .get(8..)
+                .get(9..)
                 .map(clean_spaces)
                 .flatten()
                 .ok_or(ParseError::MissingArgs)?
@@ -246,7 +247,7 @@ pub fn parse_id(input: &str) -> Result<ParsedQuery, ParseError> {
         return Ok(ParsedQuery::Id(id));
     }
 
-    return Err(ParseError::ExpectId);
+    Err(ParseError::ExpectId)
 }
 
 pub fn clean_spaces(input: &str) -> Option<&str> {
@@ -290,8 +291,11 @@ mod parser {
         assert_eq!(parse(""), Err(Empty));
         assert_eq!(parse("eazazd"), Ok(Query(String::from("eazazd"))));
         assert_eq!(parse(":channels foo"), Ok(Channels(String::from("foo"))));
+        assert_eq!(parse(":channels foo"), Ok(Channels(String::from("foo"))));
         assert_eq!(parse(":trending"), Ok(Trending));
         assert_eq!(parse(":info eazeaz"), Err(BadArgType));
+        assert_eq!(parse(":comments eazeaz"), Err(BadArgType));
+        assert_eq!(parse(":comments 12"), Ok(Comments(12)));
         assert_eq!(parse(":info 12"), Ok(Info(12)));
         assert_eq!(parse(":browser 12"), Ok(Browser(12)));
         assert_eq!(parse(":info"), Err(MissingArgs));
