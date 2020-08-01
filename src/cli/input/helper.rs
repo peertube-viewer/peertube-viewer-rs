@@ -226,6 +226,7 @@ impl Highlighter for Helper {
             Ok(ParsedQuery::Query(_)) => bold(line),
             Ok(ParsedQuery::Id(_)) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Quit) => green_then_bold(line, self.use_color),
+            Ok(ParsedQuery::Help) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Trending) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Previous) => green_then_bold(line, self.use_color),
             Ok(ParsedQuery::Next) => green_then_bold(line, self.use_color),

@@ -247,6 +247,15 @@ impl Cli {
                     data.mode = Mode::Videos(trending_tmp);
                     self.rl.add_history_entry(":trending");
                 }
+                ParsedQuery::Help => {
+                    self.display.help();
+                    self.rl.std_in("Press enter to continue".to_string())?;
+                    if data.mode.is_temp() {
+                        data.action = self.rl.first_readline(">>".to_string())?;
+                        data.changed_action = true;
+                        self.parse_action(data)?;
+                    }
+                }
                 ParsedQuery::Channels(q) => {
                     let channels_tmp = PreloadableList::new(
                         Channels::new(self.instance.clone(), &q),
@@ -577,6 +586,14 @@ impl Mode {
             Mode::Channels(c) => Ok(c.ensure_init()?),
             Mode::Comments(c) => Ok(c.ensure_init()?),
             Mode::Temp => panic!("Bad use of temp"),
+        }
+    }
+
+    pub fn is_temp(&self) -> bool {
+        if let Mode::Temp = self {
+            true
+        } else {
+            false
         }
     }
 }

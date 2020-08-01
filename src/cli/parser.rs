@@ -1,9 +1,11 @@
-const COMMANDS: [&str; 12] = [
+const COMMANDS: [&str; 14] = [
     //Sorted list of available commands
     ":browser",
     ":chandle",
     ":channels",
     ":comments",
+    ":h",
+    ":help",
     ":info",
     ":n",
     ":next",
@@ -14,18 +16,22 @@ const COMMANDS: [&str; 12] = [
     ":trending",
 ];
 
-const COMMANDS_FIRST: [&str; 5] = [
+const COMMANDS_FIRST: [&str; 7] = [
     //Sorted list of available commands
     ":chandle",
     ":channels",
+    ":h",
+    ":help",
     ":q",
     ":quit",
     ":trending",
 ];
 
-const NO_ARGS_FIRST_CMDS_WITH_SPACE: [&str; 3] = [":q ", ":quit ", ":trending "];
+const NO_ARGS_FIRST_CMDS_WITH_SPACE: [&str; 5] = [":h ", ":help ", ":q ", ":quit ", ":trending "];
 
-const NO_ARGS_CMDS_WITH_SPACE: [&str; 7] = [
+const NO_ARGS_CMDS_WITH_SPACE: [&str; 9] = [
+    ":h ",
+    ":help ",
     ":n ",
     ":next ",
     ":p ",
@@ -44,6 +50,7 @@ pub enum ParsedQuery {
     Browser(usize),
     Query(String),
     Id(usize),
+    Help,
     Quit,
     Next,
     Previous,
@@ -161,6 +168,8 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
         ))
     } else if input == ":trending" {
         Ok(ParsedQuery::Trending)
+    } else if input == ":h" || input == ":help" {
+        Ok(ParsedQuery::Help)
     } else if input == ":q" || input == ":quit" {
         Ok(ParsedQuery::Quit)
     } else if input == ":p" || input == ":previous" {
@@ -215,6 +224,8 @@ pub fn parse_first(input: &str) -> Result<ParsedQuery, ParseError> {
         ))
     } else if input == ":trending" {
         Ok(ParsedQuery::Trending)
+    } else if input == ":h" || input == ":help" {
+        Ok(ParsedQuery::Help)
     } else if input == ":q" || input == ":quit" {
         Ok(ParsedQuery::Quit)
     } else {
@@ -293,6 +304,8 @@ mod parser {
         assert_eq!(parse(":channels foo"), Ok(Channels(String::from("foo"))));
         assert_eq!(parse(":channels foo"), Ok(Channels(String::from("foo"))));
         assert_eq!(parse(":trending"), Ok(Trending));
+        assert_eq!(parse(":help"), Ok(Help));
+        assert_eq!(parse(":h"), Ok(Help));
         assert_eq!(parse(":info eazeaz"), Err(BadArgType));
         assert_eq!(parse(":comments eazeaz"), Err(BadArgType));
         assert_eq!(parse(":comments 12"), Ok(Comments(12)));
@@ -317,6 +330,8 @@ mod parser {
             Ok(Channels(String::from("foo")))
         );
         assert_eq!(parse_first(":trending"), Ok(Trending));
+        assert_eq!(parse_first(":help"), Ok(Help));
+        assert_eq!(parse_first(":h"), Ok(Help));
         assert_eq!(parse_first(":info eazeaz"), Err(UnknownCommand));
         assert_eq!(parse_first(":info 12"), Err(UnknownCommand));
         assert_eq!(parse_first(":browser 12"), Err(UnknownCommand));

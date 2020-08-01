@@ -397,4 +397,23 @@ impl Display {
         let before = ' '.to_string().repeat((self.cols - len) / 2);
         println!("{}{}", before, s);
     }
+
+    pub fn help(&self) {
+        println!(
+            "\
+            # MODES\n\n\
+            <keywords>           : search for a video\n\
+            :h(elp)              : display this help\n\
+            :trending            : get trending videos\n\
+            :channels <keywords> : search for a channel\n\
+            :info  <ID>          : get info for one of the currently displayed items\n\
+            :comments <ID>       : get comments for a video\n\
+            :browser <ID>        : open an item in the browser\n\n\
+            # NAVIGATING\n\
+            :n(ext)              : see more items\n\
+            :p(revious)          : return to the previous items\n\
+            :q(uit)\n\
+        "
+        );
+    }
 }
