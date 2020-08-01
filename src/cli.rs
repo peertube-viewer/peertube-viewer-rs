@@ -150,7 +150,10 @@ impl Cli {
             InitialInfo::Channels(s) => ParsedQuery::Channels(s),
             InitialInfo::Handle(s) => ParsedQuery::Chandle(s),
             InitialInfo::Trending => ParsedQuery::Trending,
-            InitialInfo::None => self.rl.first_readline(">> ".to_string())?,
+            InitialInfo::None => {
+                self.display.info("Search for videos (:h for help)");
+                self.rl.first_readline(">> ".to_string())?
+            }
         };
         let changed_action = true;
 
@@ -251,7 +254,8 @@ impl Cli {
                     self.display.help();
                     self.rl.std_in("Press enter to continue".to_string())?;
                     if data.mode.is_temp() {
-                        data.action = self.rl.first_readline(">>".to_string())?;
+                        self.display.info("Search for videos (:h for help)");
+                        data.action = self.rl.first_readline(">> ".to_string())?;
                         data.changed_action = true;
                         self.parse_action(data)?;
                     }

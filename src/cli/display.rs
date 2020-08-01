@@ -291,9 +291,13 @@ impl Display {
         println!("{}", msg);
     }
 
+    pub fn info(&self, msg: &str) {
+        println!("{}{}{}{}", style::Bold, style::Underline, msg, style::Reset);
+    }
+
     pub fn mode_info(&self, mode: &str, total: usize, offset: usize, current_len: usize) {
         println!(
-            "{}{}{} results {} to {} out of {}{}",
+            "{}{}{} results {} to {} out of {} (:h for help){}",
             style::Bold,
             style::Underline,
             mode,
