@@ -35,7 +35,7 @@ const NO_ARGS_CMDS_WITH_SPACE: [&str; 7] = [
     ":trending ",
 ];
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ParsedQuery {
     Channels(String),
     Chandle(String),
@@ -59,7 +59,7 @@ impl ParsedQuery {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ParseError {
     UnexpectedArgs,
     UnknownCommand,
@@ -173,7 +173,7 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
             }
         }
 
-        let starts = COMMANDS_FIRST.iter().fold(Vec::new(), |mut acc, cmd| {
+        let starts = COMMANDS.iter().fold(Vec::new(), |mut acc, cmd| {
             if cmd.starts_with(input) {
                 acc.push(*cmd);
             }
@@ -223,7 +223,7 @@ pub fn parse_first(input: &str) -> Result<ParsedQuery, ParseError> {
             }
         }
 
-        let starts = COMMANDS.iter().fold(Vec::new(), |mut acc, cmd| {
+        let starts = COMMANDS_FIRST.iter().fold(Vec::new(), |mut acc, cmd| {
             if cmd.starts_with(input) {
                 acc.push(*cmd);
             }
@@ -272,6 +272,67 @@ pub fn clean_spaces(input: &str) -> Option<&str> {
 #[cfg(test)]
 mod parser {
     use super::*;
+    use ParseError::*;
+    use ParsedQuery::*;
+
+    fn is_sorted<T: Ord>(input: &[T]) -> bool {
+        for i in 0..(input.len() - 1) {
+            if input[i] > input[i + 1] {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    #[test]
+    fn normal() {
+        assert_eq!(parse(""), Err(Empty));
+        assert_eq!(parse("eazazd"), Ok(Query(String::from("eazazd"))));
+        assert_eq!(parse(":channels foo"), Ok(Channels(String::from("foo"))));
+        assert_eq!(parse(":trending"), Ok(Trending));
+        assert_eq!(parse(":info eazeaz"), Err(BadArgType));
+        assert_eq!(parse(":info 12"), Ok(Info(12)));
+        assert_eq!(parse(":browser 12"), Ok(Browser(12)));
+        assert_eq!(parse(":info"), Err(MissingArgs));
+        assert_eq!(parse(":browser"), Err(MissingArgs));
+        assert_eq!(parse(":next"), Ok(Next));
+        assert_eq!(parse(":previous"), Ok(Previous));
+        assert_eq!(parse(":n"), Ok(Next));
+        assert_eq!(parse(":p"), Ok(Previous));
+        assert_eq!(parse("12"), Ok(Id(12)));
+        assert_eq!(parse("110"), Ok(Id(110)));
+    }
+
+    #[test]
+    fn first() {
+        assert_eq!(parse_first(""), Err(Empty));
+        assert_eq!(parse_first("eazazd"), Ok(Query(String::from("eazazd"))));
+        assert_eq!(
+            parse_first(":channels foo"),
+            Ok(Channels(String::from("foo")))
+        );
+        assert_eq!(parse_first(":trending"), Ok(Trending));
+        assert_eq!(parse_first(":info eazeaz"), Err(UnknownCommand));
+        assert_eq!(parse_first(":info 12"), Err(UnknownCommand));
+        assert_eq!(parse_first(":browser 12"), Err(UnknownCommand));
+        assert_eq!(parse_first(":info"), Err(UnknownCommand));
+        assert_eq!(parse_first(":browser"), Err(UnknownCommand));
+        assert_eq!(parse_first(":next"), Err(UnknownCommand));
+        assert_eq!(parse_first(":previous"), Err(UnknownCommand));
+        assert_eq!(parse_first(":n"), Err(UnknownCommand));
+        assert_eq!(parse_first(":p"), Err(UnknownCommand));
+        assert_eq!(parse_first("12"), Ok(Query(String::from("12"))));
+        assert_eq!(parse_first("110"), Ok(Query(String::from("110"))));
+    }
+
+    #[test]
+    fn static_data() {
+        assert!(is_sorted(&COMMANDS));
+        assert!(is_sorted(&COMMANDS_FIRST));
+        assert!(is_sorted(&NO_ARGS_FIRST_CMDS_WITH_SPACE));
+        assert!(is_sorted(&NO_ARGS_CMDS_WITH_SPACE));
+    }
 
     #[test]
     fn test_spaces() {
@@ -283,5 +344,16 @@ mod parser {
         assert_eq!(clean_spaces(" eaze"), Some("eaze"));
         assert_eq!(clean_spaces("eae "), Some("eae"));
         assert_eq!(clean_spaces("1"), Some("1"));
+    }
+
+    #[test]
+    fn id() {
+        assert_eq!(parse_id(""), Err(Empty));
+        assert_eq!(parse_id(" "), Err(ExpectId));
+        assert_eq!(parse_id("  "), Err(ExpectId));
+        assert_eq!(parse_id(" aeaeaz "), Err(ExpectId));
+        assert_eq!(parse_id("1"), Ok(Id(1)));
+        assert_eq!(parse_id("10"), Ok(Id(10)));
+        assert_eq!(parse_id("119"), Ok(Id(119)));
     }
 }
