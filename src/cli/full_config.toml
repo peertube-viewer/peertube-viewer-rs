@@ -17,6 +17,11 @@ edit-mode = "vi"
 # If it isn't set, the default is Firefox
 browser = "qutebrowser"
 
+# Change the User-Agent used for requests
+# Defaults to peertube-viewer-rs/<verion>
+# false instead of a string removes the user agent
+user-agent = "Mozilla/5.0 (X11; Linux x86_64; rv:79.0) Gecko/20100101 Firefox/79.0"
+
 [player]
 command = "mpv"
 args = ["--volume=30"]

@@ -42,6 +42,7 @@ struct PlayerConf {
 const NSFW_ALLOWED: [&str; 3] = ["tag", "block", "let"];
 const COLORS_ALLOWED: [&str; 2] = ["enable", "disable"];
 const EDIT_MODE_ALLOWED: [&str; 2] = ["emacs", "vi"];
+const USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
 #[derive(Debug)]
 pub enum ConfigLoadError {
@@ -163,6 +164,8 @@ pub struct Config {
     torrent: Option<(TorrentConf, bool)>,
     listed_instances: HashSet<String>,
     is_allowlist: bool,
+
+    user_agent: Option<String>,
 
     edit_mode: EditMode,
     browser: String,
@@ -334,6 +337,14 @@ impl Config {
 
             if let Some(Value::Boolean(true)) = t.get("select-quality") {
                 temp.select_quality = true;
+            }
+
+            if let Some(Value::Boolean(false)) = t.get("user-agent") {
+                temp.user_agent = None;
+            }
+
+            if let Some(Value::String(s)) = t.get("user-agent") {
+                temp.user_agent = Some(s.into());
             }
 
             if let Some(Value::String(s)) = t.get("edit-mode") {
@@ -547,6 +558,10 @@ impl Config {
     pub fn edit_mode(&self) -> EditMode {
         self.edit_mode
     }
+
+    pub fn user_agent(&self) -> Option<String> {
+        self.user_agent.clone()
+    }
 }
 
 impl Default for Config {
@@ -559,6 +574,7 @@ impl Default for Config {
             },
             instance: "https://video.ploud.fr".to_string(),
             torrent: None,
+            user_agent: Some(USER_AGENT.into()),
             nsfw: NsfwBehavior::Tag,
             listed_instances: HashSet::new(),
             is_allowlist: false,
@@ -651,13 +667,17 @@ mod config {
         assert_eq!(errors.len(), 0);
         assert_eq!(config.nsfw(), NsfwBehavior::Block);
         assert_eq!(config.player(), "mpv");
-        assert_eq!(*config.player_args(), vec!["--volume=30"]);
+        assert_eq!(*config.player_args(), vec!["--volume=30",]);
         assert_eq!(config.instance(), "https://skeptikon.fr");
         assert_eq!(config.browser(), "qutebrowser");
         assert!(config.is_blocked("peertube.social").is_some());
         assert_eq!(config.use_raw_url(), true);
         assert_eq!(config.select_quality(), true);
         assert_eq!(config.edit_mode(), EditMode::Vi);
+        assert_eq!(
+            config.user_agent(),
+            Some("Mozilla/5.0 (X11; Linux x86_64; rv:79.0) Gecko/20100101 Firefox/79.0".into())
+        );
 
         let yml = load_yaml!("clap_app.yml");
         let app = App::from_yaml(yml);

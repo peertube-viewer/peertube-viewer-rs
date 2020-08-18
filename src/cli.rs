@@ -28,7 +28,6 @@ use directories::ProjectDirs;
 use std::process::Command;
 
 const SEARCH_TOTAL: usize = 20;
-const USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"));
 
 pub struct Cli {
     config: Config,
@@ -121,7 +120,7 @@ impl Cli {
             },
             !config.nsfw().is_block(),
             config.local(),
-            Some(USER_AGENT.into()),
+            config.user_agent(),
         );
 
         if !is_single_url {
