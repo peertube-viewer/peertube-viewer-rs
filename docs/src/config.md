@@ -24,6 +24,7 @@ Format
     - [`select-quality`](#select-quality) regarding quality selection
     - [`edit-mode`](#edit-mode) to set the input mode to vi style keybindings
     - [`browser`](#browser) set the browser to be used
+    - [`user-agent`](#user-agent) set the user agent to be used
 
 - [[`player`]](#player)
     - [`command`](#command) video player command
@@ -79,6 +80,12 @@ Set the browser to use when opening items with the `:browser` command.
 If this variable isn't set, the `BROWSER` environment variable is used.
 If the environment variable isn't available, Firefox is the default
 
+#### user-agent
+Set the [`User-Agent`](https://en.wikipedia.org/wiki/User_agent) string to be used when making http requests.
+If can be a string, which will be used as is, or a boolean (false means remove the `User-Agent` header).
+
+Defaults to: `peertube-viewer-rs/<version>`
+
 
 Example:
 ```toml
@@ -88,6 +95,7 @@ colors = "enable"
 select-quality = true
 edit-mode = "vi"
 browser = "qutebrowser"
+user-agent = false
 ```
 ### Player
 Configuration for the player
