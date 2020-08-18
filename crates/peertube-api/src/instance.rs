@@ -17,6 +17,7 @@ use crate::video::Video;
 /// created them. This avoids connecting to many distinct instances.
 pub struct Instance {
     host: String,
+    user_agent: Option<String>,
     include_nsfw: &'static str,
     local: bool,
 }
@@ -30,12 +31,27 @@ fn status_or_error(res: ureq::Response) -> error::Result<ureq::Response> {
 }
 
 impl Instance {
-    pub fn new(host: String, include_nsfw: bool, local: bool) -> Arc<Instance> {
+    pub fn new(
+        host: String,
+        include_nsfw: bool,
+        local: bool,
+        user_agent: Option<String>,
+    ) -> Arc<Instance> {
         Arc::new(Instance {
             host,
+            user_agent,
             include_nsfw: nsfw_string(include_nsfw),
             local,
         })
+    }
+
+    /// Adds the user agent if there is one
+    fn add_user_agent<'r>(&self, req: &'r mut ureq::Request) -> &'r mut ureq::Request {
+        if let Some(user_agent) = &self.user_agent {
+            req.set("User-Agent", user_agent)
+        } else {
+            req
+        }
     }
 
     /// Perform a search for the given query
@@ -49,7 +65,8 @@ impl Instance {
         url.push_str("/api/v1/search/videos");
 
         let mut req = ureq::get(&url);
-        req.query("search", query)
+        self.add_user_agent(&mut req)
+            .query("search", query)
             .query("count", &nb.to_string())
             .query("start", &offset.to_string())
             .query("nsfw", self.include_nsfw);
@@ -81,9 +98,11 @@ impl Instance {
         url.push_str("/videos");
 
         let mut req = ureq::get(&url);
-        req.query("nsfw", self.include_nsfw)
+        self.add_user_agent(&mut req)
+            .query("nsfw", self.include_nsfw)
             .query("count", &nb.to_string())
-            .query("start", &offset.to_string());
+            .query("start", &offset.to_string())
+            .set("User-Agent", concat!(env!("CARGO_PKG_NAME")));
 
         if self.local {
             req.query("filter", "local");
@@ -111,7 +130,8 @@ impl Instance {
         url.push_str("/comment-threads");
 
         let mut req = ureq::get(&url);
-        req.query("count", &nb.to_string())
+        self.add_user_agent(&mut req)
+            .query("count", &nb.to_string())
             .query("start", &offset.to_string());
 
         let mut comment_res: Comments =
@@ -136,7 +156,8 @@ impl Instance {
         url.push_str("/api/v1/videos");
 
         let mut req = ureq::get(&url);
-        req.query("sort", "-trending")
+        self.add_user_agent(&mut req)
+            .query("sort", "-trending")
             .query("count", &nb.to_string())
             .query("start", &offset.to_string())
             .query("nsfw", self.include_nsfw);
@@ -166,7 +187,8 @@ impl Instance {
         url.push_str("/api/v1/search/video-channels");
 
         let mut req = ureq::get(&url);
-        req.query("search", query)
+        self.add_user_agent(&mut req)
+            .query("search", query)
             .query("count", &nb.to_string())
             .query("start", &offset.to_string());
 
@@ -193,6 +215,7 @@ impl Instance {
         url.push_str(uuid);
 
         let mut req = ureq::get(&url);
+        self.add_user_agent(&mut req);
         Ok(Video::from_full(
             self,
             DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?, //TODO reput error for status
@@ -219,6 +242,7 @@ impl Instance {
         url.push_str(uuid);
 
         let mut req = ureq::get(&url);
+        self.add_user_agent(&mut req);
         let video: FullVideo =
             DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?; //TODO reput error for status
         Ok(video.files)
