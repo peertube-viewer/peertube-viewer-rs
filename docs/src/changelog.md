@@ -1,6 +1,11 @@
 Changelog
 =========
 
+dev
+---
+
+- User agent configuration
+
 1.7.1
 -----
 
