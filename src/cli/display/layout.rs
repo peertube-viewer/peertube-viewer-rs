@@ -39,7 +39,7 @@ where
     }
 
     pub fn is_align(&self) -> bool {
-        matches!(self, LayoutItem::Alignement)
+        matches!(self, LayoutItem::Alignement | LayoutItem::WrappableInner(_))
     }
 
     pub fn is_style(&self) -> bool {
@@ -48,7 +48,7 @@ where
 
     pub fn is_wrappable(&self) -> bool {
         match self {
-             LayoutItem::WrappableInner(_) => true,
+            LayoutItem::WrappableInner(_) => true,
             _ => false,
         }
     }
@@ -130,7 +130,7 @@ pub fn default_video_layouts() -> (
 ) {
     let video_layout = vec![
         LayoutItem::Style(Box::new(color::Fg(color::Blue))),
-        LayoutItem::Inner(VideoLayoutItem::Name),
+        LayoutItem::WrappableInner(VideoLayoutItem::Name),
         LayoutItem::Text(" ".to_string()),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Green))),
@@ -159,7 +159,7 @@ pub fn default_video_layouts() -> (
 
     let seen_video_layout = vec![
         LayoutItem::Style(Box::new(style::Bold)),
-        LayoutItem::Inner(VideoLayoutItem::Name),
+        LayoutItem::WrappableInner(VideoLayoutItem::Name),
         LayoutItem::Style(Box::new(style::Reset)),
         LayoutItem::Text(" ".to_string()),
         LayoutItem::Alignement,
@@ -193,7 +193,7 @@ pub fn default_video_layouts() -> (
 pub fn default_channel_layouts() -> Vec<LayoutItem<ChannelLayoutItem>> {
     vec![
         LayoutItem::Style(Box::new(color::Fg(color::Blue))),
-        LayoutItem::Inner(ChannelLayoutItem::Name),
+        LayoutItem::WrappableInner(ChannelLayoutItem::Name),
         LayoutItem::Text(" ".to_string()),
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
@@ -221,7 +221,7 @@ pub fn default_comment_layouts() -> Vec<LayoutItem<CommentLayoutItem>> {
         LayoutItem::Alignement,
         LayoutItem::Style(Box::new(color::Fg(color::Reset))),
         LayoutItem::Text("\n".to_string()),
-        LayoutItem::WrappableInner(CommentLayoutItem::Content),
+        LayoutItem::Inner(CommentLayoutItem::Content),
         LayoutItem::Text("\n".to_string()),
     ]
 }

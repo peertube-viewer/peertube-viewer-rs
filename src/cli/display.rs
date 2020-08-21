@@ -135,6 +135,8 @@ impl Display {
                 layout.iter().filter(|i| i.is_align()).count()
             )
         ];
+        let mut max_wrappable = 0;
+        let mut max_length = 0;
         for v in contents {
             let mut tmp_str = Vec::new();
             let mut tmp_align = Vec::new();
@@ -152,11 +154,15 @@ impl Display {
                 layout.iter()
             };
 
+            let mut length_total = 0;
+
             for item in layout_iter {
                 if !item.is_align() && !item.is_style() {
                     let dsp = item.display(v);
                     let s: &str = &dsp;
-                    align_off += UnicodeWidthStr::width(s);
+                    let len = UnicodeWidthStr::width(s);
+                    align_off += len;
+                    length_total += len;
                     tmp_str.push(dsp);
                 } else if item.is_align() {
                     if alignements_total[align_id] < align_off {
@@ -165,22 +171,48 @@ impl Display {
                     tmp_align.push(align_off);
                     align_off = 0;
                     align_id += 1;
+                    if item.is_wrappable() {
+                        let dsp = item.display(v);
+                        let s: &str = &dsp;
+                        let len = UnicodeWidthStr::width(s);
+                        align_off = len;
+                        length_total += len;
+                        tmp_str.push(dsp);
+
+                        if align_off > max_wrappable {
+                            max_wrappable = align_off;
+                        }
+                    }
                 }
             }
+
+            if length_total > max_length {
+                max_length = length_total;
+            }
+
             content_parts.push((tmp_str, tmp_align));
+        }
+
+        let mut should_wrap = None;
+        if max_length > self.cols {
+            if max_length - max_wrappable < self.cols {
+                should_wrap = Some(self.cols - (max_length - max_wrappable))
+            }
         }
 
         let mut buffer = String::new();
         for (id, parts) in content_parts.into_iter().enumerate() {
-            buffer.push_str(&(id + 1).to_string());
-            buffer.push_str(
+            let mut wrapped_lines = None;
+            let mut line = String::new();
+            line.push_str(&(id + 1).to_string());
+            line.push_str(
                 &" ".to_string()
                     .repeat(display_length(contents.len()) - display_length(id + 1)),
             );
-            buffer.push_str(": ");
+            line.push_str(": ");
 
             if let Some(reason) = blocklist.is_blocked(&contents[id]) {
-                buffer.push_str(&format!(
+                line.push_str(&format!(
                     "{}{}{}\n",
                     fg_color(color::Red, self.colors),
                     reason,
@@ -206,20 +238,34 @@ impl Display {
                         - parts_align_it
                             .next()
                             .expect("Internal error: align smaller than expected");
-                    buffer.push_str(&" ".to_string().repeat(spacing));
+                    line.push_str(&" ".to_string().repeat(spacing));
+                    if item.is_wrappable() {
+                        if let Some(len) = should_wrap {
+                            let tmp = textwrap::fill(
+                                parts_it
+                                    .next()
+                                    .expect("Internal Error: parts smaller than alignement"),
+                                len,
+                            );
+                            if tmp.len() > 0 && tmp.bytes().nth(0) != Some(b'\n') {
+                                line.push_str(&tmp.lines().nth(0).expect("unreachable"));
+                            }
+                            wrapped_lines = Some((UnicodeWidthStr::width(&*line), tmp));
+                        } else {
+                            line.push_str(&fill(
+                                &parts_it
+                                    .next()
+                                    .expect("Internal Error: parts smaller than alignement"),
+                                self.cols,
+                            ));
+                        }
+                    }
                 } else if item.is_style() {
                     if self.colors {
-                        buffer.push_str(&item.display_as_style());
+                        line.push_str(&item.display_as_style());
                     }
-                } else if item.is_wrappable() {
-                    buffer.push_str(&fill(
-                        &parts_it
-                            .next()
-                            .expect("Internal Error: parts smaller than alignement"),
-                        self.cols,
-                    ));
                 } else {
-                    buffer.push_str(
+                    line.push_str(
                         &parts_it
                             .next()
                             .expect("Internal Error: parts smaller than alignement"),
@@ -227,7 +273,17 @@ impl Display {
                 }
             }
 
-            buffer.push('\n');
+            if let Some((offset, wrapped)) = wrapped_lines {
+                let lines = wrapped.lines().next();
+                for l in lines {
+                    line.push('\n');
+                    line.push_str(&" ".to_string().repeat(offset));
+                    line.push_str(l);
+                }
+            }
+
+            line.push('\n');
+            buffer.push_str(&line);
         }
 
         print!("{}", buffer);
