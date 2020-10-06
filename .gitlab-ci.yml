@@ -74,7 +74,7 @@ pages:
   - wget https://github.com/rust-lang/mdBook/releases/download/v0.4.3/mdbook-v0.4.3-x86_64-unknown-linux-gnu.tar.gz
   - tar xvzf mdbook-v0.4.3-x86_64-unknown-linux-gnu.tar.gz
   - ./mdbook build docs/ -d ../public
-  - find public -type f -regex '.*\.\(htm\|html\|txt\|text\|js\|css\)$' -exec gzip -9 -f -k {} \;
+  - find public -type f -exec gzip -9 -f -k {} \;
   artifacts:
     paths:
     - public/
