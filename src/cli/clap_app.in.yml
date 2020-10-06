@@ -1,6 +1,6 @@
 name: peertube-viewer-rs
 version:
-author: Sosthène Guédon <sosthene.gued@gmail.com>
+author: Sosthène Guédon <dev@peertube-viewer.com>
 about: PeerTube cli client
 
 args:
