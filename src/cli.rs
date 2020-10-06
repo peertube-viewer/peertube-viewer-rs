@@ -476,32 +476,32 @@ impl Cli {
                     .rl
                     .readline_id(">> ".to_string(), Some(nb_resolutions + 1))?;
                 if self.config.use_torrent() {
-                    // This should not error because the videos where
-                    // already loaded and the bounds are checked
-                    video.torrent_url(choice - 1).expect("Unexpected error")
+                    video.torrent_url(choice - 1)?
                 } else {
-                    video.resolution_url(choice - 1).expect("Unexpected error")
+                    video.resolution_url(choice - 1)?
                 }
             }
         } else if self.config.use_torrent() {
             video.load_resolutions()?;
             match video.torrent_url(0) {
                 Ok(url) => url,
-                Err(_) => {
+                Err(peertube_api::error::Error::OutOfBound(_)) => {
                     self.display
                         .warn(&"Unable to fetch torrent url\nThis video will be skipped");
                     return Ok(());
                 }
+                Err(err) => return Err(err.into()),
             }
         } else if self.config.use_raw_url() {
             video.load_resolutions()?;
             match video.resolution_url(0) {
                 Ok(url) => url,
-                Err(_) => {
+                Err(peertube_api::error::Error::OutOfBound(_)) => {
                     self.display
                         .warn(&"Unable to fetch raw video url\nAttempting to play with watch url");
                     video.watch_url()
                 }
+                Err(err) => return Err(err.into()),
             }
         } else {
             video.watch_url()
