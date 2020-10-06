@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use crate::common::Channel;
-use crate::error;
+use crate::error::{self, Error};
 use crate::instance::Instance;
 use peertube_ser::{search, video};
 
@@ -92,16 +92,21 @@ impl From<video::File> for File {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 enum Description {
     None,
     FetchedNone,
+    FetchedError(Error),
     Fetched(String),
 }
 
 impl Description {
     pub fn is_none(&self) -> bool {
-        Description::None == *self
+        if let Description::None = *self {
+            true
+        } else {
+            false
+        }
     }
 
     pub fn to_option(&self) -> Option<String> {
@@ -111,6 +116,13 @@ impl Description {
             None
         }
     }
+}
+
+#[derive(Debug, Clone)]
+enum Files {
+    None,
+    FetchedError(Error),
+    Fetched(Vec<File>),
 }
 
 /// Handle to a video
@@ -126,7 +138,7 @@ pub struct Video {
     published: Option<DateTime<FixedOffset>>,
     short_desc: Option<String>,
     description: Mutex<Description>,
-    files: Mutex<Option<Vec<File>>>,
+    files: Mutex<Files>,
     channel: Channel,
     account: Channel,
 }
@@ -192,7 +204,7 @@ impl Video {
             published: DateTime::parse_from_rfc3339(&v.publishedAt).ok(),
             short_desc: v.description,
             description: Mutex::new(Description::None),
-            files: Mutex::new(None),
+            files: Mutex::new(Files::None),
             channel: v.channel.into(),
             account: v.account.into(),
         }
@@ -210,7 +222,9 @@ impl Video {
             published: DateTime::parse_from_rfc3339(&v.publishedAt).ok(),
             short_desc: v.description,
             description: Mutex::new(Description::None),
-            files: Mutex::new(Some(v.files.drain(..).map(|v| v.into()).collect())),
+            files: Mutex::new(Files::Fetched(
+                v.files.drain(..).map(|v| v.into()).collect(),
+            )),
             channel: v.channel.into(),
             account: v.account.into(),
         }
@@ -231,9 +245,10 @@ impl Video {
     pub fn description(&self) -> error::Result<Option<String>> {
         let mut guard = self.description.lock().unwrap();
         if guard.is_none() {
-            *guard = match self.fetch_description()? {
-                Some(s) => Description::Fetched(s),
-                None => Description::FetchedNone,
+            *guard = match self.fetch_description() {
+                Ok(Some(s)) => Description::Fetched(s),
+                Ok(None) => Description::FetchedNone,
+                Err(err) => Description::FetchedError(err),
             };
         }
         Ok(guard.to_option())
@@ -264,8 +279,16 @@ impl Video {
     /// Used to asynchronously load the resolutions for later use
     pub fn load_resolutions(&self) -> error::Result<()> {
         let mut guard = self.files.lock().unwrap();
-        if guard.is_none() {
-            *guard = Some(self.fetch_files()?);
+        if let Files::None = &*guard {
+            match self.fetch_files() {
+                Ok(files) => {
+                    *guard = Files::Fetched(files);
+                }
+                Err(err) => {
+                    *guard = Files::FetchedError(err.clone());
+                    return Err(err);
+                }
+            }
         }
         Ok(())
     }
@@ -290,37 +313,50 @@ impl Video {
     /// is stored and re-used
     pub fn resolutions(&self) -> error::Result<Vec<Resolution>> {
         let mut guard = self.files.lock().unwrap();
-        if guard.is_none() {
-            *guard = Some(self.fetch_files()?);
+        match &*guard {
+            Files::None => match self.fetch_files() {
+                Ok(files) => {
+                    let resolutions = files
+                        .iter()
+                        .map(|file| Resolution::from_file(file))
+                        .collect();
+                    *guard = Files::Fetched(files);
+                    Ok(resolutions)
+                }
+                Err(err) => {
+                    *guard = Files::FetchedError(err.clone());
+                    Err(err)
+                }
+            },
+            Files::FetchedError(err) => Err(err.clone()),
+            Files::Fetched(files) => Ok(files
+                .iter()
+                .map(|file| Resolution::from_file(file))
+                .collect()),
         }
-
-        let resolutions = guard
-            .as_ref()
-            .unwrap()
-            .iter()
-            .map(|file| Resolution::from_file(file))
-            .collect();
-
-        Ok(resolutions)
     }
 
     /// Get a url for a given resolution
-    pub fn resolution_url(&self, id: usize) -> String {
+    pub fn resolution_url(&self, id: usize) -> error::Result<String> {
         let guard = self.files.lock().unwrap();
-        if let Some(res) = guard.as_ref() {
-            res[id].download_url.clone()
-        } else {
-            panic!("Resolution hasn't been fetched");
+
+        match &*guard {
+            Files::Fetched(res) if res.len() > id => Ok(res[id].download_url.clone()),
+            Files::Fetched(res) => Err(Error::OutOfBound(res.len())),
+            Files::FetchedError(err) => Err(err.clone()),
+            Files::None => panic!("Resolution hasn't been fetched yet"),
         }
     }
 
     /// Get a torrent url for a given resolution
-    pub fn torrent_url(&self, id: usize) -> String {
+    pub fn torrent_url(&self, id: usize) -> error::Result<String> {
         let guard = self.files.lock().unwrap();
-        if let Some(res) = guard.as_ref() {
-            res[id].torrent_download_url.clone()
-        } else {
-            panic!("Resolution hasn't been fetched");
+
+        match &*guard {
+            Files::Fetched(res) if res.len() > id => Ok(res[id].torrent_download_url.clone()),
+            Files::Fetched(res) => Err(Error::OutOfBound(res.len())),
+            Files::FetchedError(err) => Err(err.clone()),
+            Files::None => panic!("Resolution hasn't been fetched yet"),
         }
     }
 }

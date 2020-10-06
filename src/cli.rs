@@ -473,16 +473,32 @@ impl Cli {
                 }
             }
             if self.config.use_torrent() {
-                video.torrent_url(choice - 1)
+                video.torrent_url(choice - 1).expect("Unexpected error")
+            //This should not error because the videos where
+            //already loaded and the bounds are checked
             } else {
-                video.resolution_url(choice - 1)
+                video.resolution_url(choice - 1).expect("Unexpected error")
             }
         } else if self.config.use_torrent() {
             video.load_resolutions()?;
-            video.torrent_url(0)
+            match video.torrent_url(0) {
+                Ok(url) => url,
+                Err(_) => {
+                    self.display
+                        .warn(&"Unable to fetch torrent url\nThis video will be skipped");
+                    return Ok(());
+                }
+            }
         } else if self.config.use_raw_url() {
             video.load_resolutions()?;
-            video.resolution_url(0)
+            match video.resolution_url(0) {
+                Ok(url) => url,
+                Err(_) => {
+                    self.display
+                        .warn(&"Unable to fetch raw video url, attempting to play with watch url");
+                    video.watch_url()
+                }
+            }
         } else {
             video.watch_url()
         };
