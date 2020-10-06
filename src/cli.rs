@@ -459,23 +459,13 @@ impl Cli {
             let resolutions = video.resolutions()?;
             let nb_resolutions = resolutions.len();
             self.display.resolutions(resolutions);
-            let choice;
-            loop {
-                match self
-                    .rl
-                    .readline_id(">> ".to_string(), Some(nb_resolutions))?
-                {
-                    ParsedQuery::Id(id) => {
-                        choice = id;
-                        break;
-                    }
-                    _ => unreachable!(),
-                }
-            }
+            let choice = self
+                .rl
+                .readline_id(">> ".to_string(), Some(nb_resolutions + 1))?;
             if self.config.use_torrent() {
+                // This should not error because the videos where
+                // already loaded and the bounds are checked
                 video.torrent_url(choice - 1).expect("Unexpected error")
-            //This should not error because the videos where
-            //already loaded and the bounds are checked
             } else {
                 video.resolution_url(choice - 1).expect("Unexpected error")
             }

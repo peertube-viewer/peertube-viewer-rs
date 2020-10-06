@@ -75,7 +75,7 @@ impl Editor {
         &mut self,
         prompt: String,
         limit: Option<usize>,
-    ) -> rustyline::Result<ParsedQuery> {
+    ) -> rustyline::Result<usize> {
         let mut guard = self.rl.lock().unwrap();
         if let Some(h) = guard.helper_mut() {
             h.set_limit(limit);
@@ -84,8 +84,11 @@ impl Editor {
         loop {
             match guard.readline(&prompt) {
                 Ok(l) => {
-                    if let Ok(q) = parse_id(&l) {
-                        return Ok(q);
+                    if let Ok(ParsedQuery::Id(id)) = parse_id(&l) {
+                        if limit.filter(|max| max > &id && id > 0).is_none() {
+                            continue;
+                        }
+                        return Ok(id);
                     }
                     continue;
                 }
