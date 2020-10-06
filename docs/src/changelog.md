@@ -1,7 +1,7 @@
 Changelog
 =========
 
-dev
+1.7.2
 ---
 
 - User agent configuration
