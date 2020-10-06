@@ -455,19 +455,33 @@ impl Cli {
                 return Ok(());
             }
         }
+
         let video_url = if self.config.select_quality() {
             let resolutions = video.resolutions()?;
             let nb_resolutions = resolutions.len();
-            self.display.resolutions(resolutions);
-            let choice = self
-                .rl
-                .readline_id(">> ".to_string(), Some(nb_resolutions + 1))?;
-            if self.config.use_torrent() {
-                // This should not error because the videos where
-                // already loaded and the bounds are checked
-                video.torrent_url(choice - 1).expect("Unexpected error")
+
+            if nb_resolutions == 0 {
+                if self.config.use_torrent() {
+                    self.display
+                        .warn(&"Unable to fetch torrent url\nThis video will be skipped");
+                    return Ok(());
+                } else {
+                    self.display
+                        .warn(&"Unable to fetch resolutions\nAttempting to play with watch url");
+                    video.watch_url()
+                }
             } else {
-                video.resolution_url(choice - 1).expect("Unexpected error")
+                self.display.resolutions(resolutions);
+                let choice = self
+                    .rl
+                    .readline_id(">> ".to_string(), Some(nb_resolutions + 1))?;
+                if self.config.use_torrent() {
+                    // This should not error because the videos where
+                    // already loaded and the bounds are checked
+                    video.torrent_url(choice - 1).expect("Unexpected error")
+                } else {
+                    video.resolution_url(choice - 1).expect("Unexpected error")
+                }
             }
         } else if self.config.use_torrent() {
             video.load_resolutions()?;
@@ -485,7 +499,7 @@ impl Cli {
                 Ok(url) => url,
                 Err(_) => {
                     self.display
-                        .warn(&"Unable to fetch raw video url, attempting to play with watch url");
+                        .warn(&"Unable to fetch raw video url\nAttempting to play with watch url");
                     video.watch_url()
                 }
             }
