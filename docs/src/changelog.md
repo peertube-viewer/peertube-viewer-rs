@@ -5,6 +5,8 @@ dev
 ---
 
 - User agent configuration
+- Fix multiple panics
+- Avoids being stuck in selecting a resolution with no option when no option is available
 
 1.7.1
 -----
