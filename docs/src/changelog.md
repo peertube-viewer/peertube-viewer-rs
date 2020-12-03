@@ -1,6 +1,13 @@
 Changelog
 =========
 
+dev
+---
+
+Features that are implemented but not released yet.
+
+- Support for HLS videos with the --use-raw-url option
+
 1.7.2
 ---
 

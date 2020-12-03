@@ -30,6 +30,7 @@ Format
     - [`command`](#command) video player command
     - [`args`](#args) video player arguments
     - [`use-raw-urls`](#use-raw-urls) see [command line arguments](cli/args.md)
+    - [`prefer-hls`](#prefer-hls) prefer [hls streams](https://en.wikipedia.org/wiki/HTTP_Live_Streaming) to static files
 
 - [[`instances`]](#instances)
     - [`main`](#main) main instance to search
@@ -112,12 +113,23 @@ Set whether the `--use-raw-urls` flag is enabled by default
 - `true`
 - `false`: the default
 
+#### prefer-hls
+Peertube has support for live streaming. Some regular videos are also made available through [hls](https://en.wikipedia.org/wiki/HTTP_Live_Streaming).
+
+This settings tells `peertube-viewer` which one it should prefer if both are available.
+
+- `false`
+- `true`: the default
+
+*Note: this option doesn't do anything if either `select-quality` is `true` or if `use-raw-urls` is `false`*
+
 Example:
 ```toml
 [player]
 command = "vlc"
 args = ["--no-audio", "-f"]
 use-raw-urls = true
+prefer-hls = false
 ```
 
 ### Torrent

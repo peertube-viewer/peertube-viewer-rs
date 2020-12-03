@@ -32,6 +32,7 @@ use-raw-urls = true
 # can be true or false
 # When use-raw-urls is true and this is true, peertube-viewer will prioritize hls
 # versions of videos instead of the static files for a given resolution
+# This option is overrided to false when select-quality is given
 prefer-hls = false
 
 [instances]
