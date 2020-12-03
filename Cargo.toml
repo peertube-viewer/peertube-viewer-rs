@@ -11,7 +11,7 @@ preloadable-list = {version = "*", path = "crates/preloadable-list"}
 ureq = "1"
 termion = "1"
 chrono = "0.4.13"
-rustyline = { version = "6", default-features=false}
+rustyline = { version = "7", default-features=false}
 clap = { version = "2", features = ["yaml"] }
 toml = "0.5.6"
 unicode-width = "0.1.8"

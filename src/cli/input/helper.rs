@@ -82,6 +82,8 @@ impl Helper {
 }
 
 impl Hinter for Helper {
+    type Hint = String;
+
     fn hint(&self, line: &str, pos: usize, ctx: &Context) -> Option<String> {
         self.message(line);
         if let Ok((0, cmds)) = self.complete(line, pos, ctx) {

@@ -197,7 +197,7 @@ impl Editor {
     }
 
     pub fn save_history(&mut self, path: &PathBuf) -> rustyline::Result<()> {
-        let ed = self.rl.lock().unwrap();
+        let mut ed = self.rl.lock().unwrap();
         ed.save_history(path)
     }
 
