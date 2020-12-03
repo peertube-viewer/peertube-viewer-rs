@@ -456,14 +456,16 @@ impl Cli {
             }
         }
 
-        let has_files = video.has_files()?;
-
-        let video_url = if self.config.select_quality() && has_files {
+        let video_url = if self.config.select_quality() {
             let resolutions = video.resolutions()?;
             let nb_resolutions = resolutions.len();
 
             if nb_resolutions == 0 {
-                if self.config.use_torrent() {
+                if video.has_streams()? {
+                    self.display
+                        .warn(&"No resolutions available\nVideo will be played with an HLS stream");
+                    video.stream_url(0)?
+                } else if self.config.use_torrent() {
                     self.display
                         .warn(&"Unable to fetch torrent url\nThis video will be skipped");
                     return Ok(());
@@ -483,8 +485,9 @@ impl Cli {
                     video.resolution_url(choice - 1)?
                 }
             }
-        } else if self.config.use_torrent() && has_files {
+        } else if self.config.use_torrent() {
             video.load_resolutions()?;
+
             match video.torrent_url(0) {
                 Ok(url) => url,
                 Err(peertube_api::error::Error::OutOfBound(_)) => {
@@ -517,17 +520,6 @@ impl Cli {
                     }
                     Err(err) => return Err(err.into()),
                 }
-            }
-        } else if !has_files {
-            match video.stream_url(0) {
-                Ok(url) => url,
-                Err(peertube_api::error::Error::OutOfBound(_)) => {
-                    self.display.warn(
-                        &"Unable to fetch streaming video url\nAttempting to play with watch url",
-                    );
-                    video.watch_url()
-                }
-                Err(err) => return Err(err.into()),
             }
         } else {
             video.watch_url()
