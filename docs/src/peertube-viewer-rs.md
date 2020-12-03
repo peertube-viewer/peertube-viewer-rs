@@ -13,7 +13,7 @@ When launching  you are prompted with a search input.
 Once a search is done, you can either select one of the results by writing the corresponding number or do another search by typing anything else.
 When you chose to play a video, it will be launched in a video player ([mpv](https://github.com/mpv-player/mpv) by default)
 
-![peertube-viewer-rs interface](screenshots/screenshot.png)
+![peertube-viewer-rs interface](screenshots/screenshot.jpg)
 
 peertube-viewer and peertube-viewer-rs
 --------------------------------------

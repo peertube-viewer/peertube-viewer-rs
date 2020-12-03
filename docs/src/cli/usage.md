@@ -2,7 +2,7 @@ Usage
 =====
 
 When launching **peertube-viewer-rs** you will be prompted to enter a search.
-![search_prompt](../screenshots/search_prompt.png)
+![search_prompt](../screenshots/search_prompt.jpg)
 
 You can then enter a search and will be displayed the results with:
 
@@ -15,10 +15,10 @@ You can then enter a search and will be displayed the results with:
 - a nsfw tag for video tagged as such
 
 The white/bold results are those that you have already been watched.
-![select_prompt](../screenshots/select_prompt.png)
+![select_prompt](../screenshots/select_prompt.jpg)
 
 You can either play one of the results by typing its ID or get more results with `:n`
-![next](../screenshots/next_done.png)
+![next](../screenshots/next_done.jpg)
 
 At any moment you can quit with `:q`
 

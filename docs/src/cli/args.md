@@ -23,7 +23,7 @@ flags
 -----
 
 -   `-s, --select-quality`    When playing a video with this option, the user will be prompted to chose the video quality
-![quality prompt](../screenshots/select_quality.png)
+![quality prompt](../screenshots/select_quality.jpg)
 
 -   `-t, --trending`    will start browsing trendings videos. If an initial query is passed with it, it will be ignored
 -   `--channels`       Search channels instead of videos
