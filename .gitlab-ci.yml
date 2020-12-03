@@ -20,6 +20,7 @@ rust-latest:
 
 rust-oldest:
   stage: test
+  allow_failure: true
   image: rust:1.41.0
   script:
     - cargo build --verbose --locked
