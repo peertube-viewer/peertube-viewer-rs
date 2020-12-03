@@ -35,19 +35,11 @@ where
     }
 
     pub fn is_align(&self) -> bool {
-        if let LayoutItem::Alignement = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, LayoutItem::Alignement)
     }
 
     pub fn is_style(&self) -> bool {
-        if let LayoutItem::Style(_) = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, LayoutItem::Style(_))
     }
 }
 

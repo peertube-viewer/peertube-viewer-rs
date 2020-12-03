@@ -102,11 +102,7 @@ enum Description {
 
 impl Description {
     pub fn is_none(&self) -> bool {
-        if let Description::None = *self {
-            true
-        } else {
-            false
-        }
+        matches!(*self, Description::None)
     }
 
     pub fn to_option(&self) -> Option<String> {

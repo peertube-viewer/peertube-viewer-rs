@@ -528,11 +528,7 @@ impl Config {
     }
 
     pub fn use_torrent(&self) -> bool {
-        if let Some((_, true)) = self.torrent {
-            true
-        } else {
-            false
-        }
+        matches!(self.torrent, Some((_, true)))
     }
 
     pub fn max_hist_lines(&self) -> usize {
@@ -591,8 +587,8 @@ impl Default for Config {
 fn correct_instance(s: &str) -> String {
     let mut s = if s.starts_with("https://") {
         s.to_string()
-    } else if s.starts_with("http://") {
-        format!("https://{}", &s[7..])
+    } else if let Some(stripped) = s.strip_prefix("http://") {
+        format!("https://{}", stripped)
     } else {
         format!("https://{}", s)
     };

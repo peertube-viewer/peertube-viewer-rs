@@ -615,11 +615,7 @@ impl Mode {
     }
 
     pub fn is_temp(&self) -> bool {
-        if let Mode::Temp = self {
-            true
-        } else {
-            false
-        }
+        matches!(self, Mode::Temp)
     }
 }
 
