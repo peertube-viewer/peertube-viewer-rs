@@ -680,6 +680,7 @@ mod config {
         assert!(config.is_blocked("peertube.social").is_some());
         assert_eq!(config.use_raw_url(), true);
         assert_eq!(config.select_quality(), true);
+        assert_eq!(config.prefer_hls(), false);
         assert_eq!(config.edit_mode(), EditMode::Vi);
         assert_eq!(
             config.user_agent(),
@@ -750,6 +751,7 @@ mod config {
     fn default_config_example() {
         let path = PathBuf::from("src/cli/default_config.toml");
         let (config, errors) = Config::from_config_file(&path);
+        assert_eq!(config.prefer_hls(), true);
         assert_eq!(errors.len(), 0);
         assert_eq!(config, Config::default());
     }
