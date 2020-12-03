@@ -47,6 +47,47 @@ impl File {
     }
 }
 
+impl From<video::File> for File {
+    fn from(v: video::File) -> File {
+        File {
+            magnet_uri: v.magnetUri,
+            resoltion_id: v.resolution.id,
+            resolution: v.resolution.label,
+            size: if v.size > 0 { v.size as u64 } else { 0 },
+            torrent_url: v.torrentUrl,
+            torrent_download_url: v.torrentDownloadUrl,
+            webseed_url: v.fileUrl,
+            download_url: v.fileDownloadUrl,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct StreamingPlaylist {
+    id: u64,
+    playlist_url: String,
+}
+
+#[allow(unused)]
+impl StreamingPlaylist {
+    pub fn playlist_url(&self) -> &str {
+        &self.playlist_url
+    }
+
+    pub fn id(&self) -> u64 {
+        self.id
+    }
+}
+
+impl From<video::StreamingPlaylist> for StreamingPlaylist {
+    fn from(v: video::StreamingPlaylist) -> StreamingPlaylist {
+        StreamingPlaylist {
+            id: v.id,
+            playlist_url: v.playlistUrl,
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct Resolution {
     id: u64,
@@ -77,21 +118,6 @@ impl Resolution {
     }
 }
 
-impl From<video::File> for File {
-    fn from(v: video::File) -> File {
-        File {
-            magnet_uri: v.magnetUri,
-            resoltion_id: v.resolution.id,
-            resolution: v.resolution.label,
-            size: if v.size > 0 { v.size as u64 } else { 0 },
-            torrent_url: v.torrentUrl,
-            torrent_download_url: v.torrentDownloadUrl,
-            webseed_url: v.fileUrl,
-            download_url: v.fileDownloadUrl,
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 enum Description {
     None,
@@ -118,7 +144,7 @@ impl Description {
 enum Files {
     None,
     FetchedError(Error),
-    Fetched(Vec<File>),
+    Fetched(Vec<File>, Vec<StreamingPlaylist>),
 }
 
 /// Handle to a video
@@ -205,7 +231,7 @@ impl Video {
             account: v.account.into(),
         }
     }
-    pub fn from_full(i: &Arc<Instance>, mut v: video::Video) -> Video {
+    pub fn from_full(i: &Arc<Instance>, v: video::Video) -> Video {
         Video {
             instance: i.clone(),
             name: v.name,
@@ -219,7 +245,8 @@ impl Video {
             short_desc: v.description,
             description: Mutex::new(Description::None),
             files: Mutex::new(Files::Fetched(
-                v.files.drain(..).map(|v| v.into()).collect(),
+                v.files.into_iter().map(|v| v.into()).collect(),
+                v.streamingPlaylists.into_iter().map(|v| v.into()).collect(),
             )),
             channel: v.channel.into(),
             account: v.account.into(),
@@ -277,8 +304,8 @@ impl Video {
         let mut guard = self.files.lock().unwrap();
         if let Files::None = &*guard {
             match self.fetch_files() {
-                Ok(files) => {
-                    *guard = Files::Fetched(files);
+                Ok((files, streams)) => {
+                    *guard = Files::Fetched(files, streams);
                 }
                 Err(err) => {
                     *guard = Files::FetchedError(err.clone());
@@ -289,19 +316,16 @@ impl Video {
         Ok(())
     }
 
-    fn fetch_files(&self) -> error::Result<Vec<File>> {
-        let files: Vec<File> = self
-            .instance
-            .video_complete(&self.uuid)?
-            .drain(..)
-            .map(|v| v.into())
-            .collect();
+    fn fetch_files(&self) -> error::Result<(Vec<File>, Vec<StreamingPlaylist>)> {
+        let (files, streams) = self.instance.video_complete(&self.uuid)?;
+        let files: Vec<File> = files.into_iter().map(|v| v.into()).collect();
+        let streams: Vec<StreamingPlaylist> = streams.into_iter().map(|v| v.into()).collect();
 
-        if files.is_empty() {
+        if files.is_empty() && streams.is_empty() {
             return Err(error::Error::NoContent);
         }
 
-        Ok(files)
+        Ok((files, streams))
     }
 
     /// Get the available resolutions
@@ -311,12 +335,12 @@ impl Video {
         let mut guard = self.files.lock().unwrap();
         match &*guard {
             Files::None => match self.fetch_files() {
-                Ok(files) => {
+                Ok((files, streams)) => {
                     let resolutions = files
                         .iter()
                         .map(|file| Resolution::from_file(file))
                         .collect();
-                    *guard = Files::Fetched(files);
+                    *guard = Files::Fetched(files, streams);
                     Ok(resolutions)
                 }
                 Err(err) => {
@@ -325,10 +349,32 @@ impl Video {
                 }
             },
             Files::FetchedError(err) => Err(err.clone()),
-            Files::Fetched(files) => Ok(files
+            Files::Fetched(files, _) => Ok(files
                 .iter()
                 .map(|file| Resolution::from_file(file))
                 .collect()),
+        }
+    }
+
+    /// Get the available streams
+    /// During the lifetime of the struct, the streams will be fetched only once and the result
+    /// is stored and re-used
+    pub fn streams(&self) -> error::Result<Vec<StreamingPlaylist>> {
+        let mut guard = self.files.lock().unwrap();
+        match &*guard {
+            Files::None => match self.fetch_files() {
+                Ok((files, streams)) => {
+                    let streams_cl = streams.clone();
+                    *guard = Files::Fetched(files, streams);
+                    Ok(streams_cl)
+                }
+                Err(err) => {
+                    *guard = Files::FetchedError(err.clone());
+                    Err(err)
+                }
+            },
+            Files::FetchedError(err) => Err(err.clone()),
+            Files::Fetched(_, streams) => Ok(streams.clone()),
         }
     }
 
@@ -337,8 +383,8 @@ impl Video {
         let guard = self.files.lock().unwrap();
 
         match &*guard {
-            Files::Fetched(res) if res.len() > id => Ok(res[id].download_url.clone()),
-            Files::Fetched(res) => Err(Error::OutOfBound(res.len())),
+            Files::Fetched(res, _) if res.len() > id => Ok(res[id].download_url.clone()),
+            Files::Fetched(res, _) => Err(Error::OutOfBound(res.len())),
             Files::FetchedError(err) => Err(err.clone()),
             Files::None => panic!("Resolution hasn't been fetched yet"),
         }
@@ -349,8 +395,20 @@ impl Video {
         let guard = self.files.lock().unwrap();
 
         match &*guard {
-            Files::Fetched(res) if res.len() > id => Ok(res[id].torrent_download_url.clone()),
-            Files::Fetched(res) => Err(Error::OutOfBound(res.len())),
+            Files::Fetched(res, _) if res.len() > id => Ok(res[id].torrent_download_url.clone()),
+            Files::Fetched(res, _) => Err(Error::OutOfBound(res.len())),
+            Files::FetchedError(err) => Err(err.clone()),
+            Files::None => panic!("Resolution hasn't been fetched yet"),
+        }
+    }
+
+    /// Get a torrent url for a given resolution
+    pub fn stream_url(&self, id: usize) -> error::Result<String> {
+        let guard = self.files.lock().unwrap();
+
+        match &*guard {
+            Files::Fetched(_, res) if res.len() > id => Ok(res[id].playlist_url.clone()),
+            Files::Fetched(_, res) => Err(Error::OutOfBound(res.len())),
             Files::FetchedError(err) => Err(err.clone()),
             Files::None => panic!("Resolution hasn't been fetched yet"),
         }
