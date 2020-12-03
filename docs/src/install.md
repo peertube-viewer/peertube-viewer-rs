@@ -14,7 +14,7 @@ Releases can be found in the release page of the project: [releases](https://git
 Building from source
 --------------------
 
-Building from source is rather easy, a [rust toolchain](https://www.rust-lang.org/tools/install) newer than `v1.41.0` is required.
+Building from source is rather easy, a [rust toolchain](https://www.rust-lang.org/tools/install) newer than `v1.45` is required.
 
 For a debug build (faster to compile), run `cargo build`.
 
