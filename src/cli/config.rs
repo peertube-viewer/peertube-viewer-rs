@@ -37,6 +37,7 @@ struct PlayerConf {
     pub client: String,
     pub args: Vec<String>,
     pub use_raw_urls: bool,
+    pub prefer_hls: bool,
 }
 
 const NSFW_ALLOWED: [&str; 3] = ["tag", "block", "let"];
@@ -261,7 +262,7 @@ impl Config {
         };
 
         /* ---Player configuration --- */
-        let (player_cmd, player_args, use_raw_urls) =
+        let (player_cmd, player_args, use_raw_urls, prefer_hls) =
             if let Some(Value::Table(t)) = config.get("player") {
                 (
                     t.get("command")
@@ -274,14 +275,19 @@ impl Config {
                         .map(|b| b.as_bool())
                         .flatten()
                         .unwrap_or(false),
+                    t.get("prefer-hls")
+                        .map(|b| b.as_bool())
+                        .flatten()
+                        .unwrap_or(true),
                 )
             } else {
-                ("mpv".to_string(), Vec::new(), false)
+                ("mpv".to_string(), Vec::new(), false, true)
             };
         temp.player = PlayerConf {
             client: player_cmd,
             args: player_args,
             use_raw_urls,
+            prefer_hls,
         };
 
         /* ---Torrent configuration --- */
@@ -512,6 +518,10 @@ impl Config {
         self.player.use_raw_urls
     }
 
+    pub fn prefer_hls(&self) -> bool {
+        self.player.prefer_hls
+    }
+
     pub fn player_args(&self) -> &Vec<String> {
         match &self.torrent {
             Some((tor, true)) => &tor.args,
@@ -567,6 +577,7 @@ impl Default for Config {
                 client: "mpv".to_string(),
                 args: Vec::new(),
                 use_raw_urls: false,
+                prefer_hls: true,
             },
             instance: "https://video.ploud.fr".to_string(),
             torrent: None,
