@@ -4,7 +4,7 @@ use std::sync::Arc;
 use nanoserde::DeJson;
 
 use peertube_ser::channels::Channels;
-use peertube_ser::video::{Description, File, Video as FullVideo};
+use peertube_ser::video::{Description, File, StreamingPlaylist, Video as FullVideo};
 use peertube_ser::{Comments, Videos};
 
 use crate::channels::Channel;
@@ -236,7 +236,10 @@ impl Instance {
     }
 
     /// Fetch the files for a given video uuid
-    pub fn video_complete(self: &Arc<Instance>, uuid: &str) -> error::Result<Vec<File>> {
+    pub fn video_complete(
+        self: &Arc<Instance>,
+        uuid: &str,
+    ) -> error::Result<(Vec<File>, Vec<StreamingPlaylist>)> {
         let mut url = self.host.clone();
         url.push_str("/api/v1/videos/");
         url.push_str(uuid);
@@ -245,7 +248,7 @@ impl Instance {
         self.add_user_agent(&mut req);
         let video: FullVideo =
             DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?; //TODO reput error for status
-        Ok(video.files)
+        Ok((video.files, video.streamingPlaylists))
     }
 
     pub fn channel_url(&self, channel: &Channel) -> String {

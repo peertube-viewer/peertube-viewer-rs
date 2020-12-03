@@ -56,7 +56,6 @@ args:
         multiple: true 
         help: arguments to be passed to the player
 
-
     - player:
         short: p 
         long: player 

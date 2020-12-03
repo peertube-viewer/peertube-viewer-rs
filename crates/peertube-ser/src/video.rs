@@ -40,6 +40,7 @@ pub struct Video {
     /// The list of files for the video
     /// Each file corresponds to an available resolution
     pub files: Vec<File>,
+    pub streamingPlaylists: Vec<StreamingPlaylist>,
 }
 
 #[derive(DeJson, Debug)]
@@ -59,4 +60,11 @@ pub struct File {
     pub torrentDownloadUrl: String,
     pub fileUrl: String,
     pub fileDownloadUrl: String,
+}
+
+#[derive(DeJson, Debug)]
+#[allow(non_snake_case)]
+pub struct StreamingPlaylist {
+    pub id: u64,
+    pub playlistUrl: String,
 }
