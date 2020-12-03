@@ -456,7 +456,9 @@ impl Cli {
             }
         }
 
-        let video_url = if self.config.select_quality() {
+        let has_files = video.has_files()?;
+
+        let video_url = if self.config.select_quality() && has_files {
             let resolutions = video.resolutions()?;
             let nb_resolutions = resolutions.len();
 
@@ -481,7 +483,7 @@ impl Cli {
                     video.resolution_url(choice - 1)?
                 }
             }
-        } else if self.config.use_torrent() {
+        } else if self.config.use_torrent() && has_files {
             video.load_resolutions()?;
             match video.torrent_url(0) {
                 Ok(url) => url,
@@ -494,11 +496,35 @@ impl Cli {
             }
         } else if self.config.use_raw_url() {
             video.load_resolutions()?;
-            match video.resolution_url(0) {
+            if (self.config.prefer_hls() && video.has_streams()?) || !video.has_files()? {
+                match video.stream_url(0) {
+                    Ok(url) => url,
+                    Err(peertube_api::error::Error::OutOfBound(_)) => {
+                        self.display
+                            .warn(&"Unable to fetch streaming video url\nAttempting to play with watch url");
+                        video.watch_url()
+                    }
+                    Err(err) => return Err(err.into()),
+                }
+            } else {
+                match video.resolution_url(0) {
+                    Ok(url) => url,
+                    Err(peertube_api::error::Error::OutOfBound(_)) => {
+                        self.display.warn(
+                            &"Unable to fetch raw video url\nAttempting to play with watch url",
+                        );
+                        video.watch_url()
+                    }
+                    Err(err) => return Err(err.into()),
+                }
+            }
+        } else if !has_files {
+            match video.stream_url(0) {
                 Ok(url) => url,
                 Err(peertube_api::error::Error::OutOfBound(_)) => {
-                    self.display
-                        .warn(&"Unable to fetch raw video url\nAttempting to play with watch url");
+                    self.display.warn(
+                        &"Unable to fetch streaming video url\nAttempting to play with watch url",
+                    );
                     video.watch_url()
                 }
                 Err(err) => return Err(err.into()),

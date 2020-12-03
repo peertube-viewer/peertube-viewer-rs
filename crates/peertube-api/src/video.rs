@@ -413,4 +413,24 @@ impl Video {
             Files::None => panic!("Resolution hasn't been fetched yet"),
         }
     }
+
+    pub fn has_streams(&self) -> error::Result<bool> {
+        let guard = self.files.lock().unwrap();
+        match &*guard {
+            Files::Fetched(_, streams) if !streams.is_empty() => Ok(true),
+            Files::Fetched(_, _) => Ok(false),
+            Files::FetchedError(err) => Err(err.clone()),
+            Files::None => panic!("Resolution hasn't been fetched yet"),
+        }
+    }
+
+    pub fn has_files(&self) -> error::Result<bool> {
+        let guard = self.files.lock().unwrap();
+        match &*guard {
+            Files::Fetched(files, _) if !files.is_empty() => Ok(true),
+            Files::Fetched(_, _) => Ok(false),
+            Files::FetchedError(err) => Err(err.clone()),
+            Files::None => panic!("Resolution hasn't been fetched yet"),
+        }
+    }
 }
