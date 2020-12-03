@@ -684,7 +684,7 @@ mod config {
                 "args-player",
                 "--player-args=--no-video",
                 "--instance=args.ploud.fr",
-                "--use-raw-url",
+                "--use-raw-urls",
                 "--let-nsfw",
                 "-s",
             ])
