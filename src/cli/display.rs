@@ -336,7 +336,10 @@ impl Display {
         }
         self.print_centered("INFORMATION");
         self.line('=');
-        println!("duration : {}", pretty_duration(video.duration()));
+        println!(
+            "duration : {}",
+            pretty_duration_or_live(video.duration(), video.is_live())
+        );
         println!("views    : {}", video.views());
         println!("likes    : {}", video.likes());
         println!("dislikes : {}", video.dislikes());

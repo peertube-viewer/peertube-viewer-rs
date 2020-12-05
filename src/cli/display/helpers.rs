@@ -60,6 +60,15 @@ pub fn pretty_duration(d: u64) -> String {
     }
 }
 
+pub fn pretty_duration_or_live(d: u64, is_live: bool) -> String {
+    if is_live || d == 0 {
+        //TODO remove d == 0 once the live property is correctly sent by peertube
+        "LIVE".to_owned()
+    } else {
+        pretty_duration(d)
+    }
+}
+
 pub fn full_date(d: Option<&DateTime<FixedOffset>>) -> String {
     d.map(|t| t.format("%a %b %Y").to_string())
         .unwrap_or_default()
