@@ -75,11 +75,11 @@ impl Instance {
             req.query("filter", "local");
         }
 
-        let mut search_res: Videos =
+        let search_res: Videos =
             DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?;
         let mut res = Vec::new();
 
-        for video in search_res.data.drain(..) {
+        for video in search_res.data {
             res.push(Video::from_search(self, video));
         }
 
@@ -108,10 +108,10 @@ impl Instance {
             req.query("filter", "local");
         }
 
-        let mut video_res: Videos =
+        let video_res: Videos =
             DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?;
         let mut res = Vec::new();
-        for video in video_res.data.drain(..) {
+        for video in video_res.data {
             res.push(Video::from_search(self, video));
         }
 
@@ -134,10 +134,10 @@ impl Instance {
             .query("count", &nb.to_string())
             .query("start", &offset.to_string());
 
-        let mut comment_res: Comments =
+        let comment_res: Comments =
             DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?;
         let mut res = Vec::new();
-        for comment in comment_res.data.drain(..) {
+        for comment in comment_res.data {
             if let Ok(c) = Comment::try_from(comment) {
                 res.push(c);
             }
@@ -166,10 +166,10 @@ impl Instance {
             req.query("filter", "local");
         }
 
-        let mut search_res: Videos =
+        let search_res: Videos =
             DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?;
         let mut res = Vec::new();
-        for video in search_res.data.drain(..) {
+        for video in search_res.data {
             res.push(Video::from_search(self, video));
         }
 
@@ -196,10 +196,10 @@ impl Instance {
             req.query("filter", "local");
         }
 
-        let mut search_res: Channels =
+        let search_res: Channels =
             DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?;
         let mut res = Vec::new();
-        for video in search_res.data.drain(..) {
+        for video in search_res.data {
             if let Some(v) = Channel::maybe_from(video, self.host.clone()) {
                 res.push(v);
             }
