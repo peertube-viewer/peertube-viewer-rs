@@ -61,8 +61,7 @@ impl Instance {
         nb: usize,
         offset: usize,
     ) -> error::Result<(Vec<Video>, usize)> {
-        let mut url = self.host.clone();
-        url.push_str("/api/v1/search/videos");
+        let url = format!("{}/api/v1/search/videos", self.host);
 
         let mut req = ureq::get(&url);
         self.add_user_agent(&mut req)
@@ -92,10 +91,7 @@ impl Instance {
         nb: usize,
         offset: usize,
     ) -> error::Result<(Vec<Video>, usize)> {
-        let mut url = self.host.clone();
-        url.push_str("/api/v1/video-channels/");
-        url.push_str(handle);
-        url.push_str("/videos");
+        let url = format!("{}/api/v1/video-channels/{}/videos", self.host, handle);
 
         let mut req = ureq::get(&url);
         self.add_user_agent(&mut req)
@@ -124,10 +120,7 @@ impl Instance {
         nb: usize,
         offset: usize,
     ) -> error::Result<(Vec<Comment>, usize)> {
-        let mut url = self.host.clone();
-        url.push_str("/api/v1/videos/");
-        url.push_str(video_uuid);
-        url.push_str("/comment-threads");
+        let url = format!("{}/api/v1/videos/{}/comment-threads", self.host, video_uuid);
 
         let mut req = ureq::get(&url);
         self.add_user_agent(&mut req)
@@ -152,8 +145,7 @@ impl Instance {
         nb: usize,
         offset: usize,
     ) -> error::Result<(Vec<Video>, usize)> {
-        let mut url = self.host.clone();
-        url.push_str("/api/v1/videos");
+        let url = format!("{}/api/v1/videos", self.host);
 
         let mut req = ureq::get(&url);
         self.add_user_agent(&mut req)
