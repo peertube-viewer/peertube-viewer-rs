@@ -39,7 +39,9 @@ pub struct Video {
 
     /// The list of files for the video
     /// Each file corresponds to an available resolution
+    #[nserde(default)]
     pub files: Vec<File>,
+    #[nserde(default)]
     pub streamingPlaylists: Vec<StreamingPlaylist>,
 }
 
