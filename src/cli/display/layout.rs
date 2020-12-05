@@ -71,7 +71,14 @@ impl InnerLayoutItem for VideoLayoutItem {
                 }
             }
             VideoLayoutItem::Views => display_count(v.views()),
-            VideoLayoutItem::Duration => pretty_duration(v.duration()),
+            VideoLayoutItem::Duration => {
+                if v.is_live() || v.duration() == 0 {
+                    //TODO remove v.duration() == 0 once the live property is correctly sent by peertube
+                    "LIVE".to_owned()
+                } else {
+                    pretty_duration(v.duration())
+                }
+            }
             VideoLayoutItem::Published => pretty_date(v.published()),
             VideoLayoutItem::String(s) => s.clone(),
         }

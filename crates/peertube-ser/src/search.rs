@@ -50,6 +50,9 @@ pub struct Video {
     pub likes: u64,
     pub dislikes: u64,
     pub nsfw: bool,
+
+    #[nserde(default)]
+    pub isLive: bool,
     pub account: Channel,
     pub channel: Channel,
     pub category: IdentifiedLabel,

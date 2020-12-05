@@ -156,6 +156,7 @@ pub struct Video {
     views: u64,
     likes: u64,
     nsfw: bool,
+    is_live: bool,
     dislikes: u64,
     published: Option<DateTime<FixedOffset>>,
     short_desc: Option<String>,
@@ -181,6 +182,9 @@ impl Video {
     }
     pub fn duration(&self) -> u64 {
         self.duration
+    }
+    pub fn is_live(&self) -> bool {
+        self.is_live
     }
     pub fn views(&self) -> u64 {
         self.views
@@ -223,6 +227,7 @@ impl Video {
             dislikes: v.dislikes,
             views: v.views,
             nsfw: v.nsfw,
+            is_live: v.isLive,
             published: DateTime::parse_from_rfc3339(&v.publishedAt).ok(),
             short_desc: v.description,
             description: Mutex::new(Description::None),
@@ -241,6 +246,7 @@ impl Video {
             dislikes: v.dislikes,
             views: v.views,
             nsfw: v.nsfw,
+            is_live: v.isLive,
             published: DateTime::parse_from_rfc3339(&v.publishedAt).ok(),
             short_desc: v.description,
             description: Mutex::new(Description::None),
