@@ -5,7 +5,7 @@ pub struct Channel {
     pub id: i64,
     pub name: String,
     pub display_name: String,
-    pub url: String,
+    pub url: Option<String>,
     pub host: String,
 }
 
@@ -20,7 +20,7 @@ impl Channel {
     fn display_name(&self) -> &str {
         &self.display_name
     }
-    fn url(&self) -> &str {
+    fn url(&self) -> &Option<String> {
         &self.url
     }
     fn host(&self) -> &str {

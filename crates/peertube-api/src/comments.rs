@@ -12,12 +12,15 @@ pub struct Comment {
 impl TryFrom<peertube_ser::comments::Comment> for Comment {
     type Error = ();
     fn try_from(comment: peertube_ser::comments::Comment) -> Result<Self, ()> {
-        Ok(Comment {
-            content: comment.text,
-            url: comment.url,
-            created_at: DateTime::parse_from_rfc3339(&comment.createdAt).ok(),
-            author: comment.account.into(),
-        })
+        match (comment.isDeleted, comment.url, comment.account) {
+            (false, Some(url), Some(account)) => Ok(Comment {
+                content: comment.text,
+                url,
+                created_at: DateTime::parse_from_rfc3339(&comment.createdAt).ok(),
+                author: account.into(),
+            }),
+            _ => Err(()),
+        }
     }
 }
 

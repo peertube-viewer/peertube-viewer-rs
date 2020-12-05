@@ -8,7 +8,8 @@ use super::common::Channel;
 #[allow(non_snake_case)]
 pub struct Comment {
     pub id: u64,
-    pub url: String,
+
+    pub url: Option<String>,
     pub text: String,
     pub threadId: i64,
     pub videoId: i64,
@@ -16,7 +17,7 @@ pub struct Comment {
     pub updatedAt: String,
     pub deleted: Option<String>,
     pub isDeleted: bool,
-    pub account: Channel,
+    pub account: Option<Channel>,
 }
 
 #[derive(DeJson, Debug)]

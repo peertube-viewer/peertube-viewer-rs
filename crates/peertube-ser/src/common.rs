@@ -16,7 +16,9 @@ pub struct Channel {
     pub id: i64,
     pub name: String,
     pub displayName: String,
-    pub url: String,
+
+    #[nserde(default)]
+    pub url: Option<String>,
     pub host: String,
     pub Avatar: Option<Avatar>,
 }
