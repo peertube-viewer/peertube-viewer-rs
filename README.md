@@ -1,12 +1,17 @@
 peertube-viewer-rs
 ===
 
+https://peertube-viewer.com
+
 A command line program to view and browse [PeerTube](https://joinpeertube.org), inspired by the youtube-viewer utility
 
 Documentation
 ---
 
-This readme provides a quick overview of peertube-viewer-rs, to learn how to use it, see the documentation [the documentation](https://docs.peertube-viewer.com).
+This readme provides a quick overview of peertube-viewer-rs. 
+
+To learn how to install peertube-viewer, see [the dowload page ](https://peertube-viewer.com/download).
+To learn how to use t, see [the documentation](https://docs.peertube-viewer.com).
 
 Compiling
 ---
