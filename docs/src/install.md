@@ -9,7 +9,9 @@ Installation
 Releases
 --------
 
-Releases can be found in the release page of the project: [releases](https://gitlab.com/peertube-viewer/peertube-viewer-rs/-/releases)
+The download for the latest releases can be found on the download page of the project: [Download](https://peertube-viewer.com/download)
+
+Releases can be found in the release page of the project: [releases](https://peertube-viewer.com/releases)
 
 Building from source
 --------------------
