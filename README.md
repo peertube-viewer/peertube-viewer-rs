@@ -10,7 +10,7 @@ Documentation
 
 This readme provides a quick overview of peertube-viewer-rs. 
 
-To learn how to install peertube-viewer, see [the dowload page ](https://peertube-viewer.com/download).
+To learn how to install peertube-viewer, see [the download page ](https://peertube-viewer.com/download).
 To learn how to use it, see [the documentation](https://docs.peertube-viewer.com).
 
 Compiling
