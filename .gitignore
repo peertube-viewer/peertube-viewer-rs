@@ -4,4 +4,6 @@
 src/cli/clap_app.yml
 docs/book/
 peertube-viewer-rs.1
+peertube-viewer-rs
+linux-build/
 rusty-tags.vi

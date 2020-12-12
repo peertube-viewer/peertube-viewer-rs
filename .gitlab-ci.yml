@@ -32,6 +32,8 @@ rust-oldest:
     key: oldest
     paths:
       - target/
+  only:
+    - dev
   except:
     - tags
 
@@ -56,9 +58,7 @@ release-linux:
   image: rust:latest
   script:
     - cargo build --release --locked --verbose
-    - cp target/release/peertube-viewer-rs peertube-viewer-rs
-    - mkdir linux-build
-    - tar -czf linux-build/peertube-viewer-rs-"$(git describe --tags)".tar.gz completions/* peertube-viewer-rs peertube-viewer-rs.1
+    - ./scripts/create-realease-tarbal.sh
   cache:
     key: release-linux
     paths:
