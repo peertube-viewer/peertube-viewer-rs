@@ -20,6 +20,13 @@ rust-latest:
     - cargo test --verbose
     - cargo clippy --workspace --verbose -- --deny warnings
     - cargo fmt --all --verbose -- --check
+  only:
+    changes:
+      - src/**/*
+      - crates/**/*
+      - Cargo.toml
+      - Cargo.lock
+      - build.rs
 
 rust-oldest:
   stage: test
@@ -33,7 +40,12 @@ rust-oldest:
     paths:
       - target/
   only:
-    - dev
+    changes:
+      - src/**/*
+      - crates/**/*
+      - Cargo.toml
+      - Cargo.lock
+      - build.rs
   except:
     - tags
 
@@ -49,7 +61,12 @@ rust-nightly:
     paths:
       - target/
   only:
-    - dev
+    changes:
+      - src/**/*
+      - crates/**/*
+      - Cargo.toml
+      - Cargo.lock
+      - build.rs
   except:
     - tags
 
@@ -83,5 +100,5 @@ pages:
     paths:
     - public/
   only:
-    - master
-    - dev
+    changes:
+      - docs/**/*
