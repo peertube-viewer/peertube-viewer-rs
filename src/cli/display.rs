@@ -124,7 +124,7 @@ impl Display {
         I: InnerLayoutItem<Data = D>,
     {
         let mut content_parts = Vec::new();
-        let mut alignements_total = vec![
+        let mut alignments_total = vec![
             0;
             cmp::max(
                 seen_layout.iter().filter(|i| i.is_align()).count(),
@@ -155,8 +155,8 @@ impl Display {
                     align_off += UnicodeWidthStr::width(s);
                     tmp_str.push(dsp);
                 } else if item.is_align() {
-                    if alignements_total[align_id] < align_off {
-                        alignements_total[align_id] = align_off;
+                    if alignments_total[align_id] < align_off {
+                        alignments_total[align_id] = align_off;
                     }
                     tmp_align.push(align_off);
                     align_off = 0;
@@ -185,7 +185,7 @@ impl Display {
                 continue;
             }
 
-            let mut layout_align_it = alignements_total.iter();
+            let mut layout_align_it = alignments_total.iter();
             let layout_it = if history.is_viewed(&*contents[id]) {
                 seen_layout.iter()
             } else {
@@ -211,7 +211,7 @@ impl Display {
                     buffer.push_str(
                         &parts_it
                             .next()
-                            .expect("Internal Error: parts smaller than alignement"),
+                            .expect("Internal Error: parts smaller than alignment"),
                     );
                 }
             }
@@ -329,7 +329,7 @@ impl Display {
                 self.line('=');
             }
         }
-        self.print_centered("INFORMATIONS");
+        self.print_centered("INFORMATION");
         self.line('=');
         println!("duration : {}", pretty_duration(video.duration()));
         println!("views    : {}", video.views());

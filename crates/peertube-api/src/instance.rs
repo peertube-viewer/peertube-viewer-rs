@@ -12,7 +12,7 @@ use crate::comments::Comment;
 use crate::error;
 use crate::video::Video;
 
-/// Connexion to an instance
+/// Connection to an instance
 /// Video that this instance returns through `search_videos` will all use the instance which
 /// created them. This avoids connecting to many distinct instances.
 pub struct Instance {

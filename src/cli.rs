@@ -404,7 +404,7 @@ impl Cli {
         match mode {
             Mode::Videos(v) => self.display.video_info(&v.current()[id - 1]),
             Mode::Channels(c) => self.display.channel_info(&c.current()[id - 1]),
-            Mode::Comments(_) => self.display.warn(&"No additionnal info available"),
+            Mode::Comments(_) => self.display.warn(&"No additional info available"),
             Mode::Temp => panic!("Bad use of temp"),
         }
         self.rl.std_in("Press enter to continue".to_string())?;

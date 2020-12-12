@@ -282,7 +282,7 @@ impl Video {
     }
 
     /// Fetch the description but don't return it to avoid an unnecessary copy
-    /// The result is store withing the struct
+    /// The result is store within the struct
     ///
     /// Used to asynchronously load the description for later use
     pub fn load_description(&self) -> error::Result<()> {
@@ -297,7 +297,7 @@ impl Video {
     }
 
     /// Fetch the available resolutions but don't return it to avoid an unnecessary copy
-    /// The result is store withing the struct
+    /// The result is store within the struct
     ///
     /// Used to asynchronously load the resolutions for later use
     pub fn load_resolutions(&self) -> error::Result<()> {

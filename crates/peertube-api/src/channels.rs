@@ -3,7 +3,7 @@ use chrono::{DateTime, FixedOffset};
 use peertube_ser::channels;
 
 pub struct Channel {
-    id: (String, u64), // Ids are not valable accross instances
+    id: (String, u64), // Ids are not valable across instances
     //so we need to keep the instance where this ID is valable
     name: String,
     display_name: String,

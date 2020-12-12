@@ -56,7 +56,7 @@ Search channels by name
 
 .B --use-raw-url
 Will pass the url to the seed file instead of the web url to the player.
-This might be neccessary for some players(vlc) but some(mpv) don't need it and will even extract some information from it to display in their GUI.
+This might be necessary for some players(vlc) but some(mpv) don't need it and will even extract some information from it to display in their GUI.
 
 .B -s, --select-quality
 Will prompt you to chose the video quality when playing a video

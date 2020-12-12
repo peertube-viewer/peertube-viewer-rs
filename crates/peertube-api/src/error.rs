@@ -17,9 +17,9 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::Ureq(err) => write!(f, "Connexion error: {}", err),
-            Error::Status(s) => write!(f, "Connexion error: ERROR {}", s),
-            Error::Io(err) => write!(f, "Connexion error: {}", err),
+            Error::Ureq(err) => write!(f, "Connection error: {}", err),
+            Error::Status(s) => write!(f, "Connection error: ERROR {}", s),
+            Error::Io(err) => write!(f, "Connection error: {}", err),
             Error::NoContent => write!(f, "No content"),
             Error::OutOfBound(len) => write!(f, "Out of bound access, the array is of len {}", len),
             Error::Serde(err) => write!(f, "Deserialisation error: {}", err),
