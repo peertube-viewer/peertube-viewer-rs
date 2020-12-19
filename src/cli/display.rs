@@ -25,8 +25,15 @@ use unicode_width::UnicodeWidthStr;
 
 const DEFAULT_COLS: usize = 80;
 
+fn col_size() -> usize {
+    if let Some((Width(w), _)) = terminal_size() {
+        w as usize
+    } else {
+        DEFAULT_COLS
+    }
+}
+
 pub struct Display {
-    cols: usize,
     colors: bool,
     video_layout: Vec<LayoutItem<VideoLayoutItem>>,
     seen_video_layout: Vec<LayoutItem<VideoLayoutItem>>,
@@ -61,16 +68,9 @@ impl<T: color::Color> fmt::Display for MaybeColor<T> {
 
 impl Display {
     pub fn new(colors: bool) -> Display {
-        let cols = if let Some((Width(w), _)) = terminal_size() {
-            w as usize
-        } else {
-            DEFAULT_COLS
-        };
-
         let (video_layout, seen_video_layout) = default_video_layouts();
 
         Display {
-            cols,
             colors,
             video_layout,
             seen_video_layout,
@@ -322,6 +322,7 @@ impl Display {
     }
 
     pub fn video_info(&self, video: &Video) {
+        let cols = col_size();
         self.line('=');
         self.print_centered(video.name());
         self.line('=');
@@ -329,7 +330,7 @@ impl Display {
             if !d.is_empty() {
                 self.print_centered("DESCRIPTION");
                 self.line('=');
-                println!("{}", fill(&d, self.cols));
+                println!("{}", fill(&d, cols));
                 self.line('=');
             }
         }
@@ -351,6 +352,7 @@ impl Display {
     }
 
     pub fn channel_info(&self, channel: &Channel) {
+        let cols = col_size();
         self.line('=');
         self.print_centered(channel.display_name());
         self.line('=');
@@ -358,7 +360,7 @@ impl Display {
             if !d.is_empty() {
                 self.print_centered("DESCRIPTION");
                 self.line('=');
-                println!("{}", fill(&d, self.cols));
+                println!("{}", fill(&d, cols));
                 self.line('=');
             }
         }
@@ -391,18 +393,20 @@ impl Display {
     }
 
     fn line(&self, c: char) {
-        let line_str = c.to_string().repeat(self.cols);
+        let cols = col_size();
+        let line_str = c.to_string().repeat(cols);
         println!("{}", line_str);
     }
 
     fn print_centered(&self, s: &str) {
+        let cols = col_size();
         let len = s.chars().count();
-        if len > self.cols {
+        if len > cols {
             println!("{}", s);
             return;
         }
 
-        let before = ' '.to_string().repeat((self.cols - len) / 2);
+        let before = ' '.to_string().repeat((cols - len) / 2);
         println!("{}{}", before, s);
     }
 
