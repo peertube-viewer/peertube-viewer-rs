@@ -43,6 +43,7 @@ where
     }
 }
 
+#[allow(unused)]
 pub enum VideoLayoutItem {
     Name,
     Channel,
@@ -77,6 +78,7 @@ impl InnerLayoutItem for VideoLayoutItem {
     }
 }
 
+#[allow(unused)]
 pub enum ChannelLayoutItem {
     Name,
     Host,
@@ -97,6 +99,7 @@ impl InnerLayoutItem for ChannelLayoutItem {
     }
 }
 
+#[allow(unused)]
 pub enum CommentLayoutItem {
     Content,
     Date,
@@ -130,10 +133,6 @@ pub fn default_video_layouts() -> (
         LayoutItem::Alignment,
         LayoutItem::Style(Box::new(color::Fg(color::Green))),
         LayoutItem::Inner(VideoLayoutItem::Channel),
-        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
-        LayoutItem::Alignment,
-        LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
-        LayoutItem::Inner(VideoLayoutItem::Host),
         LayoutItem::Alignment,
         LayoutItem::Style(Box::new(color::Fg(color::Yellow))),
         LayoutItem::Inner(VideoLayoutItem::String(" [".to_string())),
@@ -160,10 +159,6 @@ pub fn default_video_layouts() -> (
         LayoutItem::Alignment,
         LayoutItem::Style(Box::new(color::Fg(color::Green))),
         LayoutItem::Inner(VideoLayoutItem::Channel),
-        LayoutItem::Inner(VideoLayoutItem::String(" ".to_string())),
-        LayoutItem::Alignment,
-        LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
-        LayoutItem::Inner(VideoLayoutItem::Host),
         LayoutItem::Alignment,
         LayoutItem::Style(Box::new(color::Fg(color::Yellow))),
         LayoutItem::Inner(VideoLayoutItem::String(" [".to_string())),
@@ -189,10 +184,6 @@ pub fn default_channel_layouts() -> Vec<LayoutItem<ChannelLayoutItem>> {
     vec![
         LayoutItem::Style(Box::new(color::Fg(color::Blue))),
         LayoutItem::Inner(ChannelLayoutItem::Name),
-        LayoutItem::Inner(ChannelLayoutItem::String(" ".to_string())),
-        LayoutItem::Alignment,
-        LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
-        LayoutItem::Inner(ChannelLayoutItem::Host),
         LayoutItem::Alignment,
         LayoutItem::Inner(ChannelLayoutItem::String(" ".to_string())),
         LayoutItem::Style(Box::new(color::Fg(color::Green))),
@@ -205,10 +196,6 @@ pub fn default_comment_layouts() -> Vec<LayoutItem<CommentLayoutItem>> {
     vec![
         LayoutItem::Style(Box::new(color::Fg(color::Blue))),
         LayoutItem::Inner(CommentLayoutItem::Author),
-        LayoutItem::Inner(CommentLayoutItem::String(" ".to_string())),
-        LayoutItem::Alignment,
-        LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
-        LayoutItem::Inner(CommentLayoutItem::Host),
         LayoutItem::Alignment,
         LayoutItem::Inner(CommentLayoutItem::String(" ".to_string())),
         LayoutItem::Style(Box::new(color::Fg(color::Cyan))),
