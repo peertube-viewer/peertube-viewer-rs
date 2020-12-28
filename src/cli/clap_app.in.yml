@@ -79,6 +79,12 @@ args:
         takes_value: true 
         help: instance to be browsed
 
+    - search-engine:
+        long: search-engine
+        takes_value: true 
+        conflicts_with: instance
+        help: use a search engine (like sepiasearch)
+
     - config-file:
         short: c 
         long: config 

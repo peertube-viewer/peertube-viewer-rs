@@ -166,11 +166,6 @@ impl Instance {
         nb: usize,
         offset: usize,
     ) -> error::Result<(Vec<Video>, usize)> {
-        assert!(
-            !self.is_search,
-            "SepiaSearch doesn't provide trending videos"
-        );
-
         let url = format!("{}/api/v1/videos", self.host);
 
         let mut req = ureq::get(&url);
@@ -281,7 +276,7 @@ impl Instance {
 
     /// Returns the host to be used for api requests outside of search
     fn api_host<'i>(&'i self, host: &'i str) -> Cow<'i, str> {
-        if self.is_search {
+        if !self.is_search {
             Cow::Borrowed(&self.host)
         } else {
             to_https(host)
