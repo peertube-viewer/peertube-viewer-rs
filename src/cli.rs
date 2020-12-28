@@ -245,12 +245,22 @@ impl Cli {
                     Mode::Temp => unreachable!(),
                 },
                 ParsedQuery::Trending => {
-                    let trending_tmp = PreloadableList::new(
-                        Videos::new_trending(self.instance.clone()),
-                        SEARCH_TOTAL,
-                    );
-                    data.mode = Mode::Videos(trending_tmp);
-                    self.rl.add_history_entry(":trending");
+                    if self.config.is_search_engine() {
+                        self.display.warn(&"Trending results are not available when using a search engine such as sepia.");
+                        if data.mode.is_temp() {
+                            self.display.info("Search for videos (:h for help)");
+                            data.action = self.rl.first_readline(">> ".to_string())?;
+                            data.changed_action = true;
+                            self.parse_action(data)?;
+                        }
+                    } else {
+                        let trending_tmp = PreloadableList::new(
+                            Videos::new_trending(self.instance.clone()),
+                            SEARCH_TOTAL,
+                        );
+                        data.mode = Mode::Videos(trending_tmp);
+                        self.rl.add_history_entry(":trending");
+                    }
                 }
                 ParsedQuery::Help => {
                     self.display.help();
