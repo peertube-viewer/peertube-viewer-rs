@@ -14,6 +14,8 @@ Allows you to search videos from a PeerTube instance with a similar interface to
 
 .B FEATURES 
 
+.B sepia search (sepiasearch.org)
+
 .B search history 
 
 .B trending videos
@@ -30,6 +32,9 @@ Allows you to search videos from a PeerTube instance with a similar interface to
 
 
 .SH OPTIONS
+
+.B --search-engine
+overrides the search engine set in the config file.
 
 .B -i, --instance
 overrides the instance set in the config file.
