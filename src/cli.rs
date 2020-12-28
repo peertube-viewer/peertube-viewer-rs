@@ -121,6 +121,7 @@ impl Cli {
             !config.nsfw().is_block(),
             config.local(),
             config.user_agent(),
+            config.is_search_engine(),
         );
 
         if !is_single_url {
@@ -144,7 +145,7 @@ impl Cli {
         let mode = Mode::Temp; //Placeholder that will be changed just after anyway on the first loop run
         let action = match self.initial_info.take() {
             InitialInfo::Query(s) if self.is_single_url => {
-                self.play_vid(&self.instance.single_video(&s)?)?;
+                self.play_vid(&self.instance.single_video(&self.instance.host(), &s)?)?;
                 return Ok(());
             }
             InitialInfo::Query(s) => ParsedQuery::Query(s),
@@ -244,12 +245,22 @@ impl Cli {
                     Mode::Temp => unreachable!(),
                 },
                 ParsedQuery::Trending => {
-                    let trending_tmp = PreloadableList::new(
-                        Videos::new_trending(self.instance.clone()),
-                        SEARCH_TOTAL,
-                    );
-                    data.mode = Mode::Videos(trending_tmp);
-                    self.rl.add_history_entry(":trending");
+                    if self.config.is_search_engine() {
+                        self.display.warn(&"Trending results are not available when using a search engine such as sepia.");
+                        if data.mode.is_temp() {
+                            self.display.info("Search for videos (:h for help)");
+                            data.action = self.rl.first_readline(">> ".to_string())?;
+                            data.changed_action = true;
+                            self.parse_action(data)?;
+                        }
+                    } else {
+                        let trending_tmp = PreloadableList::new(
+                            Videos::new_trending(self.instance.clone()),
+                            SEARCH_TOTAL,
+                        );
+                        data.mode = Mode::Videos(trending_tmp);
+                        self.rl.add_history_entry(":trending");
+                    }
                 }
                 ParsedQuery::Help => {
                     self.display.help();
@@ -388,7 +399,11 @@ impl Cli {
             Mode::Videos(v) => {
                 self.display.video_info(&v.current()[id - 1]);
                 let comments_tmp = PreloadableList::new(
-                    Comments::new(self.instance.clone(), v.current()[id - 1].uuid()),
+                    Comments::new(
+                        self.instance.clone(),
+                        v.current()[id - 1].host().to_owned(),
+                        v.current()[id - 1].uuid().to_owned(),
+                    ),
                     SEARCH_TOTAL,
                 );
                 *mode = Mode::Comments(comments_tmp);
@@ -424,8 +439,9 @@ impl Cli {
             }
             Mode::Channels(c) => {
                 self.display.channel_info(&c.current()[id - 1]);
+                let c = &c.current()[id - 1];
                 Command::new(self.config.browser())
-                    .arg(self.instance.channel_url(&c.current()[id - 1]))
+                    .arg(self.instance.channel_url(c.host(), c))
                     .spawn()
                     .map_err(Error::BrowserLaunch)?
                     .wait()

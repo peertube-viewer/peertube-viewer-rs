@@ -1,4 +1,5 @@
 use peertube_api::{channels::Channel, error, Comment, Instance, Video};
+use peertube_viewer_utils::host_from_handle;
 use preloadable_list::AsyncLoader;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
@@ -64,7 +65,15 @@ impl AsyncLoader for Videos {
     fn data(&self, step: usize, offset: usize) -> Result<(Vec<Self::Data>, usize), Self::Error> {
         match &self.mode {
             VideoMode::Search(query) => self.instance.search_videos(&query, step, offset),
-            VideoMode::Channel(handle) => self.instance.channel_videos(&handle, step, offset),
+            VideoMode::Channel(handle) => self.instance.channel_videos(
+                host_from_handle(&handle)
+                    .as_ref()
+                    .map(|s| &**s)
+                    .unwrap_or(""),
+                &handle,
+                step,
+                offset,
+            ),
             VideoMode::Trending => self.instance.trending_videos(step, offset),
         }
     }
@@ -96,6 +105,7 @@ impl Channels {
 pub struct Comments {
     instance: Arc<Instance>,
     video_uuid: String,
+    host: String,
 }
 
 impl AsyncLoader for Channels {
@@ -108,10 +118,11 @@ impl AsyncLoader for Channels {
 }
 
 impl Comments {
-    pub fn new(instance: Arc<Instance>, video_uuid: &str) -> Comments {
+    pub fn new(instance: Arc<Instance>, host: String, video_uuid: String) -> Comments {
         Comments {
             instance,
-            video_uuid: video_uuid.to_owned(),
+            host,
+            video_uuid,
         }
     }
 }
@@ -121,6 +132,7 @@ impl AsyncLoader for Comments {
     type Error = error::Error;
 
     fn data(&self, step: usize, offset: usize) -> Result<(Vec<Comment>, usize), error::Error> {
-        self.instance.comments(&self.video_uuid, step, offset)
+        self.instance
+            .comments(&self.host, &self.video_uuid, step, offset)
     }
 }

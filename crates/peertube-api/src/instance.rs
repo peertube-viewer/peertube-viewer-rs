@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::convert::TryFrom;
 use std::sync::Arc;
 
@@ -6,6 +7,7 @@ use nanoserde::DeJson;
 use peertube_ser::channels::Channels;
 use peertube_ser::video::{Description, File, StreamingPlaylist, Video as FullVideo};
 use peertube_ser::{Comments, Videos};
+use peertube_viewer_utils::to_https;
 
 use crate::channels::Channel;
 use crate::comments::Comment;
@@ -20,6 +22,12 @@ pub struct Instance {
     user_agent: Option<String>,
     include_nsfw: &'static str,
     local: bool,
+
+    // If true (when connected to sepia_search for instance)
+    // this means that additionnal info outside of search should
+    // come from the hosts of videos instead of this instance
+    // because the instance doesn't have them
+    is_search: bool,
 }
 
 fn status_or_error(res: ureq::Response) -> error::Result<ureq::Response> {
@@ -36,12 +44,14 @@ impl Instance {
         include_nsfw: bool,
         local: bool,
         user_agent: Option<String>,
+        is_search: bool,
     ) -> Arc<Instance> {
         Arc::new(Instance {
             host,
             user_agent,
             include_nsfw: nsfw_string(include_nsfw),
             local,
+            is_search,
         })
     }
 
@@ -85,13 +95,19 @@ impl Instance {
         Ok((res, search_res.total))
     }
 
+    /// Get the videos from a given channel
     pub fn channel_videos(
         self: &Arc<Instance>,
+        host: &str,
         handle: &str,
         nb: usize,
         offset: usize,
     ) -> error::Result<(Vec<Video>, usize)> {
-        let url = format!("{}/api/v1/video-channels/{}/videos", self.host, handle);
+        let url = format!(
+            "{}/api/v1/video-channels/{}/videos",
+            self.api_host(host),
+            handle
+        );
 
         let mut req = ureq::get(&url);
         self.add_user_agent(&mut req)
@@ -116,11 +132,16 @@ impl Instance {
 
     pub fn comments(
         self: &Arc<Instance>,
+        host: &str,
         video_uuid: &str,
         nb: usize,
         offset: usize,
     ) -> error::Result<(Vec<Comment>, usize)> {
-        let url = format!("{}/api/v1/videos/{}/comment-threads", self.host, video_uuid);
+        let url = format!(
+            "{}/api/v1/videos/{}/comment-threads",
+            self.api_host(host),
+            video_uuid
+        );
 
         let mut req = ureq::get(&url);
         self.add_user_agent(&mut req)
@@ -201,10 +222,8 @@ impl Instance {
     }
 
     /// Load a single video from its uuid
-    pub fn single_video(self: &Arc<Instance>, uuid: &str) -> error::Result<Video> {
-        let mut url = self.host.clone();
-        url.push_str("/api/v1/videos/");
-        url.push_str(uuid);
+    pub fn single_video(self: &Arc<Instance>, host: &str, uuid: &str) -> error::Result<Video> {
+        let url = format!("{}/api/v1/videos/{}", self.api_host(host), uuid);
 
         let mut req = ureq::get(&url);
         self.add_user_agent(&mut req);
@@ -215,11 +234,12 @@ impl Instance {
     }
 
     /// Fetch a video description
-    pub fn video_description(self: &Arc<Instance>, uuid: &str) -> error::Result<Option<String>> {
-        let mut url = self.host.clone();
-        url.push_str("/api/v1/videos/");
-        url.push_str(uuid);
-        url.push_str("/description");
+    pub fn video_description(
+        self: &Arc<Instance>,
+        host: &str,
+        uuid: &str,
+    ) -> error::Result<Option<String>> {
+        let url = format!("{}/api/v1/videos/{}/description", self.api_host(host), uuid);
 
         let mut req = ureq::get(&url);
         let desc: Description =
@@ -230,11 +250,10 @@ impl Instance {
     /// Fetch the files for a given video uuid
     pub fn video_complete(
         self: &Arc<Instance>,
+        host: &str,
         uuid: &str,
     ) -> error::Result<(Vec<File>, Vec<StreamingPlaylist>)> {
-        let mut url = self.host.clone();
-        url.push_str("/api/v1/videos/");
-        url.push_str(uuid);
+        let url = format!("{}/api/v1/videos/{}", self.api_host(host), uuid);
 
         let mut req = ureq::get(&url);
         self.add_user_agent(&mut req);
@@ -243,16 +262,25 @@ impl Instance {
         Ok((video.files, video.streamingPlaylists))
     }
 
-    pub fn channel_url(&self, channel: &Channel) -> String {
-        let mut channel_url = self.host.clone();
-        channel_url.push_str("/video-channels/");
-        channel_url.push_str(&channel.handle());
-        channel_url.push_str("/videos/");
-        channel_url
+    pub fn channel_url(&self, host: &str, channel: &Channel) -> String {
+        format!(
+            "{}/video-channels/{}/videos",
+            self.api_host(host),
+            channel.handle()
+        )
     }
 
     pub fn host(&self) -> &String {
         &self.host
+    }
+
+    /// Returns the host to be used for api requests outside of search
+    fn api_host<'i>(&'i self, host: &'i str) -> Cow<'i, str> {
+        if !self.is_search {
+            Cow::Borrowed(&self.host)
+        } else {
+            to_https(host)
+        }
     }
 }
 

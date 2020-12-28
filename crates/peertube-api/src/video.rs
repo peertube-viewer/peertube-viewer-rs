@@ -278,7 +278,7 @@ impl Video {
     }
 
     fn fetch_description(&self) -> error::Result<Option<String>> {
-        self.instance.video_description(&self.uuid)
+        self.instance.video_description(self.host(), &self.uuid)
     }
 
     /// Fetch the description but don't return it to avoid an unnecessary copy
@@ -317,7 +317,7 @@ impl Video {
     }
 
     fn fetch_files(&self) -> error::Result<(Vec<File>, Vec<StreamingPlaylist>)> {
-        let (files, streams) = self.instance.video_complete(&self.uuid)?;
+        let (files, streams) = self.instance.video_complete(self.host(), &self.uuid)?;
         let files: Vec<File> = files.into_iter().map(|v| v.into()).collect();
         let streams: Vec<StreamingPlaylist> = streams.into_iter().map(|v| v.into()).collect();
 

@@ -1,0 +1,8 @@
+[package]
+name = "peertube-viewer-utils"
+version = "0.1.0"
+authors = ["Sosthène Guédon <sosthene@guedon.gdn>"]
+edition = "2018"
+
+
+[dependencies]

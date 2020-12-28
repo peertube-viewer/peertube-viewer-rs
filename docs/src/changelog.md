@@ -1,6 +1,11 @@
 Changelog
 =========
 
+dev
+---
+
+- Add support for using sepia search
+
 1.7.3
 ---
 

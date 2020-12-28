@@ -9,7 +9,8 @@ Options
 - `-c, --config <config-file>`       Sets a custom config file location.
 The default is `$XDG_CONFIG_HOME/peertube-viewer-rs/config.toml` or `$HOME/.config/peertube-viewer-rs/config.toml`
 
-- `-i, --instance <instance>`       instance to be browsed (default is [video.ploud.fr](https://video.ploud.fr))
+- `--search-engine <api>`       search engine to be used to used (default is [sepiasearch.org](https://sepiasearch.org))
+- `-i, --instance <instance>`       instance to be browsed. The search will be made using this instance, and all API request will go through this instance.
 - `-p, --player <player>`       player to play the videos with
 - `--chandle <handle>`       list the videos of a channel from its handle (ex: `mychannel@myinstance.com`)
 - `--player-args <player-args>...`       arguments to be passed to the player

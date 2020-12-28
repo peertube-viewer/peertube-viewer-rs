@@ -21,6 +21,7 @@ pub struct Video {
     pub updatedAt: String,
     pub description: Option<String>,
     pub duration: u64,
+    #[nserde(default)]
     pub isLocal: bool,
     pub name: String,
     pub thumbnailPath: String,

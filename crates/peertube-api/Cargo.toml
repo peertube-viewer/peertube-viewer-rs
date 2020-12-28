@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 peertube-ser = {version = "*", path = "../peertube-ser"}
+peertube-viewer-utils = {version = "*", path = "../peertube-viewer-utils"}
 
 
 ureq = "1"

@@ -8,4 +8,4 @@ command = "mpv"
 use-raw-urls = false
 
 [instances]
-main = "video.ploud.fr"
+search-engine = "sepiasearch.org"

@@ -33,7 +33,8 @@ Format
     - [`prefer-hls`](#prefer-hls) prefer [hls streams](https://en.wikipedia.org/wiki/HTTP_Live_Streaming) to static files
 
 - [[`instances`]](#instances)
-    - [`main`](#main) main instance to search
+    - [`search-engine`](#search-engine) search engine to be used
+    - [`main`](#main) main instance to browse
     - [`blocklist`](#blocklist-allowlist) instance blocklist
     - [`allowlist`](#blocklist-allowlist) instance blocklist
 
@@ -148,8 +149,12 @@ args = ["-a"]
 
 Instance settings
 
+#### search-engine
+The search engine to be used ([sepiasearch.org](https://sepiasearch.rg) is the default)
+
 #### main
 The main instance to be connected to, it is expected to be a string.
+It is incompatible with the `search-engine` option. The difference with the search engine option is that all API requests will be made through the same instance.
 
 #### blocklist-allowlist
 

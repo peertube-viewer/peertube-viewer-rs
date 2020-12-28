@@ -6,6 +6,8 @@ use toml::{
     value::{Table, Value},
 };
 
+use peertube_viewer_utils::to_https;
+
 use std::collections::HashSet;
 use std::default::Default;
 use std::env::vars_os;
@@ -51,7 +53,7 @@ pub enum ConfigLoadError {
     TomlError(TomlError),
     UseTorrentAndNoInfo,
     NotATable,
-    NotAString,
+    NotAString(String),
     NonUtf8EnvironmentVariable {
         name: &'static str,
         provided: OsString,
@@ -61,6 +63,7 @@ pub enum ConfigLoadError {
         provided: String,
         allowed: &'static [&'static str],
     },
+    ConflicingOptions(String, String),
 }
 
 impl Display for ConfigLoadError {
@@ -94,13 +97,20 @@ impl Display for ConfigLoadError {
                 f,
                 "The config file is malformed, it should be a TOML table\nUsing default config"
             ),
-            ConfigLoadError::NotAString => write!(
+            ConfigLoadError::NotAString(s) => write!(
                 f,
-                "Command arguments and blocklisted instances need to be a table of String\n Ignoring bad arguments"
+                "{} needs to be Strings\n Ignoring bad arguments",
+                s
             ),
             ConfigLoadError::UseTorrentAndNoInfo=> write!(
                 f,
                 "--use-torrent requires a torrent to be set\nUsing player instead of torrent"
+            ),
+            ConfigLoadError::ConflicingOptions(first, second) => write!(
+                f,
+                "{} and {} cannot appear at the same time in the config.\nUsing the search engine provided",
+                first,
+                second,
             ),
         }
     }
@@ -120,9 +130,10 @@ impl error::Error for ConfigLoadError {
                 name: _,
                 provided: _,
             }
+            | ConfigLoadError::ConflicingOptions(_, _)
             | ConfigLoadError::UseTorrentAndNoInfo
             | ConfigLoadError::NotATable
-            | ConfigLoadError::NotAString => None,
+            | ConfigLoadError::NotAString(_) => None,
         }
     }
 }
@@ -162,6 +173,7 @@ impl InitialInfo {
 pub struct Config {
     player: PlayerConf,
     instance: String,
+    is_search_engine: bool,
     torrent: Option<(TorrentConf, bool)>,
     listed_instances: HashSet<String>,
     is_allowlist: bool,
@@ -408,8 +420,29 @@ impl Config {
         };
 
         if let Some(Value::Table(t)) = config.get("instances") {
-            if let Some(Value::String(s)) = t.get("main") {
-                temp.instance = correct_instance(s);
+            match (t.get("main"), t.get("search-engine")) {
+                (None, None) => {}
+                (Some(_), Some(Value::String(search))) => {
+                    temp.instance = to_https(search).into_owned();
+                    temp.is_search_engine = true;
+                    load_errors.push(ConfigLoadError::ConflicingOptions(
+                        "instances: main".to_string(),
+                        "instances: search-engine".to_string(),
+                    ));
+                }
+                (None, Some(Value::String(search))) => {
+                    temp.instance = to_https(search).into_owned();
+                    temp.is_search_engine = true
+                }
+                (Some(Value::String(instance)), None) => {
+                    temp.instance = to_https(instance).into_owned();
+                    temp.is_search_engine = true
+                }
+                (Some(_), Some(_)) | (None, Some(_)) | (Some(_), None) => {
+                    load_errors.push(ConfigLoadError::NotAString(
+                        "instance : search-engine and instance: main".to_owned(),
+                    ));
+                }
             }
         }
 
@@ -435,7 +468,11 @@ impl Config {
         self.local = args.is_present("local");
 
         if let Some(i) = args.value_of("instance") {
-            self.instance = correct_instance(i);
+            self.instance = to_https(i).into_owned();
+            self.is_search_engine = false;
+        } else if let Some(s) = args.value_of("search-engine") {
+            self.instance = to_https(s).into_owned();
+            self.is_search_engine = true;
         }
 
         /* ---Torrent configuration --- */
@@ -568,6 +605,10 @@ impl Config {
     pub fn user_agent(&self) -> Option<String> {
         self.user_agent.clone()
     }
+
+    pub fn is_search_engine(&self) -> bool {
+        self.is_search_engine
+    }
 }
 
 impl Default for Config {
@@ -579,7 +620,8 @@ impl Default for Config {
                 use_raw_urls: false,
                 prefer_hls: true,
             },
-            instance: "https://video.ploud.fr".to_string(),
+            instance: "https://sepiasearch.org".to_string(),
+            is_search_engine: true,
             torrent: None,
             user_agent: Some(USER_AGENT.into()),
             nsfw: NsfwBehavior::Tag,
@@ -593,23 +635,6 @@ impl Default for Config {
             max_hist_lines: 2000,
         }
     }
-}
-
-fn correct_instance(s: &str) -> String {
-    let mut s = if s.starts_with("https://") {
-        s.to_string()
-    } else if let Some(stripped) = s.strip_prefix("http://") {
-        format!("https://{}", stripped)
-    } else {
-        format!("https://{}", s)
-    };
-    if let Some(c) = s.pop() {
-        if c != '/' {
-            s.push(c);
-        }
-    }
-
-    s
 }
 
 impl Blocklist<str> for Config {
@@ -653,7 +678,10 @@ fn get_string_array(t: &Table, name: &str, load_errors: &mut Vec<ConfigLoadError
                 .filter_map(|s| {
                     let res = s.as_str().map(|s| s.to_string());
                     if res.is_none() {
-                        load_errors.push(ConfigLoadError::NotAString)
+                        load_errors.push(ConfigLoadError::NotAString(format!(
+                            "The elements of {}",
+                            name
+                        )))
                     }
                     res
                 })
@@ -789,18 +817,5 @@ mod config {
                 .kind,
             ErrorKind::ArgumentConflict
         );
-    }
-}
-
-#[cfg(test)]
-mod helpers {
-    use super::*;
-
-    #[test]
-    fn instance_correction() {
-        assert_eq!(correct_instance("http://foo.bar/"), "https://foo.bar");
-        assert_eq!(correct_instance("foo.bar"), "https://foo.bar");
-        assert_eq!(correct_instance("foo.bar/"), "https://foo.bar");
-        assert_eq!(correct_instance("https://foo.bar/"), "https://foo.bar");
     }
 }

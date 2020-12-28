@@ -38,6 +38,9 @@ prefer-hls = false
 [instances]
 main = "skeptikon.fr"
 
+# peertube-viewer supports using sepiasearch
+# search-engine = "sepiasearch.org"
+
 # allowlist = ["video.ploud.fr"]
 blocklist = ["peertube.social"]
 
