@@ -145,7 +145,7 @@ impl Cli {
         let mode = Mode::Temp; //Placeholder that will be changed just after anyway on the first loop run
         let action = match self.initial_info.take() {
             InitialInfo::Query(s) if self.is_single_url => {
-                self.play_vid(&self.instance.single_video(&s)?)?;
+                self.play_vid(&self.instance.single_video(&self.instance.host(), &s)?)?;
                 return Ok(());
             }
             InitialInfo::Query(s) => ParsedQuery::Query(s),
@@ -389,7 +389,11 @@ impl Cli {
             Mode::Videos(v) => {
                 self.display.video_info(&v.current()[id - 1]);
                 let comments_tmp = PreloadableList::new(
-                    Comments::new(self.instance.clone(), v.current()[id - 1].uuid()),
+                    Comments::new(
+                        self.instance.clone(),
+                        v.current()[id - 1].host().to_owned(),
+                        v.current()[id - 1].uuid().to_owned(),
+                    ),
                     SEARCH_TOTAL,
                 );
                 *mode = Mode::Comments(comments_tmp);
@@ -425,8 +429,9 @@ impl Cli {
             }
             Mode::Channels(c) => {
                 self.display.channel_info(&c.current()[id - 1]);
+                let c = &c.current()[id - 1];
                 Command::new(self.config.browser())
-                    .arg(self.instance.channel_url(&c.current()[id - 1]))
+                    .arg(self.instance.channel_url(c.host(), c))
                     .spawn()
                     .map_err(Error::BrowserLaunch)?
                     .wait()
