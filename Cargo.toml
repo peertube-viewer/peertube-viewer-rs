@@ -8,6 +8,7 @@ build = "build.rs"
 [dependencies]
 peertube-api = {version = "*", path = "crates/peertube-api"}
 preloadable-list = {version = "*", path = "crates/preloadable-list"}
+peertube-viewer-utils = {version = "*", path = "crates/peertube-viewer-utils"}
 ureq = "1"
 termion = "1"
 chrono = "0.4"
@@ -20,7 +21,7 @@ textwrap = "0.11"
 terminal_size = "0.1"
 
 [workspace]
-members = ["crates/peertube-api/", "crates/peertube-ser/"]
+members = ["crates/peertube-api/", "crates/peertube-ser/", "crates/preloadable-list/", "crates/peertube-viewer-utils/"]
 
 [build-dependencies]
 clap = { version = "2", features = ["yaml"] }

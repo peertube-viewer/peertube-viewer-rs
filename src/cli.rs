@@ -121,6 +121,7 @@ impl Cli {
             !config.nsfw().is_block(),
             config.local(),
             config.user_agent(),
+            false,
         );
 
         if !is_single_url {

@@ -6,6 +6,8 @@ use toml::{
     value::{Table, Value},
 };
 
+use peertube_viewer_utils::to_https;
+
 use std::collections::HashSet;
 use std::default::Default;
 use std::env::vars_os;
@@ -409,7 +411,7 @@ impl Config {
 
         if let Some(Value::Table(t)) = config.get("instances") {
             if let Some(Value::String(s)) = t.get("main") {
-                temp.instance = correct_instance(s);
+                temp.instance = to_https(s).into_owned();
             }
         }
 
@@ -435,7 +437,7 @@ impl Config {
         self.local = args.is_present("local");
 
         if let Some(i) = args.value_of("instance") {
-            self.instance = correct_instance(i);
+            self.instance = to_https(i).into_owned();
         }
 
         /* ---Torrent configuration --- */
@@ -593,23 +595,6 @@ impl Default for Config {
             max_hist_lines: 2000,
         }
     }
-}
-
-fn correct_instance(s: &str) -> String {
-    let mut s = if s.starts_with("https://") {
-        s.to_string()
-    } else if let Some(stripped) = s.strip_prefix("http://") {
-        format!("https://{}", stripped)
-    } else {
-        format!("https://{}", s)
-    };
-    if let Some(c) = s.pop() {
-        if c != '/' {
-            s.push(c);
-        }
-    }
-
-    s
 }
 
 impl Blocklist<str> for Config {
@@ -789,18 +774,5 @@ mod config {
                 .kind,
             ErrorKind::ArgumentConflict
         );
-    }
-}
-
-#[cfg(test)]
-mod helpers {
-    use super::*;
-
-    #[test]
-    fn instance_correction() {
-        assert_eq!(correct_instance("http://foo.bar/"), "https://foo.bar");
-        assert_eq!(correct_instance("foo.bar"), "https://foo.bar");
-        assert_eq!(correct_instance("foo.bar/"), "https://foo.bar");
-        assert_eq!(correct_instance("https://foo.bar/"), "https://foo.bar");
     }
 }
