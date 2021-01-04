@@ -104,7 +104,7 @@ impl Editor {
         };
         loop {
             match guard.readline(&prompt) {
-                Ok(l) if l != "" => {
+                Ok(l) if !l.is_empty() => {
                     if let Ok(q) = parse_first(&l) {
                         if let Some(h) = guard.helper_mut() {
                             h.set_stade(Stade::Normal);
