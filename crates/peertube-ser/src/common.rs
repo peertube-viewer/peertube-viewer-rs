@@ -1,8 +1,6 @@
-#![allow(clippy::redundant_pattern_matching)] // Suppress warnings caused by nanoserde
+use serde::Deserialize;
 
-use nanoserde::DeJson;
-
-#[derive(DeJson, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Avatar {
     pub path: String,
@@ -10,21 +8,21 @@ pub struct Avatar {
     pub updatedAt: Option<String>,
 }
 
-#[derive(DeJson, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Channel {
     pub id: i64,
     pub name: String,
     pub displayName: String,
 
-    #[nserde(default)]
+    #[serde(default)]
     pub url: Option<String>,
     pub host: String,
     pub Avatar: Option<Avatar>,
 }
 
 /// Structure used to deserialize the state of a video
-#[derive(DeJson, Debug, Default)]
+#[derive(Deserialize, Debug, Default)]
 #[allow(non_snake_case)]
 pub struct VideoState {
     pub id: u16,

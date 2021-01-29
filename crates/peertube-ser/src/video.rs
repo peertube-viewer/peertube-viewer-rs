@@ -1,18 +1,16 @@
-#![allow(clippy::redundant_pattern_matching)] // Suppress warnings caused by nanoserde
-
 use crate::common::{Channel, VideoState};
 use crate::search::{IdentifiedLabel, Language};
-use nanoserde::DeJson;
+use serde::Deserialize;
 
 /// Structure used to deserialize the json output from fetching a video description
-#[derive(DeJson, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Description {
     pub description: Option<String>,
 }
 
 /// Structure used to deserialize the json output from fetching video data
-#[derive(DeJson, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Video {
     pub uuid: String,
@@ -21,7 +19,7 @@ pub struct Video {
     pub updatedAt: String,
     pub description: Option<String>,
     pub duration: u64,
-    #[nserde(default)]
+    #[serde(default)]
     pub isLocal: bool,
     pub name: String,
     pub thumbnailPath: String,
@@ -32,9 +30,9 @@ pub struct Video {
     pub dislikes: u64,
     pub nsfw: bool,
 
-    #[nserde(default)]
+    #[serde(default)]
     pub isLive: bool,
-    #[nserde(default)]
+    #[serde(default)]
     pub state: VideoState,
     pub account: Channel,
     pub channel: Channel,
@@ -45,20 +43,20 @@ pub struct Video {
 
     /// The list of files for the video
     /// Each file corresponds to an available resolution
-    #[nserde(default)]
+    #[serde(default)]
     pub files: Vec<File>,
-    #[nserde(default)]
+    #[serde(default)]
     pub streamingPlaylists: Vec<StreamingPlaylist>,
 }
 
-#[derive(DeJson, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct Resolution {
     pub id: u64,
     pub label: String,
 }
 
-#[derive(DeJson, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct File {
     pub magnetUri: String,
@@ -70,7 +68,7 @@ pub struct File {
     pub fileDownloadUrl: String,
 }
 
-#[derive(DeJson, Debug)]
+#[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
 pub struct StreamingPlaylist {
     pub id: u64,

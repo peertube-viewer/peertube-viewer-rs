@@ -305,21 +305,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
 
 [[package]]
-name = "nanoserde"
-version = "0.1.22"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cadfbf6f15cee144bb4b4a8d8885b25d9338cf05021fa6b9e40d527c812fc7c5"
-dependencies = [
- "nanoserde-derive",
-]
-
-[[package]]
-name = "nanoserde-derive"
-version = "0.1.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14c89882788bb83c0eb07ee5c5e690910210f5425d9651b525d7ad9f4041dd68"
-
-[[package]]
 name = "nix"
 version = "0.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -367,9 +352,9 @@ name = "peertube-api"
 version = "0.1.0"
 dependencies = [
  "chrono",
- "nanoserde",
  "peertube-ser",
  "peertube-viewer-utils",
+ "serde_json",
  "ureq",
 ]
 
@@ -377,7 +362,8 @@ dependencies = [
 name = "peertube-ser"
 version = "0.1.0"
 dependencies = [
- "nanoserde",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

@@ -10,5 +10,5 @@ peertube-viewer-utils = {version = "*", path = "../peertube-viewer-utils"}
 
 
 ureq = "1"
-nanoserde = "0.1.18"
+serde_json = "1"
 chrono = "0.4.13"

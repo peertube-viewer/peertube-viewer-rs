@@ -2,8 +2,6 @@ use std::borrow::Cow;
 use std::convert::TryFrom;
 use std::sync::Arc;
 
-use nanoserde::DeJson;
-
 use peertube_ser::channels::Channels;
 use peertube_ser::video::{Description, File, StreamingPlaylist, Video as FullVideo};
 use peertube_ser::{Comments, Videos};
@@ -85,7 +83,7 @@ impl Instance {
         }
 
         let search_res: Videos =
-            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?;
+            serde_json::from_str(&status_or_error(req.call())?.into_string()?)?;
         let mut res = Vec::new();
 
         for video in search_res.data {
@@ -120,8 +118,7 @@ impl Instance {
             req.query("filter", "local");
         }
 
-        let video_res: Videos =
-            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?;
+        let video_res: Videos = serde_json::from_str(&status_or_error(req.call())?.into_string()?)?;
         let mut res = Vec::new();
         for video in video_res.data {
             res.push(Video::from_search(self, video));
@@ -149,7 +146,7 @@ impl Instance {
             .query("start", &offset.to_string());
 
         let comment_res: Comments =
-            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?;
+            serde_json::from_str(&status_or_error(req.call())?.into_string()?)?;
         let mut res = Vec::new();
         for comment in comment_res.data {
             if let Ok(c) = Comment::try_from(comment) {
@@ -180,7 +177,7 @@ impl Instance {
         }
 
         let search_res: Videos =
-            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?;
+            serde_json::from_str(&status_or_error(req.call())?.into_string()?)?;
         let mut res = Vec::new();
         for video in search_res.data {
             res.push(Video::from_search(self, video));
@@ -210,7 +207,7 @@ impl Instance {
         }
 
         let search_res: Channels =
-            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?;
+            serde_json::from_str(&status_or_error(req.call())?.into_string()?)?;
         let mut res = Vec::new();
         for video in search_res.data {
             if let Some(v) = Channel::maybe_from(video, self.host.clone()) {
@@ -229,7 +226,7 @@ impl Instance {
         self.add_user_agent(&mut req);
         Ok(Video::from_full(
             self,
-            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?,
+            serde_json::from_str(&status_or_error(req.call())?.into_string()?)?,
         ))
     }
 
@@ -242,8 +239,7 @@ impl Instance {
         let url = format!("{}/api/v1/videos/{}/description", self.api_host(host), uuid);
 
         let mut req = ureq::get(&url);
-        let desc: Description =
-            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?;
+        let desc: Description = serde_json::from_str(&status_or_error(req.call())?.into_string()?)?;
         Ok(desc.description)
     }
 
@@ -257,8 +253,7 @@ impl Instance {
 
         let mut req = ureq::get(&url);
         self.add_user_agent(&mut req);
-        let video: FullVideo =
-            DeJson::deserialize_json(&status_or_error(req.call())?.into_string()?)?;
+        let video: FullVideo = serde_json::from_str(&status_or_error(req.call())?.into_string()?)?;
         Ok((video.files, video.streamingPlaylists))
     }
 

@@ -11,7 +11,7 @@ pub enum Error {
     /// contains the length of the array
     OutOfBound(usize),
     Io(Arc<io::Error>),
-    Serde(nanoserde::DeJsonErr),
+    Serde(Arc<serde_json::Error>),
 }
 
 impl fmt::Display for Error {
@@ -32,7 +32,7 @@ impl error::Error for Error {
         match self {
             Error::Ureq(err) => Some(&**err),
             Error::Io(err) => Some(&**err),
-            Error::Serde(err) => Some(err),
+            Error::Serde(err) => Some(&**err),
             Error::Status(_) | Error::NoContent | Error::OutOfBound(_) => None,
         }
     }
@@ -50,8 +50,8 @@ impl From<io::Error> for Error {
     }
 }
 
-impl From<nanoserde::DeJsonErr> for Error {
-    fn from(err: nanoserde::DeJsonErr) -> Self {
-        Error::Serde(err)
+impl From<serde_json::Error> for Error {
+    fn from(err: serde_json::Error) -> Self {
+        Error::Serde(Arc::new(err))
     }
 }
