@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 
+#[derive(Debug, PartialEq)]
 pub struct FromHandleError {}
 
 pub fn to_https(mut s: &str) -> Cow<'_, str> {
@@ -55,6 +56,6 @@ mod helpers {
             host_from_handle("channel@instance.org").unwrap(),
             "https://instance.org".to_owned()
         );
-        assert_eq!(host_from_handle("no "), Err(()));
+        assert!(host_from_handle("no ").is_err());
     }
 }
