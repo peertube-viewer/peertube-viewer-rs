@@ -7,4 +7,4 @@ mod video;
 
 pub use comments::Comment;
 pub use instance::Instance;
-pub use video::{Resolution, Video};
+pub use video::{Resolution, State as VideoState, Video};

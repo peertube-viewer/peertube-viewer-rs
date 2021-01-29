@@ -5,7 +5,7 @@ use std::sync::Mutex;
 use crate::common::Channel;
 use crate::error::{self, Error};
 use crate::instance::Instance;
-use peertube_ser::{search, video};
+use peertube_ser::{common::VideoState, search, video};
 
 #[derive(Clone, Debug)]
 struct File {
@@ -126,6 +126,31 @@ enum Description {
     Fetched(String),
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum State {
+    None,
+    Published,
+    ToTranscode,
+    ToImport,
+    WaitingForLive,
+    LiveEnded,
+    Unknown(u16, String),
+}
+
+impl From<VideoState> for State {
+    fn from(i: VideoState) -> State {
+        match i.id {
+            0 => State::None,
+            1 => State::Published,
+            2 => State::ToTranscode,
+            3 => State::ToImport,
+            4 => State::WaitingForLive,
+            5 => State::LiveEnded,
+            _ => State::Unknown(i.id, i.label),
+        }
+    }
+}
+
 impl Description {
     pub fn is_none(&self) -> bool {
         matches!(*self, Description::None)
@@ -156,6 +181,7 @@ pub struct Video {
     views: u64,
     likes: u64,
     nsfw: bool,
+    is_live: bool,
     dislikes: u64,
     published: Option<DateTime<FixedOffset>>,
     short_desc: Option<String>,
@@ -163,6 +189,7 @@ pub struct Video {
     files: Mutex<Files>,
     channel: Channel,
     account: Channel,
+    state: State,
 }
 
 #[allow(unused)]
@@ -182,6 +209,9 @@ impl Video {
     pub fn duration(&self) -> u64 {
         self.duration
     }
+    pub fn is_live(&self) -> bool {
+        self.is_live
+    }
     pub fn views(&self) -> u64 {
         self.views
     }
@@ -193,6 +223,10 @@ impl Video {
     }
     pub fn dislikes(&self) -> u64 {
         self.dislikes
+    }
+
+    pub fn state(&self) -> &State {
+        &self.state
     }
 
     pub fn host(&self) -> &str {
@@ -223,12 +257,14 @@ impl Video {
             dislikes: v.dislikes,
             views: v.views,
             nsfw: v.nsfw,
+            is_live: v.isLive,
             published: DateTime::parse_from_rfc3339(&v.publishedAt).ok(),
             short_desc: v.description,
             description: Mutex::new(Description::None),
             files: Mutex::new(Files::None),
             channel: v.channel.into(),
             account: v.account.into(),
+            state: v.state.into(),
         }
     }
     pub fn from_full(i: &Arc<Instance>, v: video::Video) -> Video {
@@ -241,6 +277,7 @@ impl Video {
             dislikes: v.dislikes,
             views: v.views,
             nsfw: v.nsfw,
+            is_live: v.isLive,
             published: DateTime::parse_from_rfc3339(&v.publishedAt).ok(),
             short_desc: v.description,
             description: Mutex::new(Description::None),
@@ -250,6 +287,7 @@ impl Video {
             )),
             channel: v.channel.into(),
             account: v.account.into(),
+            state: v.state.into(),
         }
     }
 

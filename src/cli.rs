@@ -16,7 +16,7 @@ use crate::error::Error;
 
 use rustyline::error::ReadlineError;
 
-use peertube_api::{error::Error as ApiError, Instance};
+use peertube_api::{error::Error as ApiError, Instance, VideoState};
 
 use preloadable_list::PreloadableList;
 use preloadables::{Channels, Comments, Videos};
@@ -470,6 +470,22 @@ impl Cli {
             if confirm != "y" && confirm != "Y" {
                 return Ok(());
             }
+        }
+
+        if !matches!(video.state(), VideoState::Published | VideoState::None | VideoState::Unknown(_,_))
+        {
+            match video.state() {
+                VideoState::ToTranscode | VideoState::ToImport => {
+                    self.display.warn(&"This video is not yet available")
+                }
+                VideoState::WaitingForLive => {
+                    self.display.warn(&"This livestream has not started yet")
+                }
+                VideoState::LiveEnded => self.display.warn(&"This livestream is over"),
+                _ => unreachable!(),
+            }
+
+            return Ok(());
         }
 
         let video_url = if self.config.select_quality() {

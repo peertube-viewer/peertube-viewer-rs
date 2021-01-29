@@ -1,6 +1,6 @@
 #![allow(clippy::redundant_pattern_matching)] // Suppress warnings caused by nanoserde
 
-use crate::common::Channel;
+use crate::common::{Channel, VideoState};
 use crate::search::{IdentifiedLabel, Language};
 use nanoserde::DeJson;
 
@@ -31,6 +31,11 @@ pub struct Video {
     pub likes: u64,
     pub dislikes: u64,
     pub nsfw: bool,
+
+    #[nserde(default)]
+    pub isLive: bool,
+    #[nserde(default)]
+    pub state: VideoState,
     pub account: Channel,
     pub channel: Channel,
     pub category: IdentifiedLabel,
