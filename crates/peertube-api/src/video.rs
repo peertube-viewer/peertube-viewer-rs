@@ -5,7 +5,7 @@ use std::sync::Mutex;
 use crate::common::Channel;
 use crate::error::{self, Error};
 use crate::instance::Instance;
-use peertube_ser::{search, video};
+use peertube_ser::{common::VideoState, search, video};
 
 #[derive(Clone, Debug)]
 struct File {
@@ -126,6 +126,29 @@ enum Description {
     Fetched(String),
 }
 
+#[derive(Debug, Clone)]
+pub enum State {
+    Published,
+    ToTranscode,
+    ToImport,
+    WaitingForLive,
+    LiveEnded,
+    Unknown(u16, String),
+}
+
+impl From<VideoState> for State {
+    fn from(i: VideoState) -> State {
+        match i.id {
+            1 => State::Published,
+            2 => State::ToTranscode,
+            3 => State::ToImport,
+            4 => State::WaitingForLive,
+            5 => State::LiveEnded,
+            _ => State::Unknown(i.id, i.label),
+        }
+    }
+}
+
 impl Description {
     pub fn is_none(&self) -> bool {
         matches!(*self, Description::None)
@@ -164,6 +187,7 @@ pub struct Video {
     files: Mutex<Files>,
     channel: Channel,
     account: Channel,
+    state: State,
 }
 
 #[allow(unused)]
@@ -197,6 +221,10 @@ impl Video {
     }
     pub fn dislikes(&self) -> u64 {
         self.dislikes
+    }
+
+    pub fn state(&self) -> &State {
+        &self.state
     }
 
     pub fn host(&self) -> &str {
@@ -234,6 +262,7 @@ impl Video {
             files: Mutex::new(Files::None),
             channel: v.channel.into(),
             account: v.account.into(),
+            state: v.state.into(),
         }
     }
     pub fn from_full(i: &Arc<Instance>, v: video::Video) -> Video {
@@ -256,6 +285,7 @@ impl Video {
             )),
             channel: v.channel.into(),
             account: v.account.into(),
+            state: v.state.into(),
         }
     }
 

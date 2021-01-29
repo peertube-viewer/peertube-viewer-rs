@@ -61,8 +61,8 @@ pub fn pretty_duration(d: u64) -> String {
 }
 
 pub fn pretty_duration_or_live(d: u64, is_live: bool) -> String {
-    if is_live || d == 0 {
-        //TODO remove d == 0 once the live property is correctly sent by peertube
+    if is_live {
+        // Currently doesn't matter since lives aren't returned by search
         "LIVE".to_owned()
     } else {
         pretty_duration(d)

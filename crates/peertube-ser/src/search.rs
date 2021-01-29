@@ -2,7 +2,7 @@
 
 use nanoserde::DeJson;
 
-use super::common::Channel;
+use super::common::{Channel, VideoState};
 
 #[derive(DeJson, Debug)]
 #[allow(non_snake_case)]
@@ -53,6 +53,8 @@ pub struct Video {
 
     #[nserde(default)]
     pub isLive: bool,
+    #[nserde(default)]
+    pub state: VideoState,
     pub account: Channel,
     pub channel: Channel,
     pub category: IdentifiedLabel,

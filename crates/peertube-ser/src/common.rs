@@ -22,3 +22,11 @@ pub struct Channel {
     pub host: String,
     pub Avatar: Option<Avatar>,
 }
+
+/// Structure used to deserialize the state of a video
+#[derive(DeJson, Debug, Default)]
+#[allow(non_snake_case)]
+pub struct VideoState {
+    pub id: u16,
+    pub label: String,
+}
