@@ -1,5 +1,7 @@
 use std::borrow::Cow;
 
+pub struct FromHandleError {}
+
 pub fn to_https(mut s: &str) -> Cow<'_, str> {
     s = s.strip_suffix('/').unwrap_or(s);
     if s.starts_with("https://") {
@@ -11,10 +13,12 @@ pub fn to_https(mut s: &str) -> Cow<'_, str> {
     }
 }
 
-pub fn host_from_handle(s: &str) -> Result<String, ()> {
+pub fn host_from_handle(s: &str) -> Result<String, FromHandleError> {
     let mut it = s.split('@');
-    it.next().ok_or(())?;
-    it.next().map(|i| format!("https://{}", i)).ok_or(())
+    it.next().ok_or(FromHandleError {})?;
+    it.next()
+        .map(|i| format!("https://{}", i))
+        .ok_or(FromHandleError {})
 }
 
 #[cfg(test)]
