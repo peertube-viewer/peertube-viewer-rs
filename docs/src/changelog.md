@@ -5,6 +5,7 @@ dev
 ---
 
 - Add support for using sepia search
+- Add support for livestreams
 
 1.7.3
 ---
