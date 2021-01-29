@@ -126,8 +126,9 @@ enum Description {
     Fetched(String),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum State {
+    None,
     Published,
     ToTranscode,
     ToImport,
@@ -139,6 +140,7 @@ pub enum State {
 impl From<VideoState> for State {
     fn from(i: VideoState) -> State {
         match i.id {
+            0 => State::None,
             1 => State::Published,
             2 => State::ToTranscode,
             3 => State::ToImport,
