@@ -1,11 +1,14 @@
 Changelog
 =========
 
-dev
+1.8
 ---
 
 - Add support for using sepia search
 - Add support for livestreams
+- Add support for giving a link to a channel in the cli args
+
+- Fix some bugs
 
 1.7.3
 ---

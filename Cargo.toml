@@ -1,6 +1,6 @@
 [package]
 name = "peertube-viewer-rs"
-version = "1.7.3"
+version = "1.8.0"
 authors = ["Sosthène Guédon <dev@peertube-viewer.com>"]
 edition = "2018"
 build = "build.rs"
