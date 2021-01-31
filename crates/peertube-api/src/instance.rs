@@ -22,7 +22,7 @@ pub struct Instance {
     local: bool,
 
     // If true (when connected to sepia_search for instance)
-    // this means that additionnal info outside of search should
+    // this means that additional info outside of search should
     // come from the hosts of videos instead of this instance
     // because the instance doesn't have them
     is_search: bool,
