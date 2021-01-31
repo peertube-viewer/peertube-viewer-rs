@@ -1,7 +1,7 @@
 Changelog
 =========
 
-1.8
+1.8.0
 ---
 
 - Add support for using sepia search
