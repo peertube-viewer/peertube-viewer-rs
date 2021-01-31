@@ -37,13 +37,12 @@ pub struct Cli {
     display: Display,
     instance: Arc<Instance>,
     initial_info: InitialInfo,
-    is_single_url: bool,
 }
 
 impl Cli {
     /// Loads an instance of the cli
     pub fn init() -> Result<Cli, Error> {
-        let (config, mut initial_info, load_errors) = Config::new();
+        let (config, initial_info, load_errors) = Config::new();
         let display = Display::new(config.colors());
 
         let mut err_iter = load_errors.into_iter();
@@ -77,38 +76,8 @@ impl Cli {
         }
 
         // If the initial query is a url, connect to the corresponding instance
-        let mut is_single_url = false;
-        let instance_domain = match &initial_info {
-            InitialInfo::Query(s) if s.starts_with("http://") || s.starts_with("https://") => {
-                match s.split('/').nth(2) {
-                    Some(domain) => {
-                        let instance_temp =
-                            format!("https://{}", domain.split(' ').next().expect("Unreachable"));
-                        match s.split('/').nth(5) {
-                            Some(uuid) => {
-                                is_single_url = true;
-                                initial_info = InitialInfo::Query(
-                                    uuid.split(' ').next().expect("Unreachable").to_string(),
-                                );
-                            }
 
-                            None => {
-                                initial_info = if let Some(s) =
-                                    s.splitn(2, ' ').nth(1).map(|s| s.to_string())
-                                {
-                                    InitialInfo::Query(s)
-                                } else {
-                                    InitialInfo::None
-                                };
-                            }
-                        }
-                        instance_temp
-                    }
-                    None => config.instance().to_string(),
-                }
-            }
-            _ => config.instance().to_string(),
-        };
+        let instance_domain = config.instance().to_string();
 
         let instance = Instance::new(
             if config.is_blocked(&instance_domain[8..]).is_some() {
@@ -124,7 +93,7 @@ impl Cli {
             config.is_search_engine(),
         );
 
-        if !is_single_url {
+        if !matches!(initial_info, InitialInfo::VideoUrl(_)) {
             display.welcome(instance.host());
         }
 
@@ -136,7 +105,6 @@ impl Cli {
             display,
             instance,
             initial_info,
-            is_single_url,
         })
     }
 
@@ -144,7 +112,7 @@ impl Cli {
     fn main_loop(&mut self) -> Result<(), Error> {
         let mode = Mode::Temp; //Placeholder that will be changed just after anyway on the first loop run
         let action = match self.initial_info.take() {
-            InitialInfo::Query(s) if self.is_single_url => {
+            InitialInfo::VideoUrl(s) => {
                 self.play_vid(&self.instance.single_video(&self.instance.host(), &s)?)?;
                 return Ok(());
             }

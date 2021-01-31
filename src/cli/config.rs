@@ -1,4 +1,6 @@
-use clap::{App, ArgMatches, Values};
+mod frontend_url_parser;
+
+use clap::{App, ArgMatches};
 use directories::ProjectDirs;
 use rustyline::config::EditMode;
 use toml::{
@@ -6,6 +8,7 @@ use toml::{
     value::{Table, Value},
 };
 
+use frontend_url_parser::{ParsedUrl, UrlType};
 use peertube_viewer_utils::to_https;
 
 use std::collections::HashSet;
@@ -155,6 +158,7 @@ impl NsfwBehavior {
 pub enum InitialInfo {
     None,
     Query(String),
+    VideoUrl(String),
     Channels(String),
     Handle(String),
     Trending,
@@ -207,18 +211,6 @@ impl Config {
             exit(0);
         }
 
-        let initial_info = if cli_args.is_present("trending") {
-            InitialInfo::Trending
-        } else if let Some(handle) = cli_args.value_of("chandle") {
-            InitialInfo::Handle(handle.to_owned())
-        } else if let Some(s) = cli_args.values_of("channels").map(concat) {
-            InitialInfo::Channels(s)
-        } else if let Some(s) = cli_args.values_of("initial-query").map(concat) {
-            InitialInfo::Query(s)
-        } else {
-            InitialInfo::None
-        };
-
         // Parse config as an String with default to empty string
         let (mut config, mut load_errors) = if let Some(c) = cli_args.value_of("config-file") {
             Config::from_config_file(&PathBuf::from(c))
@@ -231,6 +223,29 @@ impl Config {
                 }
                 None => (Config::default(), Vec::new()),
             }
+        };
+
+        let initial_info = if cli_args.is_present("trending") {
+            InitialInfo::Trending
+        } else if let Some(handle) = cli_args.value_of("chandle") {
+            InitialInfo::Handle(handle.to_owned())
+        } else if let Some(s) = cli_args.values_of_lossy("channels").map(concat) {
+            InitialInfo::Channels(s)
+        } else if let Some(s) = cli_args.values_of_lossy("initial-query") {
+            match ParsedUrl::from_url(&s[0]) {
+                Some(parsed) => {
+                    config.instance = parsed.instance;
+                    match parsed.url_data {
+                        UrlType::Video(uuid) => InitialInfo::VideoUrl(uuid),
+                        UrlType::Channel(chandle) => InitialInfo::Handle(chandle),
+                        UrlType::Search(search) => InitialInfo::Query(search),
+                        UrlType::LandingPage => InitialInfo::Query(concat(s)),
+                    }
+                }
+                None => InitialInfo::Query(concat(s)),
+            }
+        } else {
+            InitialInfo::None
         };
 
         load_errors.append(&mut config.update_with_args(cli_args));
@@ -657,12 +672,13 @@ impl Blocklist<peertube_api::Video> for Config {
     }
 }
 
-fn concat(mut v: Values) -> String {
+fn concat(v: Vec<String>) -> String {
     let mut concatenated = String::new();
-    if let Some(s) = v.next() {
+    let mut it = v.iter();
+    if let Some(s) = it.next() {
         concatenated.push_str(s);
     }
-    for s in v {
+    for s in it {
         concatenated.push(' ');
         concatenated.push_str(s);
     }
