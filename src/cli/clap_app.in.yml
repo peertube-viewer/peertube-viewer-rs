@@ -3,6 +3,9 @@ version:
 author: Sosthène Guédon <dev@peertube-viewer.com>
 about: PeerTube cli client
 
+settings:
+    - StrictUtf8
+
 args:
     - use-raw-urls:
         long: use-raw-urls
