@@ -29,18 +29,14 @@ impl ParsedUrl {
             Some(domain) => {
                 instance = format!("https://{}", domain.split(' ').next().expect("Unreachable"));
                 match (path_iter.next(), path_iter.next(), path_iter.next()) {
-                    (Some("videos"), Some("watch"), Some(uuid)) => {
-                        return Some(ParsedUrl {
-                            instance,
-                            url_data: UrlType::Video(uuid.to_string()),
-                        })
-                    }
-                    (Some("video-channels"), Some(handle), Some("videos")) => {
-                        return Some(ParsedUrl {
-                            instance,
-                            url_data: UrlType::Channel(handle.to_string()),
-                        })
-                    }
+                    (Some("videos"), Some("watch"), Some(uuid)) => Some(ParsedUrl {
+                        instance,
+                        url_data: UrlType::Video(uuid.to_string()),
+                    }),
+                    (Some("video-channels"), Some(handle), Some("videos")) => Some(ParsedUrl {
+                        instance,
+                        url_data: UrlType::Channel(handle.to_string()),
+                    }),
                     (Some("search"), _, _) => {
                         for (name, value) in parsed.query_pairs() {
                             if name == "search" {
@@ -50,21 +46,19 @@ impl ParsedUrl {
                                 });
                             }
                         }
-                        return Some(ParsedUrl {
-                            instance,
-                            url_data: UrlType::LandingPage,
-                        });
-                    }
-
-                    (_, _, _) => {
-                        return Some(ParsedUrl {
+                        Some(ParsedUrl {
                             instance,
                             url_data: UrlType::LandingPage,
                         })
                     }
+
+                    (_, _, _) => Some(ParsedUrl {
+                        instance,
+                        url_data: UrlType::LandingPage,
+                    }),
                 }
             }
-            None => return None,
+            None => None,
         }
     }
 }
