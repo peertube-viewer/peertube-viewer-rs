@@ -10,8 +10,8 @@ pub enum UrlType {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ParsedUrl {
-    instance: String,
-    url_data: UrlType,
+    pub instance: String,
+    pub url_data: UrlType,
 }
 
 impl ParsedUrl {
