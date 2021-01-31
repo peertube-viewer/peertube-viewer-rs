@@ -70,7 +70,7 @@ pub fn pretty_duration_or_live(d: u64, is_live: bool) -> String {
 }
 
 pub fn full_date(d: Option<&DateTime<FixedOffset>>) -> String {
-    d.map(|t| t.format("%a %b %Y").to_string())
+    d.map(|t| t.format("%A %e %B %Y").to_string())
         .unwrap_or_default()
 }
 
