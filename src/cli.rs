@@ -4,6 +4,7 @@ mod history;
 mod input;
 mod parser;
 mod preloadables;
+mod frontend_url_parser;
 
 pub use config::ConfigLoadError;
 use config::{Blocklist, Config, InitialInfo};
