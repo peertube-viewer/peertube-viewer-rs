@@ -265,7 +265,7 @@ impl Cli {
                     self.rl.add_history_entry(&format!(":browser {}", id));
                 }
                 ParsedQuery::Comments(id) => {
-                    self.comments(&mut data.mode, *id)?;
+                    self.comments(&mut data.mode, *id);
                     self.rl.add_history_entry(&format!(":comments {}", id));
                 }
                 ParsedQuery::Id(_) => unreachable!(),
@@ -362,7 +362,7 @@ impl Cli {
         }
     }
 
-    fn comments(&mut self, mode: &mut Mode, id: usize) -> Result<(), Error> {
+    fn comments(&mut self, mode: &mut Mode, id: usize) {
         match mode {
             Mode::Videos(v) => {
                 self.display.video_info(&v.current()[id - 1]);
@@ -380,7 +380,6 @@ impl Cli {
             Mode::Comments(_) => self.display.err(&"Comments don't have comments"),
             Mode::Temp => panic!("Bad use of temp"),
         }
-        Ok(())
     }
 
     fn info(&mut self, mode: &Mode, id: usize) -> Result<(), Error> {
@@ -440,8 +439,10 @@ impl Cli {
             }
         }
 
-        if !matches!(video.state(), VideoState::Published | VideoState::None | VideoState::Unknown(_,_))
-        {
+        if !matches!(
+            video.state(),
+            VideoState::Published | VideoState::None | VideoState::Unknown(_, _)
+        ) {
             match video.state() {
                 VideoState::ToTranscode | VideoState::ToImport => {
                     self.display.warn(&"This video is not yet available")
