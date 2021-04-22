@@ -5,6 +5,8 @@ https://peertube-viewer.com
 
 A command line program to view and browse [PeerTube](https://joinpeertube.org), inspired by the youtube-viewer utility
 
+![example of the prompt](./docs/src/screenshots/select_prompt.jpg)
+
 Documentation
 ---
 
