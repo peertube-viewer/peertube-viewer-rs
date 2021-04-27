@@ -348,7 +348,6 @@ dependencies = [
  "textwrap 0.13.4",
  "toml",
  "unicode-width",
- "ureq",
  "url",
 ]
 

@@ -9,7 +9,6 @@ build = "build.rs"
 peertube-api = {version = "*", path = "crates/peertube-api"}
 preloadable-list = {version = "*", path = "crates/preloadable-list"}
 peertube-viewer-utils = {version = "*", path = "crates/peertube-viewer-utils"}
-ureq = "1"
 termion = "1"
 chrono = "0.4"
 rustyline = { version = "8", default-features=false}
