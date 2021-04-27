@@ -46,7 +46,7 @@ impl Instance {
     }
 
     /// Adds the user agent if there is one
-    fn add_user_agent<'r>(&self, req: ureq::Request) -> ureq::Request {
+    fn add_user_agent(&self, req: ureq::Request) -> ureq::Request {
         if let Some(user_agent) = &self.user_agent {
             req.set("User-Agent", user_agent)
         } else {

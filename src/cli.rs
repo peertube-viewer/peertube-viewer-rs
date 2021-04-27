@@ -12,8 +12,6 @@ use history::History;
 use input::Editor;
 use parser::ParsedQuery;
 
-use ureq;
-
 use crate::error::Error;
 
 use rustyline::error::ReadlineError;

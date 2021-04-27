@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 use std::thread::spawn;
 
 use std::io::{self, Write};
-use std::path::PathBuf;
+use std::path::Path;
 
 use rustyline::config::{Builder, EditMode};
 
@@ -191,12 +191,12 @@ impl Editor {
         }
     }
 
-    pub fn load_history(&mut self, path: &PathBuf) -> rustyline::Result<()> {
+    pub fn load_history(&mut self, path: &Path) -> rustyline::Result<()> {
         let mut ed = self.rl.lock().unwrap();
         ed.load_history(path)
     }
 
-    pub fn save_history(&mut self, path: &PathBuf) -> rustyline::Result<()> {
+    pub fn save_history(&mut self, path: &Path) -> rustyline::Result<()> {
         let mut ed = self.rl.lock().unwrap();
         ed.save_history(path)
     }

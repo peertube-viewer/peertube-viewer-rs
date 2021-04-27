@@ -17,7 +17,7 @@ use std::env::vars_os;
 use std::ffi::OsString;
 use std::fmt::{self, Display};
 use std::fs::read_to_string;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::{error, io};
 
@@ -253,7 +253,7 @@ impl Config {
         (config, initial_info, load_errors)
     }
 
-    fn from_config_file(path: &PathBuf) -> (Config, Vec<ConfigLoadError>) {
+    fn from_config_file(path: &Path) -> (Config, Vec<ConfigLoadError>) {
         let mut temp = Config::default();
         let mut load_errors = Vec::new();
 
@@ -272,7 +272,7 @@ impl Config {
         /* ---File parsing--- */
 
         let config_str = read_to_string(path)
-            .map_err(|e| load_errors.push(ConfigLoadError::UnreadableFile(e, path.clone())))
+            .map_err(|e| load_errors.push(ConfigLoadError::UnreadableFile(e, path.to_path_buf())))
             .unwrap_or_default();
 
         // Parse config as TOML with default to empty

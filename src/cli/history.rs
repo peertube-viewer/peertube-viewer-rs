@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use std::fs::File;
 use std::io::{BufRead, BufReader, Error};
-use std::path::PathBuf;
+use std::path::Path;
 
 pub struct History {
     videos: HashSet<String>,
@@ -17,7 +17,7 @@ impl History {
         }
     }
 
-    pub fn load_file(&mut self, path: &PathBuf) -> Result<(), Error> {
+    pub fn load_file(&mut self, path: &Path) -> Result<(), Error> {
         let file = File::open(path)?;
         let buf_reader = BufReader::new(file);
         let mut reversed = Vec::new();
@@ -40,7 +40,7 @@ impl History {
         }
     }
 
-    pub fn save(&self, path: &PathBuf, max_len: usize) -> Result<(), Error> {
+    pub fn save(&self, path: &Path, max_len: usize) -> Result<(), Error> {
         let mut already_in = HashSet::new();
         let mut full_str = String::new();
         let mut lines = 0;
