@@ -12,7 +12,7 @@ peertube-viewer-utils = {version = "*", path = "crates/peertube-viewer-utils"}
 ureq = "1"
 termion = "1"
 chrono = "0.4"
-rustyline = { version = "7", default-features=false}
+rustyline = { version = "8", default-features=false}
 clap = { version = "2", features = ["yaml"] }
 toml = "0.5"
 unicode-width = "0.1"
