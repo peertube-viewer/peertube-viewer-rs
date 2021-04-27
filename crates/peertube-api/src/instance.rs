@@ -28,11 +28,6 @@ pub struct Instance {
     is_search: bool,
 }
 
-// TODO remove all calls to this
-fn status_or_error(res: ureq::Response) -> error::Result<ureq::Response> {
-    Ok(res)
-}
-
 impl Instance {
     pub fn new(
         host: String,
@@ -79,8 +74,7 @@ impl Instance {
             req = req.query("filter", "local");
         }
 
-        let search_res: Videos =
-            serde_json::from_str(&status_or_error(req.call()?)?.into_string()?)?;
+        let search_res: Videos = serde_json::from_str(&req.call()?.into_string()?)?;
         let mut res = Vec::new();
 
         for video in search_res.data {
@@ -115,8 +109,7 @@ impl Instance {
             req = req.query("filter", "local");
         }
 
-        let video_res: Videos =
-            serde_json::from_str(&status_or_error(req.call()?)?.into_string()?)?;
+        let video_res: Videos = serde_json::from_str(&req.call()?.into_string()?)?;
         let mut res = Vec::new();
         for video in video_res.data {
             res.push(Video::from_search(self, video));
@@ -143,8 +136,7 @@ impl Instance {
             .query("count", &nb.to_string())
             .query("start", &offset.to_string());
 
-        let comment_res: Comments =
-            serde_json::from_str(&status_or_error(req.call()?)?.into_string()?)?;
+        let comment_res: Comments = serde_json::from_str(&req.call()?.into_string()?)?;
         let mut res = Vec::new();
         for comment in comment_res.data {
             if let Ok(c) = Comment::try_from(comment) {
@@ -174,8 +166,7 @@ impl Instance {
             req = req.query("filter", "local");
         }
 
-        let search_res: Videos =
-            serde_json::from_str(&status_or_error(req.call()?)?.into_string()?)?;
+        let search_res: Videos = serde_json::from_str(&req.call()?.into_string()?)?;
         let mut res = Vec::new();
         for video in search_res.data {
             res.push(Video::from_search(self, video));
@@ -204,8 +195,7 @@ impl Instance {
             req = req.query("filter", "local");
         }
 
-        let search_res: Channels =
-            serde_json::from_str(&status_or_error(req.call()?)?.into_string()?)?;
+        let search_res: Channels = serde_json::from_str(&req.call()?.into_string()?)?;
         let mut res = Vec::new();
         for video in search_res.data {
             if let Some(v) = Channel::maybe_from(video, self.host.clone()) {
@@ -223,7 +213,7 @@ impl Instance {
         let req = self.add_user_agent(ureq::get(&url));
         Ok(Video::from_full(
             self,
-            serde_json::from_str(&status_or_error(req.call()?)?.into_string()?)?,
+            serde_json::from_str(&req.call()?.into_string()?)?,
         ))
     }
 
@@ -236,8 +226,7 @@ impl Instance {
         let url = format!("{}/api/v1/videos/{}/description", self.api_host(host), uuid);
 
         let req = ureq::get(&url);
-        let desc: Description =
-            serde_json::from_str(&status_or_error(req.call()?)?.into_string()?)?;
+        let desc: Description = serde_json::from_str(&req.call()?.into_string()?)?;
         Ok(desc.description)
     }
 
@@ -250,7 +239,7 @@ impl Instance {
         let url = format!("{}/api/v1/videos/{}", self.api_host(host), uuid);
 
         let req = self.add_user_agent(ureq::get(&url));
-        let video: FullVideo = serde_json::from_str(&status_or_error(req.call()?)?.into_string()?)?;
+        let video: FullVideo = serde_json::from_str(&req.call()?.into_string()?)?;
         Ok((video.files, video.streamingPlaylists))
     }
 
