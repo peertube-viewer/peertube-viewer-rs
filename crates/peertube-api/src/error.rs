@@ -5,8 +5,6 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Clone)]
 pub enum Error {
     Ureq(Arc<ureq::Error>),
-    // TODO remove this
-    Status(u16),
     NoContent,
 
     /// contains the length of the array
@@ -19,7 +17,6 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::Ureq(err) => write!(f, "Connection error: {}", err),
-            Error::Status(s) => write!(f, "Connection error: ERROR {}", s),
             Error::Io(err) => write!(f, "Connection error: {}", err),
             Error::NoContent => write!(f, "No content"),
             Error::OutOfBound(len) => write!(f, "Out of bound access, the array is of len {}", len),
@@ -34,7 +31,7 @@ impl error::Error for Error {
             Error::Ureq(err) => Some(&**err),
             Error::Io(err) => Some(&**err),
             Error::Serde(err) => Some(&**err),
-            Error::Status(_) | Error::NoContent | Error::OutOfBound(_) => None,
+            Error::NoContent | Error::OutOfBound(_) => None,
         }
     }
 }

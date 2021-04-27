@@ -12,6 +12,8 @@ use history::History;
 use input::Editor;
 use parser::ParsedQuery;
 
+use ureq;
+
 use crate::error::Error;
 
 use rustyline::error::ReadlineError;
@@ -540,27 +542,31 @@ impl Cli {
     /// Returns None if the error was dealt with
     fn handle_err(&mut self, err: Error) -> Option<Error> {
         match &err {
-            Error::Api(ApiError::Status(code)) => {
-                if *code >= 400 && *code < 500 {
-                    self.display.err(&format!(
+            Error::Api(ApiError::Ureq(e)) => {
+                if let ureq::Error::Status(code, _) = &**e {
+                    if *code >= 400 && *code < 500 {
+                        self.display.err(&format!(
                             "\
                             Error encountered while connecting to the desired instance: {}\n\
                             This is likely because the server you are trying to connect isn't a PeerTube instance.\
                         ",
-                            code
+                            *code
                         ));
-                    self.display.report_error(err, &*self.instance.host());
-                    None
-                } else if *code >= 500 {
-                    self.display.err(&format!(
+                        self.display.report_error(err, &*self.instance.host());
+                        None
+                    } else if *code >= 500 {
+                        self.display.err(&format!(
                             "\
                             The server you are trying to connect failed to process the request: {}\n\
                             This likely isn't a bug from peertube-viewer-rs.
                         ",
-                            code
+                            *code
                         ));
-                    self.display.report_error(err, &*self.instance.host());
-                    None
+                        self.display.report_error(err, &*self.instance.host());
+                        None
+                    } else {
+                        Some(err)
+                    }
                 } else {
                     Some(err)
                 }
