@@ -5,6 +5,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug, Clone)]
 pub enum Error {
     Ureq(Arc<ureq::Error>),
+    // TODO remove this
     Status(u16),
     NoContent,
 
