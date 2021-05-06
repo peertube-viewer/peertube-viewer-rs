@@ -319,19 +319,13 @@ impl Config {
 
         /* ---Torrent configuration --- */
         let torrent = if let Some(Value::Table(t)) = config.get("torrent") {
-            if let Some(s) = t
-                .get("command")
+            t.get("command")
                 .map(|cmd| cmd.as_str())
                 .flatten()
-                .map(|s| s.to_string())
-            {
-                Some(TorrentConf {
-                    client: s,
+                .map(|s| TorrentConf {
+                    client: s.to_string(),
                     args: get_string_array(t, "args", &mut load_errors),
                 })
-            } else {
-                None
-            }
         } else {
             None
         };

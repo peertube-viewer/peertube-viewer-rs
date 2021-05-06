@@ -100,8 +100,8 @@ impl Cli {
         Ok(Cli {
             config,
             history,
-            rl,
             dirs,
+            rl,
             display,
             instance,
             initial_info,

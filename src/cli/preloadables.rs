@@ -121,8 +121,8 @@ impl Comments {
     pub fn new(instance: Arc<Instance>, host: String, video_uuid: String) -> Comments {
         Comments {
             instance,
-            host,
             video_uuid,
+            host,
         }
     }
 }
