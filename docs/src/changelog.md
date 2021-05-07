@@ -1,6 +1,13 @@
 Changelog
 =========
 
+1.8.1
+---
+
+- Update all dependencies
+- Fix some warnings
+- Reduce the size of the binary by removing a dependency
+
 1.8.0
 ---
 
