@@ -12,7 +12,7 @@ peertube-viewer-utils = {version = "*", path = "crates/peertube-viewer-utils"}
 termion = "1"
 chrono = "0.4"
 rustyline = { version = "8", default-features=false}
-clap = { version = "2", default-features=false, features = ["yaml", "wrap_help", "color"] }
+clap = { version = "2", default-features=false, features = [ "wrap_help", "color"] }
 toml = "0.5"
 unicode-width = "0.1"
 directories = "3"
@@ -25,7 +25,7 @@ ureq = "2"
 members = ["crates/peertube-api/", "crates/peertube-ser/", "crates/preloadable-list/", "crates/peertube-viewer-utils/"]
 
 [build-dependencies]
-clap = { version = "2", default-features=false, features = ["yaml", "suggestions" ] }
+clap = { version = "2", default-features=false, features = ["suggestions"] }
 
 [profile.release]
 lto="fat"

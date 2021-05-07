@@ -1,6 +1,6 @@
 mod frontend_url_parser;
 
-use clap::{App, ArgMatches};
+use clap::ArgMatches;
 use directories::ProjectDirs;
 use rustyline::config::EditMode;
 use toml::{
@@ -20,6 +20,8 @@ use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 use std::process::exit;
 use std::{error, io};
+
+use super::clap_app::gen_app;
 
 pub trait Blocklist<T: ?Sized> {
     fn is_blocked(&self, instance: &T) -> Option<String>;
@@ -197,8 +199,9 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> (Config, InitialInfo, Vec<ConfigLoadError>) {
-        let yml = load_yaml!("clap_app.yml");
-        let app = App::from_yaml(yml);
+        //let yml = load_yaml!("clap_app.yml");
+        //let app = App::from_yaml(yml);
+        let app = gen_app();
         let cli_args = app.get_matches();
 
         if cli_args.is_present("print-default-config") {

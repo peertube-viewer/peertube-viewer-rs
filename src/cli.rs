@@ -1,3 +1,4 @@
+mod clap_app;
 mod config;
 mod display;
 mod history;
