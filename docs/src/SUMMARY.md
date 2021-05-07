@@ -10,4 +10,4 @@
 - [Fancy features](fancy.md)
 - [Configuration](config.md)
 - [Installation](install.md)
-- [changelog](changelog.md)
+- [Changelog](changelog.md)
