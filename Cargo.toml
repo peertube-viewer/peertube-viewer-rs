@@ -23,7 +23,6 @@ ureq = "2"
 
 [workspace]
 members = ["crates/peertube-api/", "crates/peertube-ser/", "crates/preloadable-list/", "crates/peertube-viewer-utils/"]
-resolver = "2"
 
 [build-dependencies]
 clap = { version = "2", default-features=false, features = ["suggestions"] }
