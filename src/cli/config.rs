@@ -199,8 +199,6 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> (Config, InitialInfo, Vec<ConfigLoadError>) {
-        //let yml = load_yaml!("clap_app.yml");
-        //let app = App::from_yaml(yml);
         let app = gen_app();
         let cli_args = app.get_matches();
 
@@ -728,8 +726,7 @@ mod config {
             Some("Mozilla/5.0 (X11; Linux x86_64; rv:79.0) Gecko/20100101 Firefox/79.0".into())
         );
 
-        let yml = load_yaml!("clap_app.yml");
-        let app = App::from_yaml(yml);
+        let app = gen_app();
         let matches = app
             .get_matches_from_safe(vec![
                 "peertube-viewer-rs",
@@ -768,8 +765,7 @@ mod config {
         assert_eq!(config.use_torrent(), false);
         assert_eq!(config.colors(), false);
 
-        let yml = load_yaml!("clap_app.yml");
-        let app = App::from_yaml(yml);
+        let app = gen_app();
         let matches = app
             .get_matches_from_safe(vec![
                 "peertube-viewer-rs",
@@ -799,8 +795,7 @@ mod config {
 
     #[test]
     fn conflicting_args1() {
-        let yml = load_yaml!("clap_app.yml");
-        let app = App::from_yaml(yml);
+        let app = gen_app();
         assert_eq!(
             app.get_matches_from_safe(vec!["peertube-viewer-rs", "--block-nsfw", "--let-nsfw"])
                 .unwrap_err()
@@ -810,8 +805,7 @@ mod config {
     }
     #[test]
     fn conflicting_args2() {
-        let yml = load_yaml!("clap_app.yml");
-        let app = App::from_yaml(yml);
+        let app = gen_app();
         assert_eq!(
             app.get_matches_from_safe(vec!["peertube-viewer-rs", "--block-nsfw", "--tag-nsfw"])
                 .unwrap_err()
@@ -822,8 +816,7 @@ mod config {
 
     #[test]
     fn conflicting_args3() {
-        let yml = load_yaml!("clap_app.yml");
-        let app = App::from_yaml(yml);
+        let app = gen_app();
         assert_eq!(
             app.get_matches_from_safe(vec!["peertube-viewer-rs", "--let-nsfw", "--tag-nsfw"])
                 .unwrap_err()

@@ -88,7 +88,7 @@ pub fn gen_app() -> App<'static, 'static> {
                 .conflicts_with("block-nsfw")
                 .help("Tag nsfw results. This is the default behavior. This flag is only useful to override the config file"),
             Arg::with_name("block-nsfw")
-                .long("block-nsfw ")
+                .long("block-nsfw")
                 .conflicts_with("let-nsfw")
                 .help("Block nsfw search results"),
             Arg::with_name("no-color")
