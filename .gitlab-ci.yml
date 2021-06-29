@@ -92,8 +92,8 @@ pages:
   script:
   - apt update
   - apt install wget -y
-  - wget https://github.com/rust-lang/mdBook/releases/download/v0.4.5/mdbook-v0.4.5-x86_64-unknown-linux-gnu.tar.gz
-  - tar xvzf mdbook-v0.4.5-x86_64-unknown-linux-gnu.tar.gz
+  - wget https://github.com/rust-lang/mdBook/releases/download/v0.4.10/mdbook-v0.4.10-x86_64-unknown-linux-gnu.tar.gz
+  - tar xvzf mdbook-v0.4.10-x86_64-unknown-linux-gnu.tar.gz
   - ./mdbook build docs/ -d ../public
   - find public -type f -exec gzip -9 -f -k {} \;
   artifacts:
