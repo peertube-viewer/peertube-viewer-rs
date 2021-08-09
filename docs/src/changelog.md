@@ -1,8 +1,12 @@
 Changelog
 =========
 
-dev
+<!--dev-->
+<!--**Changes that have been implemented but not yet released**-->
+
+1.8.2
 ---
+
 
 - Fix error when using a local channel url with the configuration being set to a search engine
 - Add support for short frontend urls
