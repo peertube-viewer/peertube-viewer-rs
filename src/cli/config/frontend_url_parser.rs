@@ -33,7 +33,15 @@ impl ParsedUrl {
                         instance,
                         url_data: UrlType::Video(uuid.to_string()),
                     }),
+                    (Some("w"), Some(uuid), None) => Some(ParsedUrl {
+                        instance,
+                        url_data: UrlType::Video(uuid.to_string()),
+                    }),
                     (Some("video-channels"), Some(handle), Some("videos")) => Some(ParsedUrl {
+                        instance,
+                        url_data: UrlType::Channel(handle.to_string()),
+                    }),
+                    (Some("c"), Some(handle), Some("videos")) => Some(ParsedUrl {
                         instance,
                         url_data: UrlType::Channel(handle.to_string()),
                     }),
@@ -101,6 +109,20 @@ mod url_tests {
             Some(ParsedUrl {
                 instance: "https://video.ploud.fr".to_string(),
                 url_data: UrlType::LandingPage
+            })
+        );
+        assert_eq!(
+            ParsedUrl::from_url("https://skeptikon.fr/c/le_reveilleur/videos"),
+            Some(ParsedUrl {
+                instance: "https://skeptikon.fr".to_string(),
+                url_data: UrlType::Channel("le_reveilleur".to_string())
+            })
+        );
+        assert_eq!(
+            ParsedUrl::from_url("https://skeptikon.fr/w/qRR6xVFzEbaAC3uk62PGhP"),
+            Some(ParsedUrl {
+                instance: "https://skeptikon.fr".to_string(),
+                url_data: UrlType::Video("qRR6xVFzEbaAC3uk62PGhP".to_string())
             })
         );
     }
