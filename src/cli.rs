@@ -114,7 +114,7 @@ impl Cli {
         let mode = Mode::Temp; //Placeholder that will be changed just after anyway on the first loop run
         let action = match self.initial_info.take() {
             InitialInfo::VideoUrl(s) => {
-                self.play_vid(&self.instance.single_video(&self.instance.host(), &s)?)?;
+                self.play_vid(&self.instance.single_video(self.instance.host(), &s)?)?;
                 return Ok(());
             }
             InitialInfo::Query(s) => ParsedQuery::Query(s),
@@ -178,9 +178,9 @@ impl Cli {
         if data.changed_action {
             match &data.action {
                 ParsedQuery::Query(s) => {
-                    self.rl.add_history_entry(&s);
+                    self.rl.add_history_entry(s);
                     let search_tmp = PreloadableList::new(
-                        Videos::new_search(self.instance.clone(), &s),
+                        Videos::new_search(self.instance.clone(), s),
                         SEARCH_TOTAL,
                     );
                     data.mode = Mode::Videos(search_tmp);
@@ -242,16 +242,14 @@ impl Cli {
                     }
                 }
                 ParsedQuery::Channels(q) => {
-                    let channels_tmp = PreloadableList::new(
-                        Channels::new(self.instance.clone(), &q),
-                        SEARCH_TOTAL,
-                    );
+                    let channels_tmp =
+                        PreloadableList::new(Channels::new(self.instance.clone(), q), SEARCH_TOTAL);
                     data.mode = Mode::Channels(channels_tmp);
                     self.rl.add_history_entry(&format!(":channels {}", q));
                 }
                 ParsedQuery::Chandle(handle) => {
                     let chandle_tmp = PreloadableList::new(
-                        Videos::new_channel(self.instance.clone(), &handle),
+                        Videos::new_channel(self.instance.clone(), handle),
                         SEARCH_TOTAL,
                     );
                     data.mode = Mode::Videos(chandle_tmp);
@@ -431,7 +429,7 @@ impl Cli {
 
     fn play_vid(&mut self, video: &peertube_api::Video) -> Result<(), Error> {
         // Resolution selection
-        self.display.video_info(&video);
+        self.display.video_info(video);
         if self.config.is_blocked(video.host()).is_some() {
             self.display.err(&"This video is from a blocked instance.");
             let confirm = self.rl.std_in("Play it anyway ? [y/N]: ".to_string())?;
