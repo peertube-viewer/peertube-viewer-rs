@@ -259,8 +259,10 @@ impl Instance {
     fn api_host<'i>(&'i self, host: &'i str) -> Cow<'i, str> {
         if !self.is_search {
             Cow::Borrowed(&self.host)
-        } else {
+        } else if !host.is_empty() {
             to_https(host)
+        } else {
+            to_https(&self.host)
         }
     }
 }

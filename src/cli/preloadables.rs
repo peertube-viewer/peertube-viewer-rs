@@ -64,13 +64,13 @@ impl AsyncLoader for Videos {
 
     fn data(&self, step: usize, offset: usize) -> Result<(Vec<Self::Data>, usize), Self::Error> {
         match &self.mode {
-            VideoMode::Search(query) => self.instance.search_videos(&query, step, offset),
+            VideoMode::Search(query) => self.instance.search_videos(query, step, offset),
             VideoMode::Channel(handle) => self.instance.channel_videos(
-                host_from_handle(&handle)
+                host_from_handle(handle)
                     .as_ref()
                     .map(|s| &**s)
                     .unwrap_or(""),
-                &handle,
+                handle,
                 step,
                 offset,
             ),

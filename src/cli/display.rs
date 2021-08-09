@@ -139,7 +139,7 @@ impl Display {
             let mut tmp_str = Vec::new();
             let mut tmp_align = Vec::new();
 
-            if blocklist.is_blocked(&v).is_some() {
+            if blocklist.is_blocked(v).is_some() {
                 content_parts.push((tmp_str, tmp_align));
                 continue;
             }
@@ -213,7 +213,7 @@ impl Display {
                     }
                 } else {
                     buffer.push_str(
-                        &parts_it
+                        parts_it
                             .next()
                             .expect("Internal Error: parts smaller than alignment"),
                     );
@@ -363,7 +363,7 @@ impl Display {
             if !d.is_empty() {
                 self.print_centered("DESCRIPTION");
                 self.line('=');
-                println!("{}", fill(&d, cols));
+                println!("{}", fill(d, cols));
                 self.line('=');
             }
         }
