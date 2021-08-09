@@ -37,11 +37,13 @@ impl ParsedUrl {
                         instance,
                         url_data: UrlType::Video(uuid.to_string()),
                     }),
-                    (Some("video-channels"), Some(handle), Some("videos")) => Some(ParsedUrl {
-                        instance,
-                        url_data: UrlType::Channel(handle.to_string()),
-                    }),
-                    (Some("c"), Some(handle), Some("videos")) => Some(ParsedUrl {
+                    (Some("video-channels"), Some(handle), Some("videos") | None) => {
+                        Some(ParsedUrl {
+                            instance,
+                            url_data: UrlType::Channel(handle.to_string()),
+                        })
+                    }
+                    (Some("c"), Some(handle), Some("videos") | None) => Some(ParsedUrl {
                         instance,
                         url_data: UrlType::Channel(handle.to_string()),
                     }),
