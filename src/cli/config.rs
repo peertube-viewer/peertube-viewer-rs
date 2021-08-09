@@ -237,6 +237,11 @@ impl Config {
                 Some(parsed) => {
                     config.instance = parsed.instance;
                     match parsed.url_data {
+                        UrlType::Video(_) | UrlType::Channel(_) => config.is_search_engine = false,
+                        _ => config.is_search_engine = true,
+                    }
+
+                    match parsed.url_data {
                         UrlType::Video(uuid) => InitialInfo::VideoUrl(uuid),
                         UrlType::Channel(chandle) => InitialInfo::Handle(chandle),
                         UrlType::Search(search) => InitialInfo::Query(search),
