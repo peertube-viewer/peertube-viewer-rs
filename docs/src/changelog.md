@@ -4,6 +4,11 @@ Changelog
 <!--dev-->
 <!--**Changes that have been implemented but not yet released**-->
 
+1.8.3
+---
+
+- Update dependencies
+
 1.8.2
 ---
 
