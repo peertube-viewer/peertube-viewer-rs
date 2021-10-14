@@ -59,3 +59,4 @@ If you want to contribute, merge requests are welcome.
 If you want to contribute, do not hesitate to take a look at the features that will be added in the [issue tracker](https://gitlab.com/peertube-viewer/peertube-viewer-rs/-/issues?label_name%5B%5D=Feature)
 The master branch is the latest released version, while the development happens on the dev branch.
 
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in peertube-viewer-rs by you, shall be licensed as AGPLv3, without any additional terms or conditions.
