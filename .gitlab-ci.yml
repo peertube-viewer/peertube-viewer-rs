@@ -28,27 +28,6 @@ rust-latest:
       - Cargo.lock
       - build.rs
 
-rust-oldest:
-  stage: test
-  allow_failure: true
-  image: rust:1.56.0
-  script:
-    - cargo build --verbose --locked
-    - cargo test --verbose
-  cache:
-    key: oldest
-    paths:
-      - target/
-  only:
-    changes:
-      - src/**/*
-      - crates/**/*
-      - Cargo.toml
-      - Cargo.lock
-      - build.rs
-  except:
-    - tags
-
 rust-nightly:
   allow_failure: true
   stage: test
