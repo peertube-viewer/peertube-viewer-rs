@@ -72,7 +72,7 @@ impl InnerLayoutItem for VideoLayoutItem {
             }
             VideoLayoutItem::Views => display_count(v.views()),
             VideoLayoutItem::Duration => pretty_duration_or_live(v.duration(), v.is_live()),
-            VideoLayoutItem::Published => pretty_date(Some(v.published())),
+            VideoLayoutItem::Published => pretty_date(v.published()),
             VideoLayoutItem::String(s) => s.clone(),
         }
     }
@@ -115,7 +115,7 @@ impl InnerLayoutItem for CommentLayoutItem {
         match self {
             CommentLayoutItem::Author => c.author_display_name().to_owned(),
             CommentLayoutItem::Host => c.author_host().to_owned(),
-            CommentLayoutItem::Date => pretty_date(Some(c.created_at())),
+            CommentLayoutItem::Date => pretty_date(c.created_at()),
             CommentLayoutItem::Content => remove_html(c.content()),
             CommentLayoutItem::String(s) => s.clone(),
         }

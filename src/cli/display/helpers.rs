@@ -22,11 +22,10 @@ pub fn display_count(mut c: u64) -> String {
     format!("{}{}", c, PREFIXES[id])
 }
 
-pub fn pretty_date(d: Option<OffsetDateTime>) -> String {
+pub fn pretty_date(d: OffsetDateTime) -> String {
     let now: OffsetDateTime =
         OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
-    d.map(|t| pretty_duration_since(now - t))
-        .unwrap_or_default()
+    pretty_duration_since(now - d)
 }
 
 pub fn pretty_duration_since(d: Duration) -> String {
