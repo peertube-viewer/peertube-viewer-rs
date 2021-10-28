@@ -1,6 +1,8 @@
-use crate::common::{Channel, VideoState};
+use crate::common::{dates_deser, Channel, VideoState};
 use crate::search::{IdentifiedLabel, Language};
 use serde::Deserialize;
+
+use time::OffsetDateTime;
 
 /// Structure used to deserialize the json output from fetching a video description
 #[derive(Deserialize, Debug)]
@@ -14,9 +16,10 @@ pub struct Description {
 #[allow(non_snake_case)]
 pub struct Video {
     pub uuid: String,
-    pub createdAt: String,
-    pub publishedAt: String,
-    pub updatedAt: String,
+    #[serde(with = "dates_deser")]
+    pub createdAt: OffsetDateTime,
+    #[serde(with = "dates_deser")]
+    pub publishedAt: OffsetDateTime,
     pub description: Option<String>,
     pub duration: u64,
     #[serde(default)]

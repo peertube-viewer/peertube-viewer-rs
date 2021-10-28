@@ -72,7 +72,7 @@ impl InnerLayoutItem for VideoLayoutItem {
             }
             VideoLayoutItem::Views => display_count(v.views()),
             VideoLayoutItem::Duration => pretty_duration_or_live(v.duration(), v.is_live()),
-            VideoLayoutItem::Published => pretty_date_t(v.published()),
+            VideoLayoutItem::Published => pretty_date_t(Some(v.published())),
             VideoLayoutItem::String(s) => s.clone(),
         }
     }
