@@ -343,7 +343,7 @@ impl Display {
         println!("views    : {}", video.views());
         println!("likes    : {}", video.likes());
         println!("dislikes : {}", video.dislikes());
-        println!("released : {}", full_date(Some(video.published())));
+        println!("released : {}", full_date(video.published()));
         println!("account  : {}", video.account_display());
         println!("channel  : {}", video.channel_display());
         println!("host     : {}", video.host());

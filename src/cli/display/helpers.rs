@@ -69,12 +69,10 @@ pub fn pretty_duration_or_live(d: u64, is_live: bool) -> String {
     }
 }
 
-pub fn full_date(d: Option<OffsetDateTime>) -> String {
+pub fn full_date(d: OffsetDateTime) -> String {
     let format =
         format_description::parse("[weekday] [day padding:none] [month repr:long] [year]").unwrap();
-    d.map(|t| t.format(&format).ok())
-        .flatten()
-        .unwrap_or_default()
+    d.format(&format).unwrap_or_default()
 }
 
 pub fn display_length(mut i: usize) -> usize {
@@ -260,9 +258,7 @@ mod helpers {
     pub fn date() {
         use time::format_description::well_known::Rfc3339;
         assert_eq!(
-            full_date(Some(
-                OffsetDateTime::parse("2016-07-08T09:10:11+00:00", &Rfc3339).unwrap()
-            )),
+            full_date(OffsetDateTime::parse("2016-07-08T09:10:11+00:00", &Rfc3339).unwrap()),
             "Friday 8 July 2016"
         );
     }
