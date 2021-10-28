@@ -1,6 +1,6 @@
 use chrono::{DateTime, Duration as ChronoDuration, FixedOffset, Utc};
 use std::time::SystemTime;
-use time::{Duration, OffsetDateTime};
+use time::{format_description, Duration, OffsetDateTime};
 
 pub fn pretty_size(mut s: u64) -> String {
     const PREFIXES: [&str; 5] = ["", "K", "M", "G", "E"];
@@ -95,6 +95,14 @@ pub fn pretty_duration_or_live(d: u64, is_live: bool) -> String {
 
 pub fn full_date(d: Option<&DateTime<FixedOffset>>) -> String {
     d.map(|t| t.format("%A %e %B %Y").to_string())
+        .unwrap_or_default()
+}
+
+pub fn full_date_t(d: Option<OffsetDateTime>) -> String {
+    let format =
+        format_description::parse("[weekday] [day padding:none] [month repr:long] [year]").unwrap();
+    d.map(|t| t.format(&format).ok())
+        .flatten()
         .unwrap_or_default()
 }
 
@@ -294,5 +302,26 @@ mod helpers {
         assert_eq!(pretty_duration_since_t(Duration::weeks(51)), "11m");
         assert_eq!(pretty_duration_since_t(Duration::weeks(52)), "12m");
         assert_eq!(pretty_duration_since_t(Duration::weeks(53)), "1y");
+    }
+
+    #[test]
+    pub fn date() {
+        assert_eq!(
+            full_date(Some(
+                &DateTime::<FixedOffset>::parse_from_rfc3339("2016-07-08T09:10:11+00:00").unwrap()
+            )),
+            "Friday  8 July 2016"
+        );
+    }
+
+    #[test]
+    pub fn date_t() {
+        use time::format_description::well_known::Rfc3339;
+        assert_eq!(
+            full_date_t(Some(
+                OffsetDateTime::parse("2016-07-08T09:10:11+00:00", &Rfc3339).unwrap()
+            )),
+            "Friday 8 July 2016"
+        );
     }
 }
