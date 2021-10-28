@@ -115,7 +115,7 @@ impl InnerLayoutItem for CommentLayoutItem {
         match self {
             CommentLayoutItem::Author => c.author_display_name().to_owned(),
             CommentLayoutItem::Host => c.author_host().to_owned(),
-            CommentLayoutItem::Date => pretty_date_t(c.created_at()),
+            CommentLayoutItem::Date => pretty_date_t(Some(c.created_at())),
             CommentLayoutItem::Content => remove_html(c.content()),
             CommentLayoutItem::String(s) => s.clone(),
         }
