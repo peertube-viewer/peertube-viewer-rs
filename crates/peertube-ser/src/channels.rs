@@ -1,6 +1,8 @@
 use serde::Deserialize;
 
-use super::common::Avatar;
+use time::OffsetDateTime;
+
+use super::common::{dates_deser, Avatar};
 
 #[derive(Deserialize, Debug)]
 #[allow(non_snake_case)]
@@ -12,8 +14,10 @@ pub struct Channel {
     pub host: String,
     pub followingCount: i64,
     pub followersCount: i64,
-    pub createdAt: String,
-    pub updatedAt: String,
+
+    #[serde(with = "dates_deser")]
+    pub createdAt: OffsetDateTime,
+
     pub ownerAccount: Account,
 }
 

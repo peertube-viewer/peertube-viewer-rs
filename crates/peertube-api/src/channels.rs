@@ -1,5 +1,5 @@
 use peertube_ser::channels;
-use time::{format_description::well_known::Rfc3339, OffsetDateTime};
+use time::OffsetDateTime;
 
 pub struct Channel {
     id: (String, u64), // Ids are not valable across instances
@@ -10,7 +10,6 @@ pub struct Channel {
     host: String,
     followers: u64,
     created_at: OffsetDateTime,
-    updated_at: OffsetDateTime,
 }
 
 #[allow(unused)]
@@ -32,10 +31,6 @@ impl Channel {
     }
     pub fn created_at(&self) -> OffsetDateTime {
         self.created_at
-    }
-
-    pub fn updated_at(&self) -> OffsetDateTime {
-        self.updated_at
     }
 
     pub fn handle(&self) -> String {
@@ -73,8 +68,7 @@ impl Channel {
             name: c.name,
             display_name: c.displayName,
             description: c.description,
-            created_at: OffsetDateTime::parse(&c.createdAt, &Rfc3339).ok()?,
-            updated_at: OffsetDateTime::parse(&c.createdAt, &Rfc3339).ok()?,
+            created_at: c.createdAt,
             host: c.host,
         })
     }

@@ -295,6 +295,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+ "time",
 ]
 
 [[package]]
@@ -610,6 +611,7 @@ checksum = "99beeb0daeac2bd1e86ac2c21caddecb244b39a093594da1a661ec2060c7aedd"
 dependencies = [
  "itoa",
  "libc",
+ "serde",
 ]
 
 [[package]]

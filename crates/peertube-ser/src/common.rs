@@ -28,3 +28,14 @@ pub struct VideoState {
     pub id: u16,
     pub label: String,
 }
+
+pub mod dates_deser {
+    use serde::{de::Error, Deserialize, Deserializer};
+    use time::{format_description::well_known::Rfc3339, OffsetDateTime};
+    pub fn deserialize<'de, D: Deserializer<'de>>(
+        deserializer: D,
+    ) -> Result<OffsetDateTime, D::Error> {
+        let time: String = Deserialize::deserialize(deserializer)?;
+        Ok(OffsetDateTime::parse(&time, &Rfc3339).map_err(D::Error::custom)?)
+    }
+}
