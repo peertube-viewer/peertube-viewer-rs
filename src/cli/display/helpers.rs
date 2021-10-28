@@ -1,5 +1,6 @@
-use chrono::{DateTime, Duration, FixedOffset, Utc};
+use chrono::{DateTime, Duration as ChronoDuration, FixedOffset, Utc};
 use std::time::SystemTime;
+use time::Duration;
 
 pub fn pretty_size(mut s: u64) -> String {
     const PREFIXES: [&str; 5] = ["", "K", "M", "G", "E"];
@@ -29,7 +30,7 @@ pub fn pretty_date(d: Option<&DateTime<FixedOffset>>) -> String {
         .unwrap_or_default()
 }
 
-pub fn pretty_duration_since(d: Duration) -> String {
+pub fn pretty_duration_since(d: ChronoDuration) -> String {
     if d.num_milliseconds() < 0 {
         return "From the future. Bug?".to_string();
     }
@@ -41,6 +42,21 @@ pub fn pretty_duration_since(d: Duration) -> String {
         d if d.num_weeks() < 5 => format!("{}w", d.num_weeks()),
         d if d.num_days() < 365 => format!("{}m", d.num_days() / 30),
         d => format!("{}y", d.num_days() / 365),
+    }
+}
+
+pub fn pretty_duration_since_t(d: Duration) -> String {
+    if d.whole_milliseconds() < 0 {
+        return "From the future. Bug?".to_string();
+    }
+    match d {
+        d if d.whole_minutes() < 1 => format!("{}s", d.whole_seconds()),
+        d if d.whole_hours() < 1 => format!("{}min", d.whole_minutes()),
+        d if d.whole_days() < 1 => format!("{}h", d.whole_hours()),
+        d if d.whole_weeks() < 1 => format!("{}d", d.whole_days()),
+        d if d.whole_weeks() < 5 => format!("{}w", d.whole_weeks()),
+        d if d.whole_days() < 365 => format!("{}m", d.whole_days() / 30),
+        d => format!("{}y", d.whole_days() / 365),
     }
 }
 
@@ -237,20 +253,39 @@ mod helpers {
 
     #[test]
     pub fn duration_since() {
-        assert_eq!(pretty_duration_since(Duration::weeks(1)), "1w");
-        assert_eq!(pretty_duration_since(Duration::weeks(4)), "4w");
-        assert_eq!(pretty_duration_since(Duration::weeks(5)), "1m");
-        assert_eq!(pretty_duration_since(Duration::seconds(1)), "1s");
-        assert_eq!(pretty_duration_since(Duration::seconds(59)), "59s");
-        assert_eq!(pretty_duration_since(Duration::seconds(61)), "1min");
-        assert_eq!(pretty_duration_since(Duration::minutes(1)), "1min");
-        assert_eq!(pretty_duration_since(Duration::minutes(59)), "59min");
-        assert_eq!(pretty_duration_since(Duration::minutes(61)), "1h");
-        assert_eq!(pretty_duration_since(Duration::hours(1)), "1h");
-        assert_eq!(pretty_duration_since(Duration::hours(23)), "23h");
-        assert_eq!(pretty_duration_since(Duration::hours(24)), "1d");
-        assert_eq!(pretty_duration_since(Duration::weeks(51)), "11m");
-        assert_eq!(pretty_duration_since(Duration::weeks(52)), "12m");
-        assert_eq!(pretty_duration_since(Duration::weeks(53)), "1y");
+        assert_eq!(pretty_duration_since(ChronoDuration::weeks(1)), "1w");
+        assert_eq!(pretty_duration_since(ChronoDuration::weeks(4)), "4w");
+        assert_eq!(pretty_duration_since(ChronoDuration::weeks(5)), "1m");
+        assert_eq!(pretty_duration_since(ChronoDuration::seconds(1)), "1s");
+        assert_eq!(pretty_duration_since(ChronoDuration::seconds(59)), "59s");
+        assert_eq!(pretty_duration_since(ChronoDuration::seconds(61)), "1min");
+        assert_eq!(pretty_duration_since(ChronoDuration::minutes(1)), "1min");
+        assert_eq!(pretty_duration_since(ChronoDuration::minutes(59)), "59min");
+        assert_eq!(pretty_duration_since(ChronoDuration::minutes(61)), "1h");
+        assert_eq!(pretty_duration_since(ChronoDuration::hours(1)), "1h");
+        assert_eq!(pretty_duration_since(ChronoDuration::hours(23)), "23h");
+        assert_eq!(pretty_duration_since(ChronoDuration::hours(24)), "1d");
+        assert_eq!(pretty_duration_since(ChronoDuration::weeks(51)), "11m");
+        assert_eq!(pretty_duration_since(ChronoDuration::weeks(52)), "12m");
+        assert_eq!(pretty_duration_since(ChronoDuration::weeks(53)), "1y");
+    }
+
+    #[test]
+    pub fn duration_since_t() {
+        assert_eq!(pretty_duration_since_t(Duration::weeks(1)), "1w");
+        assert_eq!(pretty_duration_since_t(Duration::weeks(4)), "4w");
+        assert_eq!(pretty_duration_since_t(Duration::weeks(5)), "1m");
+        assert_eq!(pretty_duration_since_t(Duration::seconds(1)), "1s");
+        assert_eq!(pretty_duration_since_t(Duration::seconds(59)), "59s");
+        assert_eq!(pretty_duration_since_t(Duration::seconds(61)), "1min");
+        assert_eq!(pretty_duration_since_t(Duration::minutes(1)), "1min");
+        assert_eq!(pretty_duration_since_t(Duration::minutes(59)), "59min");
+        assert_eq!(pretty_duration_since_t(Duration::minutes(61)), "1h");
+        assert_eq!(pretty_duration_since_t(Duration::hours(1)), "1h");
+        assert_eq!(pretty_duration_since_t(Duration::hours(23)), "23h");
+        assert_eq!(pretty_duration_since_t(Duration::hours(24)), "1d");
+        assert_eq!(pretty_duration_since_t(Duration::weeks(51)), "11m");
+        assert_eq!(pretty_duration_since_t(Duration::weeks(52)), "12m");
+        assert_eq!(pretty_duration_since_t(Duration::weeks(53)), "1y");
     }
 }
