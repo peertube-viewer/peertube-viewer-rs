@@ -36,6 +36,6 @@ pub mod dates_deser {
         deserializer: D,
     ) -> Result<OffsetDateTime, D::Error> {
         let time: String = Deserialize::deserialize(deserializer)?;
-        Ok(OffsetDateTime::parse(&time, &Rfc3339).map_err(D::Error::custom)?)
+        OffsetDateTime::parse(&time, &Rfc3339).map_err(D::Error::custom)
     }
 }
