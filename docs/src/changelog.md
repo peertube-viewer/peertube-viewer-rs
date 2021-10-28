@@ -4,6 +4,8 @@ Changelog
 <!--dev-->
 <!--**Changes that have been implemented but not yet released**-->
 
+- Internal changes, removes a dependency
+
 1.8.3
 ---
 
