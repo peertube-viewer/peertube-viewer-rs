@@ -4,7 +4,10 @@ Changelog
 <!--dev-->
 <!--**Changes that have been implemented but not yet released**-->
 
-- Internal changes, removes a dependency
+Next release
+------------
+
+- Migrate away from chrono to use time directly
 
 1.8.3
 ---
