@@ -1,6 +1,6 @@
 use chrono::{DateTime, Duration as ChronoDuration, FixedOffset, Utc};
 use std::time::SystemTime;
-use time::Duration;
+use time::{Duration, OffsetDateTime};
 
 pub fn pretty_size(mut s: u64) -> String {
     const PREFIXES: [&str; 5] = ["", "K", "M", "G", "E"];
@@ -27,6 +27,13 @@ pub fn display_count(mut c: u64) -> String {
 pub fn pretty_date(d: Option<&DateTime<FixedOffset>>) -> String {
     let now: DateTime<Utc> = SystemTime::now().into();
     d.map(|t| pretty_duration_since(now.naive_local().signed_duration_since(t.naive_local())))
+        .unwrap_or_default()
+}
+
+pub fn pretty_date_t(d: Option<OffsetDateTime>) -> String {
+    let now: OffsetDateTime =
+        OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
+    d.map(|t| pretty_duration_since_t(now - t))
         .unwrap_or_default()
 }
 

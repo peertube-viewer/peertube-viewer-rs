@@ -11,7 +11,7 @@ peertube-api = {version = "*", path = "crates/peertube-api"}
 preloadable-list = {version = "*", path = "crates/preloadable-list"}
 peertube-viewer-utils = {version = "*", path = "crates/peertube-viewer-utils"}
 termion = "1"
-time = "0.3"
+time = {version = "0.3", features = ["local-offset"]}
 chrono = "0.4"
 rustyline = { version = "9.0.0", default-features = false }
 clap = { version = "2", default-features=false, features = [ "wrap_help", "color"] }
