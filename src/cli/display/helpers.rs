@@ -1,5 +1,3 @@
-use chrono::{DateTime, Duration as ChronoDuration, FixedOffset, Utc};
-use std::time::SystemTime;
 use time::{format_description, Duration, OffsetDateTime};
 
 pub fn pretty_size(mut s: u64) -> String {
@@ -24,35 +22,14 @@ pub fn display_count(mut c: u64) -> String {
     format!("{}{}", c, PREFIXES[id])
 }
 
-pub fn pretty_date(d: Option<&DateTime<FixedOffset>>) -> String {
-    let now: DateTime<Utc> = SystemTime::now().into();
-    d.map(|t| pretty_duration_since(now.naive_local().signed_duration_since(t.naive_local())))
-        .unwrap_or_default()
-}
-
 pub fn pretty_date_t(d: Option<OffsetDateTime>) -> String {
     let now: OffsetDateTime =
         OffsetDateTime::now_local().unwrap_or_else(|_| OffsetDateTime::now_utc());
-    d.map(|t| pretty_duration_since_t(now - t))
+    d.map(|t| pretty_duration_since(now - t))
         .unwrap_or_default()
 }
 
-pub fn pretty_duration_since(d: ChronoDuration) -> String {
-    if d.num_milliseconds() < 0 {
-        return "From the future. Bug?".to_string();
-    }
-    match d {
-        d if d.num_minutes() < 1 => format!("{}s", d.num_seconds()),
-        d if d.num_hours() < 1 => format!("{}min", d.num_minutes()),
-        d if d.num_days() < 1 => format!("{}h", d.num_hours()),
-        d if d.num_weeks() < 1 => format!("{}d", d.num_days()),
-        d if d.num_weeks() < 5 => format!("{}w", d.num_weeks()),
-        d if d.num_days() < 365 => format!("{}m", d.num_days() / 30),
-        d => format!("{}y", d.num_days() / 365),
-    }
-}
-
-pub fn pretty_duration_since_t(d: Duration) -> String {
+pub fn pretty_duration_since(d: Duration) -> String {
     if d.whole_milliseconds() < 0 {
         return "From the future. Bug?".to_string();
     }
@@ -93,12 +70,7 @@ pub fn pretty_duration_or_live(d: u64, is_live: bool) -> String {
     }
 }
 
-pub fn full_date(d: Option<&DateTime<FixedOffset>>) -> String {
-    d.map(|t| t.format("%A %e %B %Y").to_string())
-        .unwrap_or_default()
-}
-
-pub fn full_date_t(d: Option<OffsetDateTime>) -> String {
+pub fn full_date(d: Option<OffsetDateTime>) -> String {
     let format =
         format_description::parse("[weekday] [day padding:none] [month repr:long] [year]").unwrap();
     d.map(|t| t.format(&format).ok())
@@ -268,57 +240,28 @@ mod helpers {
 
     #[test]
     pub fn duration_since() {
-        assert_eq!(pretty_duration_since(ChronoDuration::weeks(1)), "1w");
-        assert_eq!(pretty_duration_since(ChronoDuration::weeks(4)), "4w");
-        assert_eq!(pretty_duration_since(ChronoDuration::weeks(5)), "1m");
-        assert_eq!(pretty_duration_since(ChronoDuration::seconds(1)), "1s");
-        assert_eq!(pretty_duration_since(ChronoDuration::seconds(59)), "59s");
-        assert_eq!(pretty_duration_since(ChronoDuration::seconds(61)), "1min");
-        assert_eq!(pretty_duration_since(ChronoDuration::minutes(1)), "1min");
-        assert_eq!(pretty_duration_since(ChronoDuration::minutes(59)), "59min");
-        assert_eq!(pretty_duration_since(ChronoDuration::minutes(61)), "1h");
-        assert_eq!(pretty_duration_since(ChronoDuration::hours(1)), "1h");
-        assert_eq!(pretty_duration_since(ChronoDuration::hours(23)), "23h");
-        assert_eq!(pretty_duration_since(ChronoDuration::hours(24)), "1d");
-        assert_eq!(pretty_duration_since(ChronoDuration::weeks(51)), "11m");
-        assert_eq!(pretty_duration_since(ChronoDuration::weeks(52)), "12m");
-        assert_eq!(pretty_duration_since(ChronoDuration::weeks(53)), "1y");
-    }
-
-    #[test]
-    pub fn duration_since_t() {
-        assert_eq!(pretty_duration_since_t(Duration::weeks(1)), "1w");
-        assert_eq!(pretty_duration_since_t(Duration::weeks(4)), "4w");
-        assert_eq!(pretty_duration_since_t(Duration::weeks(5)), "1m");
-        assert_eq!(pretty_duration_since_t(Duration::seconds(1)), "1s");
-        assert_eq!(pretty_duration_since_t(Duration::seconds(59)), "59s");
-        assert_eq!(pretty_duration_since_t(Duration::seconds(61)), "1min");
-        assert_eq!(pretty_duration_since_t(Duration::minutes(1)), "1min");
-        assert_eq!(pretty_duration_since_t(Duration::minutes(59)), "59min");
-        assert_eq!(pretty_duration_since_t(Duration::minutes(61)), "1h");
-        assert_eq!(pretty_duration_since_t(Duration::hours(1)), "1h");
-        assert_eq!(pretty_duration_since_t(Duration::hours(23)), "23h");
-        assert_eq!(pretty_duration_since_t(Duration::hours(24)), "1d");
-        assert_eq!(pretty_duration_since_t(Duration::weeks(51)), "11m");
-        assert_eq!(pretty_duration_since_t(Duration::weeks(52)), "12m");
-        assert_eq!(pretty_duration_since_t(Duration::weeks(53)), "1y");
+        assert_eq!(pretty_duration_since(Duration::weeks(1)), "1w");
+        assert_eq!(pretty_duration_since(Duration::weeks(4)), "4w");
+        assert_eq!(pretty_duration_since(Duration::weeks(5)), "1m");
+        assert_eq!(pretty_duration_since(Duration::seconds(1)), "1s");
+        assert_eq!(pretty_duration_since(Duration::seconds(59)), "59s");
+        assert_eq!(pretty_duration_since(Duration::seconds(61)), "1min");
+        assert_eq!(pretty_duration_since(Duration::minutes(1)), "1min");
+        assert_eq!(pretty_duration_since(Duration::minutes(59)), "59min");
+        assert_eq!(pretty_duration_since(Duration::minutes(61)), "1h");
+        assert_eq!(pretty_duration_since(Duration::hours(1)), "1h");
+        assert_eq!(pretty_duration_since(Duration::hours(23)), "23h");
+        assert_eq!(pretty_duration_since(Duration::hours(24)), "1d");
+        assert_eq!(pretty_duration_since(Duration::weeks(51)), "11m");
+        assert_eq!(pretty_duration_since(Duration::weeks(52)), "12m");
+        assert_eq!(pretty_duration_since(Duration::weeks(53)), "1y");
     }
 
     #[test]
     pub fn date() {
-        assert_eq!(
-            full_date(Some(
-                &DateTime::<FixedOffset>::parse_from_rfc3339("2016-07-08T09:10:11+00:00").unwrap()
-            )),
-            "Friday  8 July 2016"
-        );
-    }
-
-    #[test]
-    pub fn date_t() {
         use time::format_description::well_known::Rfc3339;
         assert_eq!(
-            full_date_t(Some(
+            full_date(Some(
                 OffsetDateTime::parse("2016-07-08T09:10:11+00:00", &Rfc3339).unwrap()
             )),
             "Friday 8 July 2016"
