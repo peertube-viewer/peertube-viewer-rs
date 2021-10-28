@@ -1,11 +1,11 @@
 use crate::common::Channel;
-use chrono::{DateTime, FixedOffset};
 use std::convert::TryFrom;
+use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 
 pub struct Comment {
     content: String,
     url: String,
-    created_at: Option<DateTime<FixedOffset>>,
+    created_at: Option<OffsetDateTime>,
     author: Channel,
 }
 
@@ -16,7 +16,7 @@ impl TryFrom<peertube_ser::comments::Comment> for Comment {
             (false, Some(url), Some(account)) => Ok(Comment {
                 content: comment.text,
                 url,
-                created_at: DateTime::parse_from_rfc3339(&comment.createdAt).ok(),
+                created_at: OffsetDateTime::parse(&comment.createdAt, &Rfc3339).ok(),
                 author: account.into(),
             }),
             _ => Err(()),
@@ -41,7 +41,7 @@ impl Comment {
         &self.author.host
     }
 
-    pub fn created_at(&self) -> &Option<DateTime<FixedOffset>> {
-        &self.created_at
+    pub fn created_at(&self) -> Option<OffsetDateTime> {
+        self.created_at
     }
 }

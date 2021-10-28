@@ -1,6 +1,6 @@
-use chrono::{DateTime, FixedOffset};
 use std::sync::Arc;
 use std::sync::Mutex;
+use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 
 use crate::common::Channel;
 use crate::error::{self, Error};
@@ -183,7 +183,7 @@ pub struct Video {
     nsfw: bool,
     is_live: bool,
     dislikes: u64,
-    published: Option<DateTime<FixedOffset>>,
+    published: Option<OffsetDateTime>,
     short_desc: Option<String>,
     description: Mutex<Description>,
     files: Mutex<Files>,
@@ -203,8 +203,8 @@ impl Video {
     pub fn short_desc(&self) -> Option<&str> {
         self.short_desc.as_deref()
     }
-    pub fn published(&self) -> Option<&DateTime<FixedOffset>> {
-        self.published.as_ref()
+    pub fn published(&self) -> Option<OffsetDateTime> {
+        self.published
     }
     pub fn duration(&self) -> u64 {
         self.duration
@@ -258,7 +258,7 @@ impl Video {
             views: v.views,
             nsfw: v.nsfw,
             is_live: v.isLive,
-            published: DateTime::parse_from_rfc3339(&v.publishedAt).ok(),
+            published: OffsetDateTime::parse(&v.publishedAt, &Rfc3339).ok(),
             short_desc: v.description,
             description: Mutex::new(Description::None),
             files: Mutex::new(Files::None),
@@ -278,7 +278,7 @@ impl Video {
             views: v.views,
             nsfw: v.nsfw,
             is_live: v.isLive,
-            published: DateTime::parse_from_rfc3339(&v.publishedAt).ok(),
+            published: OffsetDateTime::parse(&v.publishedAt, &Rfc3339).ok(),
             short_desc: v.description,
             description: Mutex::new(Description::None),
             files: Mutex::new(Files::Fetched(

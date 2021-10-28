@@ -1,6 +1,5 @@
-use chrono::{DateTime, FixedOffset};
-
 use peertube_ser::channels;
+use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 
 pub struct Channel {
     id: (String, u64), // Ids are not valable across instances
@@ -10,8 +9,8 @@ pub struct Channel {
     description: Option<String>,
     host: String,
     followers: u64,
-    created_at: DateTime<FixedOffset>,
-    updated_at: DateTime<FixedOffset>,
+    created_at: OffsetDateTime,
+    updated_at: OffsetDateTime,
 }
 
 #[allow(unused)]
@@ -31,12 +30,12 @@ impl Channel {
     pub fn description(&self) -> &Option<String> {
         &self.description
     }
-    pub fn created_at(&self) -> &DateTime<FixedOffset> {
-        &self.created_at
+    pub fn created_at(&self) -> OffsetDateTime {
+        self.created_at
     }
 
-    pub fn updated_at(&self) -> &DateTime<FixedOffset> {
-        &self.updated_at
+    pub fn updated_at(&self) -> OffsetDateTime {
+        self.updated_at
     }
 
     pub fn handle(&self) -> String {
@@ -74,8 +73,8 @@ impl Channel {
             name: c.name,
             display_name: c.displayName,
             description: c.description,
-            created_at: DateTime::parse_from_rfc3339(&c.createdAt).ok()?,
-            updated_at: DateTime::parse_from_rfc3339(&c.createdAt).ok()?,
+            created_at: OffsetDateTime::parse(&c.createdAt, &Rfc3339).ok()?,
+            updated_at: OffsetDateTime::parse(&c.createdAt, &Rfc3339).ok()?,
             host: c.host,
         })
     }
