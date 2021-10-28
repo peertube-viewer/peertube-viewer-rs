@@ -34,6 +34,7 @@ pub fn pretty_duration_since(d: Duration) -> String {
         return "From the future. Bug?".to_string();
     }
     match d {
+        d if d.num_minutes() < 1 => format!("{}s", d.num_seconds()),
         d if d.num_hours() < 1 => format!("{}min", d.num_minutes()),
         d if d.num_days() < 1 => format!("{}h", d.num_hours()),
         d if d.num_weeks() < 1 => format!("{}d", d.num_days()),
@@ -232,5 +233,24 @@ mod helpers {
         assert_eq!(pretty_duration(3600), "1:00:00");
         assert_eq!(pretty_duration(7199), "1:59:59");
         assert_eq!(pretty_duration(7200), "2:00:00");
+    }
+
+    #[test]
+    pub fn duration_since() {
+        assert_eq!(pretty_duration_since(Duration::weeks(1)), "1w");
+        assert_eq!(pretty_duration_since(Duration::weeks(4)), "4w");
+        assert_eq!(pretty_duration_since(Duration::weeks(5)), "1m");
+        assert_eq!(pretty_duration_since(Duration::seconds(1)), "1s");
+        assert_eq!(pretty_duration_since(Duration::seconds(59)), "59s");
+        assert_eq!(pretty_duration_since(Duration::seconds(61)), "1min");
+        assert_eq!(pretty_duration_since(Duration::minutes(1)), "1min");
+        assert_eq!(pretty_duration_since(Duration::minutes(59)), "59min");
+        assert_eq!(pretty_duration_since(Duration::minutes(61)), "1h");
+        assert_eq!(pretty_duration_since(Duration::hours(1)), "1h");
+        assert_eq!(pretty_duration_since(Duration::hours(23)), "23h");
+        assert_eq!(pretty_duration_since(Duration::hours(24)), "1d");
+        assert_eq!(pretty_duration_since(Duration::weeks(51)), "11m");
+        assert_eq!(pretty_duration_since(Duration::weeks(52)), "12m");
+        assert_eq!(pretty_duration_since(Duration::weeks(53)), "1y");
     }
 }
