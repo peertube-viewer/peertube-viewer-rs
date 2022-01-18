@@ -1,11 +1,10 @@
-use clap::{App, AppSettings, Arg};
+use clap::{App, Arg};
 
-pub fn gen_app() -> App<'static, 'static> {
+pub fn gen_app() -> App<'static> {
     App::new(env!("CARGO_PKG_NAME"))
     .version(env!("CARGO_PKG_VERSION"))
     .author("Sosthène Guédon <dev@peertube-viewer.com>")
     .about("PeerTube CLI client")
-    .setting(AppSettings::StrictUtf8)
     .args(
         &[
             Arg::with_name("use-raw-urls")
@@ -19,7 +18,7 @@ pub fn gen_app() -> App<'static, 'static> {
                 .long("print-full-example-config")
                 .help("Print an example of all possible config options and exit"),
             Arg::with_name("select-quality")
-                .short("s")
+                .short('s')
                 .long("select-quality")
                 .help("When playing a video with this option, the user will be prompted to chose the video quality\n Note: this implies --use-raw-urls"),
             Arg::with_name("local")
@@ -30,7 +29,7 @@ pub fn gen_app() -> App<'static, 'static> {
                 .conflicts_with("use-raw-urls")
                 .help("Will download the video via the torrent downloader instead of playing it"),
             Arg::with_name("trending")
-                .short("t")
+                .short('t')
                 .long("trending")
                 .conflicts_with("chandle")
                 .help("Will start browsing trending videos"),
@@ -51,7 +50,7 @@ pub fn gen_app() -> App<'static, 'static> {
                 .multiple(true)
                 .help("Arguments to be passed to the player"),
             Arg::with_name("player")
-                .short("p")
+                .short('p')
                 .long("player")
                 .takes_value(true)
                 .help("Player to play the videos with"),
@@ -65,7 +64,7 @@ pub fn gen_app() -> App<'static, 'static> {
                 .multiple(true)
                 .help("Arguments to be passed to the torrent downloader"),
             Arg::with_name("instance")
-                .short("i")
+                .short('i')
                 .long("instance")
                 .takes_value(true)
                 .help("Instance to be browsed"),
@@ -75,7 +74,7 @@ pub fn gen_app() -> App<'static, 'static> {
                 .conflicts_with("instance")
                 .help("Use a search engine (like sepiasearch)"),
             Arg::with_name("config-file")
-                .short("c")
+                .short('c')
                 .long("config")
                 .takes_value(true)
                 .help("Sets a custom config file"),
