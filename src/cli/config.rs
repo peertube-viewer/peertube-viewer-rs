@@ -733,7 +733,7 @@ mod config {
 
         let app = gen_app();
         let matches = app
-            .get_matches_from_safe(vec![
+            .try_get_matches_from(vec![
                 "peertube-viewer-rs",
                 "--player",
                 "args-player",
@@ -772,7 +772,7 @@ mod config {
 
         let app = gen_app();
         let matches = app
-            .get_matches_from_safe(vec![
+            .try_get_matches_from(vec![
                 "peertube-viewer-rs",
                 "--torrent-downloader",
                 "args-downloader",
@@ -802,7 +802,7 @@ mod config {
     fn conflicting_args1() {
         let app = gen_app();
         assert_eq!(
-            app.get_matches_from_safe(vec!["peertube-viewer-rs", "--block-nsfw", "--let-nsfw"])
+            app.try_get_matches_from(vec!["peertube-viewer-rs", "--block-nsfw", "--let-nsfw"])
                 .unwrap_err()
                 .kind,
             ErrorKind::ArgumentConflict
@@ -812,7 +812,7 @@ mod config {
     fn conflicting_args2() {
         let app = gen_app();
         assert_eq!(
-            app.get_matches_from_safe(vec!["peertube-viewer-rs", "--block-nsfw", "--tag-nsfw"])
+            app.try_get_matches_from(vec!["peertube-viewer-rs", "--block-nsfw", "--tag-nsfw"])
                 .unwrap_err()
                 .kind,
             ErrorKind::ArgumentConflict
@@ -823,7 +823,7 @@ mod config {
     fn conflicting_args3() {
         let app = gen_app();
         assert_eq!(
-            app.get_matches_from_safe(vec!["peertube-viewer-rs", "--let-nsfw", "--tag-nsfw"])
+            app.try_get_matches_from(vec!["peertube-viewer-rs", "--let-nsfw", "--tag-nsfw"])
                 .unwrap_err()
                 .kind,
             ErrorKind::ArgumentConflict
