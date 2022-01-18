@@ -13,7 +13,7 @@ peertube-viewer-utils = {version = "*", path = "crates/peertube-viewer-utils"}
 termion = "1"
 time = {version = "0.3", features = ["local-offset", "formatting"]}
 rustyline = { version = "9.0.0", default-features = false }
-clap = { version = "3", default-features = false, features = [ "wrap_help", "color", "std"] }
+clap = { version = "3", default-features = false, features = [ "wrap_help", "color", "std", "suggestions"] }
 toml = "0.5"
 unicode-width = "0.1"
 directories = "4.0.1"
