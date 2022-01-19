@@ -231,10 +231,12 @@ impl Config {
 
         let initial_info = if cli_args.is_present("trending") {
             InitialInfo::Trending
-        } else if let Some(handle) = cli_args.value_of("chandle") {
-            InitialInfo::Handle(handle.to_owned())
-        } else if let Some(s) = cli_args.values_of("channels").map(concat) {
-            InitialInfo::Channels(s)
+        } else if let Some(s) = cli_args.value_of("chandle") {
+            InitialInfo::Handle(s.into())
+        } else if cli_args.is_present("channels") {
+            InitialInfo::Channels(concat(
+                cli_args.values_of("initial-query").into_iter().flatten(),
+            ))
         } else if let Some(s) = cli_args
             .values_of("initial-query")
             .map(|it| it.collect::<Vec<_>>())
@@ -839,12 +841,50 @@ mod config {
                 "peertube-viewer-rs",
                 "-c",
                 "src/cli/default_config.toml",
-                "what",
+                "What",
                 "is",
                 "peertube",
             ])
             .unwrap();
-        let (_, _, errors) = Config::new_with_args(args);
+        let (_, initial_info, errors) = Config::new_with_args(args);
         assert_eq!(errors.len(), 0, "{errors:?}");
+        assert_eq!(initial_info, InitialInfo::Query("What is peertube".into()));
+    }
+
+    #[test]
+    fn initial_channel_search() {
+        let app = gen_app();
+        let args = app
+            .try_get_matches_from(vec![
+                "peertube-viewer-rs",
+                "-c",
+                "src/cli/default_config.toml",
+                "--channels",
+                "What",
+                "is",
+                "peertube",
+            ])
+            .unwrap();
+        let (_, initial_info, errors) = Config::new_with_args(args);
+        assert_eq!(errors.len(), 0, "{errors:?}");
+        assert_eq!(
+            initial_info,
+            InitialInfo::Channels("What is peertube".into())
+        );
+    }
+
+    #[test]
+    fn initial_and_chandle() {
+        let app = gen_app();
+        assert!(app
+            .try_get_matches_from(vec![
+                "peertube-viewer-rs",
+                "-c",
+                "src/cli/default_config.toml",
+                "--chandle",
+                "What",
+                "is"
+            ])
+            .is_err());
     }
 }

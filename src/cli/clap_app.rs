@@ -35,14 +35,12 @@ pub fn gen_app() -> App<'static> {
                 .help("Will start browsing trending videos"),
             Arg::new("channels")
                 .long("channels")
-                .takes_value(true)
-                .multiple_occurrences(true)
                 .conflicts_with("trending")
                 .help("Will start searching video channels"),
             Arg::new("chandle")
                 .long("chandle")
-                .conflicts_with("channels")
                 .takes_value(true)
+                .conflicts_with("channels")
                 .help("Start browsing the videos of a channel with its handle (ex: name@instance.com)"),
             Arg::new("player-args")
                 .long("player-args")
@@ -99,6 +97,9 @@ pub fn gen_app() -> App<'static> {
             Arg::new("initial-query")
                 .takes_value(true)
                 .multiple_occurrences(true)
+                .conflicts_with("trending")
+                .conflicts_with("chandle")
+                .index(1)
                 .help("Initial query to be searched.\nIf it is a url, it will try to play it as a video"),
         ]
     )
