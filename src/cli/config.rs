@@ -239,7 +239,7 @@ impl Config {
             .values_of("initial-query")
             .map(|it| it.collect::<Vec<_>>())
         {
-            match ParsedUrl::from_url(&s[0]) {
+            match ParsedUrl::from_url(s[0]) {
                 Some(parsed) => {
                     config.instance = parsed.instance;
                     match parsed.url_data {
