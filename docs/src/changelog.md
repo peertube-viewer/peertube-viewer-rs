@@ -10,6 +10,7 @@ Next release
 - Migrate away from chrono to use time directly
 - Update dependencies, including Clap to version 3
 - Fix weird behaviors with --channels
+- Remove error warning when default config is missing
 
 1.8.3
 ---
