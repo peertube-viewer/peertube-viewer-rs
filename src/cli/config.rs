@@ -201,7 +201,10 @@ impl Config {
     pub fn new() -> (Config, InitialInfo, Vec<ConfigLoadError>) {
         let app = gen_app();
         let cli_args = app.get_matches();
+        Self::new_with_args(cli_args)
+    }
 
+    fn new_with_args(cli_args: clap::ArgMatches) -> (Config, InitialInfo, Vec<ConfigLoadError>) {
         if cli_args.is_present("print-default-config") {
             print!("{}", include_str!("default_config.toml"));
             exit(0);
@@ -823,5 +826,14 @@ mod config {
                 .kind,
             ErrorKind::ArgumentConflict
         );
+    }
+
+    #[test]
+    fn initial_query() {
+        let app = gen_app();
+        let args = app
+            .try_get_matches_from(vec!["peertube-viewer-rs", "what", "is", "peertube"])
+            .unwrap();
+        assert_eq!(Config::new_with_args(args).2.len(), 0);
     }
 }
