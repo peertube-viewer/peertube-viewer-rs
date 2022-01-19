@@ -290,9 +290,8 @@ impl Cli {
         videos
             .loader()
             .preload_res(self.config.select_quality() || self.config.use_raw_url());
-        let choice;
-        match self.rl.autoload_readline(">> ".to_string(), videos)? {
-            ParsedQuery::Id(id) => choice = id,
+        let choice = match self.rl.autoload_readline(">> ".to_string(), videos)? {
+            ParsedQuery::Id(id) => id,
             new_action => {
                 *action = new_action;
                 *changed_action = true;

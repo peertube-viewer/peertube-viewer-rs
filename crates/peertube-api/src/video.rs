@@ -374,10 +374,7 @@ impl Video {
         match &*guard {
             Files::None => match self.fetch_files() {
                 Ok((files, streams)) => {
-                    let resolutions = files
-                        .iter()
-                        .map(|file| Resolution::from_file(file))
-                        .collect();
+                    let resolutions = files.iter().map(Resolution::from_file).collect();
                     *guard = Files::Fetched(files, streams);
                     Ok(resolutions)
                 }
@@ -387,10 +384,7 @@ impl Video {
                 }
             },
             Files::FetchedError(err) => Err(err.clone()),
-            Files::Fetched(files, _) => Ok(files
-                .iter()
-                .map(|file| Resolution::from_file(file))
-                .collect()),
+            Files::Fetched(files, _) => Ok(files.iter().map(Resolution::from_file).collect()),
         }
     }
 
