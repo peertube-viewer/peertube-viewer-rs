@@ -9,6 +9,7 @@ Next release
 
 - Migrate away from chrono to use time directly
 - Update dependencies, including Clap to version 3
+- Fix weird behaviors with --channels
 
 1.8.3
 ---
