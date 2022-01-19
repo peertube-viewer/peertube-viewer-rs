@@ -18,7 +18,7 @@ rust-latest:
     - rustup component add clippy
     - cargo build --verbose --locked
     - cargo test --verbose --workspace
-    - cargo clippy --workspace --verbose
+    - cargo clippy --workspace --verbose -- -D clippy::all
     - cargo fmt --all --verbose -- --check
   only:
     changes:
