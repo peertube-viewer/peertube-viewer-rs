@@ -299,18 +299,15 @@ impl Config {
             if let Some(Value::Table(t)) = config.get("player") {
                 (
                     t.get("command")
-                        .map(|cmd| cmd.as_str())
-                        .flatten()
+                        .and_then(|cmd| cmd.as_str())
                         .map(|s| s.to_string())
                         .unwrap_or_else(|| "mpv".to_string()),
                     get_string_array(t, "args", &mut load_errors),
                     t.get("use-raw-urls")
-                        .map(|b| b.as_bool())
-                        .flatten()
+                        .and_then(|b| b.as_bool())
                         .unwrap_or(false),
                     t.get("prefer-hls")
-                        .map(|b| b.as_bool())
-                        .flatten()
+                        .and_then(|b| b.as_bool())
                         .unwrap_or(true),
                 )
             } else {
@@ -326,8 +323,7 @@ impl Config {
         /* ---Torrent configuration --- */
         let torrent = if let Some(Value::Table(t)) = config.get("torrent") {
             t.get("command")
-                .map(|cmd| cmd.as_str())
-                .flatten()
+                .and_then(|cmd| cmd.as_str())
                 .map(|s| TorrentConf {
                     client: s.to_string(),
                     args: get_string_array(t, "args", &mut load_errors),
@@ -687,8 +683,7 @@ fn concat(v: Vec<String>) -> String {
 
 fn get_string_array(t: &Table, name: &str, load_errors: &mut Vec<ConfigLoadError>) -> Vec<String> {
     t.get(name)
-        .map(|cmd| cmd.as_array())
-        .flatten()
+        .and_then(|cmd| cmd.as_array())
         .map(|v| {
             v.iter()
                 .filter_map(|s| {

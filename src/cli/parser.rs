@@ -119,8 +119,7 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
         Ok(ParsedQuery::Chandle(
             input
                 .get(8..)
-                .map(clean_spaces)
-                .flatten()
+                .and_then(clean_spaces)
                 .ok_or(ParseError::MissingArgs)?
                 .to_string(),
         ))
@@ -128,8 +127,7 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
         Ok(ParsedQuery::Channels(
             input
                 .get(9..)
-                .map(clean_spaces)
-                .flatten()
+                .and_then(clean_spaces)
                 .ok_or(ParseError::MissingArgs)?
                 .to_string(),
         ))
@@ -137,8 +135,7 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
         Ok(ParsedQuery::Comments(
             input
                 .get(9..)
-                .map(clean_spaces)
-                .flatten()
+                .and_then(clean_spaces)
                 .ok_or(ParseError::MissingArgs)?
                 .to_string()
                 .parse()
@@ -148,8 +145,7 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
         Ok(ParsedQuery::Browser(
             input
                 .get(8..)
-                .map(clean_spaces)
-                .flatten()
+                .and_then(clean_spaces)
                 .ok_or(ParseError::MissingArgs)?
                 .to_string()
                 .parse()
@@ -159,8 +155,7 @@ pub fn parse(input: &str) -> Result<ParsedQuery, ParseError> {
         Ok(ParsedQuery::Info(
             input
                 .get(5..)
-                .map(clean_spaces)
-                .flatten()
+                .and_then(clean_spaces)
                 .ok_or(ParseError::MissingArgs)?
                 .to_string()
                 .parse()
@@ -208,8 +203,7 @@ pub fn parse_first(input: &str) -> Result<ParsedQuery, ParseError> {
         Ok(ParsedQuery::Chandle(
             input
                 .get(8..)
-                .map(clean_spaces)
-                .flatten()
+                .and_then(clean_spaces)
                 .ok_or(ParseError::MissingArgs)?
                 .to_string(),
         ))
@@ -217,8 +211,7 @@ pub fn parse_first(input: &str) -> Result<ParsedQuery, ParseError> {
         Ok(ParsedQuery::Channels(
             input
                 .get(9..)
-                .map(clean_spaces)
-                .flatten()
+                .and_then(clean_spaces)
                 .ok_or(ParseError::MissingArgs)?
                 .to_string(),
         ))
