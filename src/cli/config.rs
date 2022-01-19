@@ -143,6 +143,15 @@ impl error::Error for ConfigLoadError {
     }
 }
 
+/// Test because otherwise it's unused and produces a warning
+/// Might become useful outside of tests at some point
+#[cfg(test)]
+impl ConfigLoadError {
+    pub fn is_unreadable(&self) -> bool {
+        matches!(self, Self::UnreadableFile(_, _))
+    }
+}
+
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub enum NsfwBehavior {
     Block,
@@ -217,13 +226,13 @@ impl Config {
 
         // Parse config as an String with default to empty string
         let (mut config, mut load_errors) = if let Some(c) = cli_args.value_of("config-file") {
-            Config::from_config_file(&PathBuf::from(c))
+            Config::from_config_file(&PathBuf::from(c), false)
         } else {
             match ProjectDirs::from("", "peertube-viewer-rs", "peertube-viewer-rs") {
                 Some(dirs) => {
                     let mut d = dirs.config_dir().to_owned();
                     d.push("config.toml");
-                    Config::from_config_file(&d)
+                    Config::from_config_file(&d, true)
                 }
                 None => (Config::default(), Vec::new()),
             }
@@ -267,7 +276,7 @@ impl Config {
         (config, initial_info, load_errors)
     }
 
-    fn from_config_file(path: &Path) -> (Config, Vec<ConfigLoadError>) {
+    fn from_config_file(path: &Path, is_default: bool) -> (Config, Vec<ConfigLoadError>) {
         let mut temp = Config::default();
         let mut load_errors = Vec::new();
 
@@ -286,7 +295,11 @@ impl Config {
         /* ---File parsing--- */
 
         let config_str = read_to_string(path)
-            .map_err(|e| load_errors.push(ConfigLoadError::UnreadableFile(e, path.to_path_buf())))
+            .map_err(|e| {
+                if !is_default && matches!(e.kind(), io::ErrorKind::NotFound) {
+                    load_errors.push(ConfigLoadError::UnreadableFile(e, path.to_path_buf()))
+                }
+            })
             .unwrap_or_default();
 
         // Parse config as TOML with default to empty
@@ -717,7 +730,7 @@ mod config {
     #[test]
     fn load_config_then_args() {
         let path = PathBuf::from("src/cli/full_config.toml");
-        let (mut config, mut errors) = Config::from_config_file(&path);
+        let (mut config, mut errors) = Config::from_config_file(&path, false);
         assert_eq!(errors.len(), 0);
         assert_eq!(config.nsfw(), NsfwBehavior::Block);
         assert_eq!(config.player(), "mpv");
@@ -761,7 +774,7 @@ mod config {
     #[test]
     fn torrent_options() {
         let path = PathBuf::from("src/cli/full_config.toml");
-        let (mut config, mut errors) = Config::from_config_file(&path);
+        let (mut config, mut errors) = Config::from_config_file(&path, false);
         assert_eq!(errors.len(), 0);
         assert_eq!(config.nsfw(), NsfwBehavior::Block);
         assert_eq!(config.player(), "mpv");
@@ -795,7 +808,26 @@ mod config {
     #[test]
     fn default_config_example() {
         let path = PathBuf::from("src/cli/default_config.toml");
-        let (config, errors) = Config::from_config_file(&path);
+        let (config, errors) = Config::from_config_file(&path, true);
+        assert_eq!(config.prefer_hls(), true);
+        assert_eq!(errors.len(), 0);
+        assert_eq!(config, Config::default());
+    }
+
+    #[test]
+    fn unknown_file() {
+        let path = PathBuf::from("does/not/exists.toml");
+        let (config, errors) = Config::from_config_file(&path, false);
+        assert_eq!(config.prefer_hls(), true);
+        assert_eq!(errors.len(), 1);
+        assert!(errors[0].is_unreadable());
+        assert_eq!(config, Config::default());
+    }
+
+    #[test]
+    fn default_no_file() {
+        let path = PathBuf::from("does/not/exists.toml");
+        let (config, errors) = Config::from_config_file(&path, true);
         assert_eq!(config.prefer_hls(), true);
         assert_eq!(errors.len(), 0);
         assert_eq!(config, Config::default());
