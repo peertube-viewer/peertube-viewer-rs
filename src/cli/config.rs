@@ -233,9 +233,12 @@ impl Config {
             InitialInfo::Trending
         } else if let Some(handle) = cli_args.value_of("chandle") {
             InitialInfo::Handle(handle.to_owned())
-        } else if let Some(s) = cli_args.values_of_lossy("channels").map(concat) {
+        } else if let Some(s) = cli_args.values_of("channels").map(concat) {
             InitialInfo::Channels(s)
-        } else if let Some(s) = cli_args.values_of_lossy("initial-query") {
+        } else if let Some(s) = cli_args
+            .values_of("initial-query")
+            .map(|it| it.collect::<Vec<_>>())
+        {
             match ParsedUrl::from_url(&s[0]) {
                 Some(parsed) => {
                     config.instance = parsed.instance;
@@ -671,15 +674,15 @@ impl Blocklist<peertube_api::Video> for Config {
     }
 }
 
-fn concat(v: Vec<String>) -> String {
+fn concat(v: impl IntoIterator<Item = impl AsRef<str>>) -> String {
     let mut concatenated = String::new();
-    let mut it = v.iter();
+    let mut it = v.into_iter();
     if let Some(s) = it.next() {
-        concatenated.push_str(s);
+        concatenated.push_str(s.as_ref());
     }
     for s in it {
         concatenated.push(' ');
-        concatenated.push_str(s);
+        concatenated.push_str(s.as_ref());
     }
     concatenated
 }
@@ -832,8 +835,16 @@ mod config {
     fn initial_query() {
         let app = gen_app();
         let args = app
-            .try_get_matches_from(vec!["peertube-viewer-rs", "what", "is", "peertube"])
+            .try_get_matches_from(vec![
+                "peertube-viewer-rs",
+                "-c",
+                "src/cli/default_config.toml",
+                "what",
+                "is",
+                "peertube",
+            ])
             .unwrap();
-        assert_eq!(Config::new_with_args(args).2.len(), 0);
+        let (_, _, errors) = Config::new_with_args(args);
+        assert_eq!(errors.len(), 0, "{errors:?}");
     }
 }
