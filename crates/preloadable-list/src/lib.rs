@@ -46,13 +46,11 @@ where
             self.current += 1;
         }
         if self.loaded.len() <= self.current {
-            let temp;
-            if let Some(handle) = self.loading.take() {
-                temp = handle.join().unwrap()?;
+            let (data, new_total) = if let Some(handle) = self.loading.take() {
+                handle.join().unwrap()?
             } else {
-                temp = self.loader.data(self.step, self.offset)?;
-            }
-            let (data, new_total) = temp;
+                self.loader.data(self.step, self.offset)?
+            };
             self.loaded.push(data.into_iter().map(Arc::new).collect());
             self.total = new_total;
         }
