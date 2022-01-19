@@ -665,7 +665,7 @@ impl Blocklist<str> for Config {
 impl Blocklist<peertube_api::Video> for Config {
     fn is_blocked(&self, video: &peertube_api::Video) -> Option<String> {
         if self.is_allowlist ^ self.listed_instances.contains(video.host()) {
-            Some(format!("Blocked video from: {}", video.host().to_string()))
+            Some(format!("Blocked video from: {}", video.host()))
         } else {
             None
         }

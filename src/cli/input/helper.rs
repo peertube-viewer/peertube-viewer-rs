@@ -124,10 +124,7 @@ impl Completer for Helper {
         }
 
         if let Err(ParseError::IncompleteCommand(cmds)) = self.parse(line) {
-            Ok((
-                0,
-                cmds.into_iter().map(|i| CompletionCandidate(i)).collect(),
-            ))
+            Ok((0, cmds.into_iter().map(CompletionCandidate).collect()))
         } else {
             Ok((0, vec![]))
         }
