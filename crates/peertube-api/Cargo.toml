@@ -9,6 +9,6 @@ peertube-ser = {version = "*", path = "../peertube-ser"}
 peertube-viewer-utils = {version = "*", path = "../peertube-viewer-utils"}
 
 
-ureq = "2"
-serde_json = "1"
-time = "0.3"
+ureq = "2.4.0"
+serde_json = "1.0.78"
+time = "0.3.7"
