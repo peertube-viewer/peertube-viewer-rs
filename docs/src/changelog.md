@@ -1,11 +1,8 @@
 Changelog
 =========
 
-<!--dev-->
-<!--**Changes that have been implemented but not yet released**-->
-
-Next release
-------------
+1.8.4
+-----
 
 - Migrate away from chrono to use time directly
 - Update dependencies, including Clap to version 3
