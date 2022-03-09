@@ -6,7 +6,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with peertube-viewer-rs. If not, see <https://www.gnu.org/licenses/>.
 
-use clap::{Command, Arg};
+use clap::{Arg, Command};
 
 pub fn gen_app() -> Command<'static> {
     Command::new(env!("CARGO_PKG_NAME"))
