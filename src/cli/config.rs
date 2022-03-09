@@ -847,7 +847,7 @@ mod config {
         assert_eq!(
             app.try_get_matches_from(vec!["peertube-viewer-rs", "--block-nsfw", "--let-nsfw"])
                 .unwrap_err()
-                .kind,
+                .kind(),
             ErrorKind::ArgumentConflict
         );
     }
@@ -857,7 +857,7 @@ mod config {
         assert_eq!(
             app.try_get_matches_from(vec!["peertube-viewer-rs", "--block-nsfw", "--tag-nsfw"])
                 .unwrap_err()
-                .kind,
+                .kind(),
             ErrorKind::ArgumentConflict
         );
     }
@@ -868,7 +868,7 @@ mod config {
         assert_eq!(
             app.try_get_matches_from(vec!["peertube-viewer-rs", "--let-nsfw", "--tag-nsfw"])
                 .unwrap_err()
-                .kind,
+                .kind(),
             ErrorKind::ArgumentConflict
         );
     }

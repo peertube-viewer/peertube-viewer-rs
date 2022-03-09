@@ -6,10 +6,10 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with peertube-viewer-rs. If not, see <https://www.gnu.org/licenses/>.
 
-use clap::{App, Arg};
+use clap::{Command, Arg};
 
-pub fn gen_app() -> App<'static> {
-    App::new(env!("CARGO_PKG_NAME"))
+pub fn gen_app() -> Command<'static> {
+    Command::new(env!("CARGO_PKG_NAME"))
     .version(env!("CARGO_PKG_VERSION"))
     .author("Sosthène Guédon <dev@peertube-viewer.com>")
     .about("PeerTube CLI client")
