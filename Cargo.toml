@@ -17,7 +17,7 @@ clap = { version = "3.0.14", default-features = false, features = [ "wrap_help",
 toml = "0.5.8"
 unicode-width = "0.1.9"
 directories = "4.0.1"
-textwrap = "0.14.2"
+textwrap = "0.15.0"
 terminal_size = "0.1.17"
 url = "2.2.2"
 ureq = "2.4.0"
