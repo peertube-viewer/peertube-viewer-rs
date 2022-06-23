@@ -21,7 +21,7 @@ use peertube_viewer_utils::to_https;
 
 use std::collections::HashSet;
 use std::default::Default;
-use std::env::vars_os;
+use std::env::{var, vars_os};
 use std::ffi::OsString;
 use std::fmt::{self, Display};
 use std::fs::read_to_string;
@@ -668,7 +668,7 @@ impl Default for Config {
             listed_instances: HashSet::new(),
             is_allowlist: false,
             edit_mode: EditMode::Emacs,
-            browser: "firefox".to_string(),
+            browser: var("BROWSER").unwrap_or_else(|_| "firefox".to_string()),
             colors: true,
             select_quality: false,
             local: false,
