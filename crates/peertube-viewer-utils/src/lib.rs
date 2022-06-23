@@ -33,6 +33,7 @@ pub fn host_from_handle(s: &str) -> Result<String, FromHandleError> {
 #[cfg(test)]
 mod helpers {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn https_helper() {

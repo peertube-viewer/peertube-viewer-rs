@@ -734,6 +734,7 @@ fn get_string_array(t: &Table, name: &str, load_errors: &mut Vec<ConfigLoadError
 mod config {
     use super::*;
     use clap::ErrorKind;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn load_config_then_args() {

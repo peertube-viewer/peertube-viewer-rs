@@ -84,6 +84,7 @@ impl ParsedUrl {
 #[cfg(test)]
 mod url_tests {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn frontend_url_parser_test() {

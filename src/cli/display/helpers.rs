@@ -172,6 +172,7 @@ pub fn remove_html(mut input: &str) -> String {
 #[cfg(test)]
 mod helpers {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     #[test]
     pub fn html() {

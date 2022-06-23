@@ -285,6 +285,7 @@ pub fn clean_spaces(input: &str) -> Option<&str> {
 #[cfg(test)]
 mod parser {
     use super::*;
+    use pretty_assertions::assert_eq;
     use ParseError::*;
     use ParsedQuery::*;
 
