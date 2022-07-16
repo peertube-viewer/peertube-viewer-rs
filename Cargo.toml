@@ -18,7 +18,7 @@ toml = "0.5.8"
 unicode-width = "0.1.9"
 directories = "4.0.1"
 textwrap = "0.15.0"
-terminal_size = "0.1.17"
+terminal_size = "0.2.1"
 url = "2.2.2"
 ureq = "2.4.0"
 
