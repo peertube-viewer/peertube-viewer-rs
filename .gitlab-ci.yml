@@ -19,7 +19,7 @@ rust-latest:
     - cargo build --verbose --locked
     - cargo test --verbose --workspace
     - cargo fmt --all --verbose -- --check
-    - cargo clippy --workspace --verbose -- -Dall
+    - cargo clippy --workspace --verbose -- -D clippy::all
   only:
     changes:
       - src/**/*

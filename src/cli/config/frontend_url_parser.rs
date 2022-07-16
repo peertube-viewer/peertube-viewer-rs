@@ -6,7 +6,7 @@
 //
 // You should have received a copy of the GNU Affero General Public License along with peertube-viewer-rs. If not, see <https://www.gnu.org/licenses/>.
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum UrlType {
     /// The url is a video with a UUID
     Video(String),
@@ -16,7 +16,7 @@ pub enum UrlType {
     LandingPage,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ParsedUrl {
     pub instance: String,
     pub url_data: UrlType,

@@ -556,7 +556,7 @@ impl Cli {
                         ",
                             *code
                         ));
-                        self.display.report_error(err, &*self.instance.host());
+                        self.display.report_error(err, self.instance.host());
                         None
                     } else if *code >= 500 {
                         self.display.err(&format!(
@@ -566,7 +566,7 @@ impl Cli {
                         ",
                             *code
                         ));
-                        self.display.report_error(err, &*self.instance.host());
+                        self.display.report_error(err, self.instance.host());
                         None
                     } else {
                         Some(err)
@@ -581,7 +581,7 @@ impl Cli {
                             This is might happen if the server you are trying to connect isn't a PeerTube instance.\n\
                             If not, it is a bug from peertube-viewer-rs".to_string()
                         );
-                self.display.report_error(err, &*self.instance.host());
+                self.display.report_error(err, self.instance.host());
                 None
             }
             Error::Api(ApiError::NoContent) => {
@@ -590,7 +590,7 @@ impl Cli {
                             This is might happen if video you are trying to play comes from a instance that is down\n\
                             If not, it is a bug from peertube-viewer-rs".to_string()
                         );
-                self.display.report_error(err, &*self.instance.host());
+                self.display.report_error(err, self.instance.host());
                 None
             }
 
@@ -609,7 +609,7 @@ impl Cli {
                 ",
                     err
                 ));
-                self.display.report_error(err, &*self.instance.host());
+                self.display.report_error(err, self.instance.host());
             }
         }
     }

@@ -29,7 +29,7 @@ pub enum Message {
     Unfinnished(ParsedQuery),
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum Stade {
     First,
     IdOnly,

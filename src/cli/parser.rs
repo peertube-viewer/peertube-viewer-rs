@@ -49,7 +49,7 @@ const NO_ARGS_CMDS_WITH_SPACE: [&str; 9] = [
     ":trending ",
 ];
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ParsedQuery {
     Channels(String),
     Chandle(String),
@@ -74,7 +74,7 @@ impl ParsedQuery {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ParseError {
     UnexpectedArgs,
     UnknownCommand,

@@ -8,7 +8,7 @@
 
 use std::borrow::Cow;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct FromHandleError {}
 
 pub fn to_https(mut s: &str) -> Cow<'_, str> {
