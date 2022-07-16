@@ -19,6 +19,27 @@ rust-latest:
     - cargo build --verbose --locked
     - cargo test --verbose --workspace
     - cargo fmt --all --verbose -- --check
+    - cargo clippy --workspace --verbose -- -Dall
+  only:
+    changes:
+      - src/**/*
+      - crates/**/*
+      - Cargo.toml
+      - Cargo.lock
+      - build.rs
+
+rust-minimal:
+  stage: test
+  cache:
+    key: latest
+    paths:
+      - target/
+  image: rust:1.58
+  script:
+    - rustup component add rustfmt
+    - rustup component add clippy
+    - cargo build --verbose --locked
+    - cargo test --verbose --workspace
   only:
     changes:
       - src/**/*

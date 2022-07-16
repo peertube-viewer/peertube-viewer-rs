@@ -16,7 +16,7 @@ Releases can be found in the release page of the project: [releases](https://pee
 Building from source
 --------------------
 
-Building from source is rather easy, a [rust toolchain](https://www.rust-lang.org/tools/install) newer than `v1.56` is required.
+Building from source is rather easy, a [rust toolchain](https://www.rust-lang.org/tools/install) newer than `v1.58` is required.
 
 For a debug build (faster to compile), run `cargo build`.
 

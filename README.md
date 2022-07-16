@@ -18,7 +18,7 @@ To learn how to use it, see [the documentation](https://docs.peertube-viewer.com
 Compiling
 ---
 
-Compiling requires a [rust toolchain](https://www.rust-lang.org/tools/install) to be installed, newer that `v1.56`.
+Compiling requires a [rust toolchain](https://www.rust-lang.org/tools/install) to be installed, newer that `v1.58`.
 
 ```bash
 cargo build --locked --release
