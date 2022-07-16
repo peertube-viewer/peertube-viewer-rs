@@ -18,6 +18,7 @@ use termion::{color, style};
 use textwrap::fill;
 
 use std::cmp;
+use std::fmt::Write;
 use std::sync::Arc;
 
 mod layout;
@@ -188,12 +189,14 @@ impl Display {
             buffer.push_str(": ");
 
             if let Some(reason) = blocklist.is_blocked(&contents[id]) {
-                buffer.push_str(&format!(
-                    "{}{}{}\n",
+                writeln!(
+                    buffer,
+                    "{}{}{}",
                     fg_color(color::Red, self.colors),
                     reason,
                     fg_color(color::Reset, self.colors)
-                ));
+                )
+                .expect("Formatting failed unexpectedly");
                 continue;
             }
 

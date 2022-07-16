@@ -8,6 +8,7 @@
 
 use std::collections::HashSet;
 
+use std::fmt::Write;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Error};
 use std::path::Path;
@@ -55,7 +56,7 @@ impl History {
         for uuid in self.order.iter().rev() {
             if !already_in.contains(uuid) {
                 already_in.insert(uuid);
-                full_str.push_str(&format!("{}\n", uuid));
+                writeln!(full_str, "{uuid}").expect("Formating failed unexpectedly");
                 lines += 1;
                 if lines == max_len {
                     break;
