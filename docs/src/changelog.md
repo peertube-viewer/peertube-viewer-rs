@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Not published yet
+---
+
+Upgrade dependencies
+
+
+
 1.8.4
 -----
 

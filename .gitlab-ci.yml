@@ -69,11 +69,13 @@ release-linux:
 pages:
   stage: deploy
   image: ubuntu:latest
+  variables:
+    - MDBOOK_VERSION: 0.4.20
   script:
   - apt update
   - apt install wget -y
-  - wget https://github.com/rust-lang/mdBook/releases/download/v0.4.10/mdbook-v0.4.10-x86_64-unknown-linux-gnu.tar.gz
-  - tar xvzf mdbook-v0.4.10-x86_64-unknown-linux-gnu.tar.gz
+  - wget https://github.com/rust-lang/mdBook/releases/download/v"$MDBOOK_VERSION"/mdbook-v"$MDBOOK_VERSION"-x86_64-unknown-linux-gnu.tar.gz
+  - tar xvzf mdbook-v"$MDBOOK_VERSION"-x86_64-unknown-linux-gnu.tar.gz
   - ./mdbook build docs/ -d ../public
   - find public -type f -exec gzip -9 -f -k {} \;
   artifacts:
