@@ -41,15 +41,15 @@ pub struct Editor {
 }
 
 impl Editor {
-    pub fn new(edit_mode: EditMode, use_color: bool) -> Editor {
+    pub fn new(edit_mode: EditMode, use_color: bool) -> Result<Editor, error::Error> {
         let (rx, tx, h) = Helper::new(use_color);
-        let mut rl = rustyline::Editor::with_config(Builder::new().edit_mode(edit_mode).build());
+        let mut rl = rustyline::Editor::with_config(Builder::new().edit_mode(edit_mode).build())?;
         rl.set_helper(Some(h));
-        Editor {
+        Ok(Editor {
             rx,
             tx,
             rl: Arc::new(Mutex::new(rl)),
-        }
+        })
     }
 
     pub fn readline(

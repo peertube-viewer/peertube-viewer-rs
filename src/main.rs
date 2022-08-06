@@ -9,8 +9,18 @@
 mod cli;
 mod error;
 
+use std::process::exit;
+
 fn main() {
-    if let Ok(mut cli) = cli::Cli::init() {
-        cli.run()
-    };
+    match cli::Cli::init() {
+        Ok(mut cli) => cli.run(),
+        Err(error::Error::Readline(err)) => {
+            eprintln!("Failed to open prompt: {err}");
+            exit(1);
+        }
+        Err(err) => {
+            eprintln!("Failed to initialize: {err}");
+            exit(1);
+        }
+    }
 }
