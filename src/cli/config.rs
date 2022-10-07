@@ -512,7 +512,7 @@ impl Config {
         self.local = args.get_flag("local");
 
         if let Some(i) = args.get_one::<String>("instance") {
-            self.instance = to_https(&i).into_owned();
+            self.instance = to_https(i).into_owned();
             self.is_search_engine = false;
         } else if let Some(s) = args.get_one::<String>("search-engine") {
             self.instance = to_https(s).into_owned();
