@@ -222,41 +222,45 @@ impl Config {
     }
 
     fn new_with_args(cli_args: clap::ArgMatches) -> (Config, InitialInfo, Vec<ConfigLoadError>) {
-        if cli_args.is_present("print-default-config") {
+        if cli_args.get_flag("print-default-config") {
             print!("{}", include_str!("default_config.toml"));
             exit(0);
         }
 
-        if cli_args.is_present("print-full-config") {
+        if cli_args.get_flag("print-full-config") {
             print!("{}", include_str!("full_config.toml"));
             exit(0);
         }
 
         // Parse config as an String with default to empty string
-        let (mut config, mut load_errors) = if let Some(c) = cli_args.value_of("config-file") {
-            Config::from_config_file(&PathBuf::from(c), false)
-        } else {
-            match ProjectDirs::from("", "peertube-viewer-rs", "peertube-viewer-rs") {
-                Some(dirs) => {
-                    let mut d = dirs.config_dir().to_owned();
-                    d.push("config.toml");
-                    Config::from_config_file(&d, true)
+        let (mut config, mut load_errors) =
+            if let Some(c) = cli_args.get_one::<String>("config-file") {
+                Config::from_config_file(&PathBuf::from(c), false)
+            } else {
+                match ProjectDirs::from("", "peertube-viewer-rs", "peertube-viewer-rs") {
+                    Some(dirs) => {
+                        let mut d = dirs.config_dir().to_owned();
+                        d.push("config.toml");
+                        Config::from_config_file(&d, true)
+                    }
+                    None => (Config::default(), Vec::new()),
                 }
-                None => (Config::default(), Vec::new()),
-            }
-        };
+            };
 
-        let initial_info = if cli_args.is_present("trending") {
+        let initial_info = if cli_args.get_flag("trending") {
             InitialInfo::Trending
-        } else if let Some(s) = cli_args.value_of("chandle") {
-            InitialInfo::Handle(s.into())
-        } else if cli_args.is_present("channels") {
+        } else if let Some(s) = cli_args.get_one::<String>("chandle") {
+            InitialInfo::Handle(s.to_string())
+        } else if cli_args.get_flag("channels") {
             InitialInfo::Channels(concat(
-                cli_args.values_of("initial-query").into_iter().flatten(),
+                cli_args
+                    .get_many::<String>("initial-query")
+                    .into_iter()
+                    .flatten(),
             ))
         } else if let Some(s) = cli_args
-            .values_of("initial-query")
-            .map(|it| it.collect::<Vec<_>>())
+            .get_many("initial-query")
+            .map(|it| it.map(String::as_str).collect::<Vec<&str>>())
         {
             match ParsedUrl::from_url(s[0]) {
                 Some(parsed) => {
@@ -497,32 +501,34 @@ impl Config {
     fn update_with_args(&mut self, args: ArgMatches) -> Vec<ConfigLoadError> {
         let mut load_errors = Vec::new();
 
-        if args.is_present("let-nsfw") {
+        if args.get_flag("let-nsfw") {
             self.nsfw = NsfwBehavior::Let
-        } else if args.is_present("block-nsfw") {
+        } else if args.get_flag("block-nsfw") {
             self.nsfw = NsfwBehavior::Block
-        } else if args.is_present("tag-nsfw") {
+        } else if args.get_flag("tag-nsfw") {
             self.nsfw = NsfwBehavior::Tag
         }
 
-        self.local = args.is_present("local");
+        self.local = args.get_flag("local");
 
-        if let Some(i) = args.value_of("instance") {
-            self.instance = to_https(i).into_owned();
+        if let Some(i) = args.get_one::<String>("instance") {
+            self.instance = to_https(&i).into_owned();
             self.is_search_engine = false;
-        } else if let Some(s) = args.value_of("search-engine") {
+        } else if let Some(s) = args.get_one::<String>("search-engine") {
             self.instance = to_https(s).into_owned();
             self.is_search_engine = true;
         }
 
         /* ---Torrent configuration --- */
-        let client = args.value_of("torrent-downloader").map(|c| c.to_string());
+        let client = args
+            .get_one::<String>("torrent-downloader")
+            .map(|s| s.to_owned());
         let torrent_args = args
-            .values_of("torrent-downloader-arguments")
-            .map(|v| v.map(|s| s.to_string()).collect::<Vec<String>>());
+            .get_many("torrent-downloader-arguments")
+            .map(|v| v.map(|s: &String| s.to_string()).collect::<Vec<String>>());
 
-        let use_torrent = args.is_present("torrent");
-        if self.torrent.is_none() && use_torrent && !args.is_present("torrent-downloader") {
+        let use_torrent = args.get_flag("torrent");
+        if self.torrent.is_none() && use_torrent && !args.get_flag("torrent-downloader") {
             load_errors.push(ConfigLoadError::UseTorrentAndNoInfo);
         }
 
@@ -559,25 +565,25 @@ impl Config {
         }
 
         /* ---Player configuration --- */
-        if let Some(c) = args.value_of("player") {
+        if let Some(c) = args.get_one::<String>("player") {
             self.player.client = c.to_string();
         }
-        args.values_of("player-args").map(|v| {
+        args.get_many::<String>("player-args").map(|v| {
             v.map(|s| self.player.args.push(s.to_string()))
                 .any(|_| false)
         });
 
-        if args.is_present("use-raw-urls") {
+        if args.get_flag("use-raw-urls") {
             self.player.use_raw_urls = true;
         }
 
-        if args.is_present("select-quality") {
+        if args.get_flag("select-quality") {
             self.select_quality = true;
         }
 
-        if args.is_present("color") {
+        if args.get_flag("color") {
             self.colors = true;
-        } else if args.is_present("no-color") {
+        } else if args.get_flag("no-color") {
             self.colors = false;
         }
 
@@ -733,7 +739,7 @@ fn get_string_array(t: &Table, name: &str, load_errors: &mut Vec<ConfigLoadError
 #[cfg(test)]
 mod config {
     use super::*;
-    use clap::ErrorKind;
+    use clap::error::ErrorKind;
     use pretty_assertions::assert_eq;
 
     #[test]
