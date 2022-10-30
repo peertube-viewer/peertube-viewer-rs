@@ -27,6 +27,7 @@ rust-latest:
       - Cargo.toml
       - Cargo.lock
       - build.rs
+      - .gitlab-ci.yml
 
 rust-minimal:
   stage: test
@@ -47,6 +48,7 @@ rust-minimal:
       - Cargo.toml
       - Cargo.lock
       - build.rs
+      - .gitlab-ci.yml
 
 rust-nightly:
   allow_failure: true
@@ -68,6 +70,7 @@ rust-nightly:
       - Cargo.toml
       - Cargo.lock
       - build.rs
+      - .gitlab-ci.yml
   except:
     - tags
 
@@ -105,3 +108,4 @@ pages:
   only:
     changes:
       - docs/**/*
+      - .gitlab-ci.yml
