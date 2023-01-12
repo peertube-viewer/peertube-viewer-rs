@@ -136,7 +136,7 @@ impl Editor {
     }
 
     pub fn std_in(&mut self, prompt: String) -> Result<String, error::Error> {
-        print!("{}", prompt);
+        print!("{prompt}");
         io::stdout().flush().expect("Unable to print to stdout");
         let mut res = String::new();
         io::stdin()

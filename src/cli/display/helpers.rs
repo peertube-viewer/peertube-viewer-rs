@@ -53,8 +53,8 @@ pub fn pretty_duration_since(d: Duration) -> String {
 
 pub fn pretty_duration(d: u64) -> String {
     match d {
-        d if d < 10 => format!("00:0{}", d),
-        d if d < 60 => format!("00:{}", d),
+        d if d < 10 => format!("00:0{d}"),
+        d if d < 60 => format!("00:{d}"),
         d if d < 600 && d % 60 < 10 => format!("0{}:0{}", d / 60, d % 60),
         d if d < 600 => format!("0{}:{}", d / 60, d % 60),
         d if d < 3600 && d % 60 < 10 => format!("{}:0{}", d / 60, d % 60),
@@ -170,7 +170,7 @@ pub fn remove_html(mut input: &str) -> String {
 }
 
 #[cfg(test)]
-mod helpers {
+mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
 

@@ -61,7 +61,7 @@ impl From<video::File> for File {
             magnet_uri: v.magnetUri,
             resoltion_id: v.resolution.id,
             resolution: v.resolution.label,
-            size: if v.size > 0 { v.size as u64 } else { 0 },
+            size: if v.size > 0 { v.size } else { 0 },
             torrent_url: v.torrentUrl,
             torrent_download_url: v.torrentDownloadUrl,
             webseed_url: v.fileUrl,

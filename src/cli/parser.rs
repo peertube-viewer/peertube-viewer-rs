@@ -283,7 +283,7 @@ pub fn clean_spaces(input: &str) -> Option<&str> {
 }
 
 #[cfg(test)]
-mod parser {
+mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
     use ParseError::*;
@@ -296,7 +296,7 @@ mod parser {
             }
         }
 
-        return true;
+        true
     }
 
     #[test]

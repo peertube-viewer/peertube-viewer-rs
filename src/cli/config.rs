@@ -90,13 +90,11 @@ impl Display for ConfigLoadError {
             ),
             ConfigLoadError::TomlError(e) => write!(
                 f,
-                "The config was not parsable as TOML:\n{}\nUsing default config",
-                e
+                "The config was not parsable as TOML:\n{e}\nUsing default config"
             ),
             ConfigLoadError::NonUtf8EnvironmentVariable{name,provided:_} => write!(
                 f,
-                "Environnment variable {} is not utf8.",
-                name ,
+                "Environnment variable {name} is not utf8." ,
             ),
             ConfigLoadError::IncorrectTag{name,provided,allowed} => write!(
                 f,
@@ -112,8 +110,7 @@ impl Display for ConfigLoadError {
             ),
             ConfigLoadError::NotAString(s) => write!(
                 f,
-                "{} needs to be Strings\n Ignoring bad arguments",
-                s
+                "{s} needs to be Strings\n Ignoring bad arguments"
             ),
             ConfigLoadError::UseTorrentAndNoInfo=> write!(
                 f,
@@ -121,9 +118,7 @@ impl Display for ConfigLoadError {
             ),
             ConfigLoadError::ConflicingOptions(first, second) => write!(
                 f,
-                "{} and {} cannot appear at the same time in the config.\nUsing the search engine provided",
-                first,
-                second,
+                "{first} and {second} cannot appear at the same time in the config.\nUsing the search engine provided",
             ),
         }
     }
@@ -725,8 +720,7 @@ fn get_string_array(t: &Table, name: &str, load_errors: &mut Vec<ConfigLoadError
                     let res = s.as_str().map(|s| s.to_string());
                     if res.is_none() {
                         load_errors.push(ConfigLoadError::NotAString(format!(
-                            "The elements of {}",
-                            name
+                            "The elements of {name}"
                         )))
                     }
                     res
@@ -737,7 +731,7 @@ fn get_string_array(t: &Table, name: &str, load_errors: &mut Vec<ConfigLoadError
 }
 
 #[cfg(test)]
-mod config {
+mod tests {
     use super::*;
     use clap::error::ErrorKind;
     use pretty_assertions::assert_eq;

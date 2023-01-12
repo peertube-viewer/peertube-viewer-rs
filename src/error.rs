@@ -29,7 +29,7 @@ impl fmt::Display for Error {
             Error::Readline(_) | Error::Stdin(_) => write!(f, "Input error"),
             Error::VideoLaunch(_) => write!(f, "Unable to launch video"),
             Error::BrowserLaunch(_) => write!(f, "Unable to launch video"),
-            Error::BlockedInstance(s) => write!(f, "Can't connect to a blocked instance: {}", s),
+            Error::BlockedInstance(s) => write!(f, "Can't connect to a blocked instance: {s}"),
         }
     }
 }

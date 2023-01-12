@@ -36,7 +36,7 @@ where
 
     pub fn display_as_style(&self) -> String {
         if let LayoutItem::Style(c) = self {
-            format!("{}", c)
+            format!("{c}")
         } else {
             panic!("Internal error: display as color on other type");
         }

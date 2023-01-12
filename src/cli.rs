@@ -73,7 +73,7 @@ impl Cli {
         if let Some(d) = dirs.as_ref() {
             let cache = d.cache_dir();
 
-            create_dir(&cache).unwrap_or(());
+            create_dir(cache).unwrap_or(());
 
             let mut view_hist_file = cache.to_owned();
             view_hist_file.push("history");
@@ -253,7 +253,7 @@ impl Cli {
                     let channels_tmp =
                         PreloadableList::new(Channels::new(self.instance.clone(), q), SEARCH_TOTAL);
                     data.mode = Mode::Channels(channels_tmp);
-                    self.rl.add_history_entry(&format!(":channels {}", q));
+                    self.rl.add_history_entry(&format!(":channels {q}"));
                 }
                 ParsedQuery::Chandle(handle) => {
                     let chandle_tmp = PreloadableList::new(
@@ -261,19 +261,19 @@ impl Cli {
                         SEARCH_TOTAL,
                     );
                     data.mode = Mode::Videos(chandle_tmp);
-                    self.rl.add_history_entry(&format!(":chandle {}", handle));
+                    self.rl.add_history_entry(&format!(":chandle {handle}"));
                 }
                 ParsedQuery::Info(id) => {
                     self.info(&data.mode, *id)?;
-                    self.rl.add_history_entry(&format!(":info {}", id));
+                    self.rl.add_history_entry(&format!(":info {id}"));
                 }
                 ParsedQuery::Browser(id) => {
                     self.open_browser(&data.mode, *id)?;
-                    self.rl.add_history_entry(&format!(":browser {}", id));
+                    self.rl.add_history_entry(&format!(":browser {id}"));
                 }
                 ParsedQuery::Comments(id) => {
                     self.comments(&mut data.mode, *id);
-                    self.rl.add_history_entry(&format!(":comments {}", id));
+                    self.rl.add_history_entry(&format!(":comments {id}"));
                 }
                 ParsedQuery::Id(_) => unreachable!(),
             };
@@ -404,7 +404,7 @@ impl Cli {
             Mode::Videos(v) => {
                 self.display.video_info(&v.current()[id - 1]);
                 Command::new(self.config.browser())
-                    .arg(&v.current()[id - 1].watch_url())
+                    .arg(v.current()[id - 1].watch_url())
                     .spawn()
                     .map_err(Error::BrowserLaunch)?
                     .wait()
@@ -422,7 +422,7 @@ impl Cli {
             }
             Mode::Comments(c) => {
                 Command::new(self.config.browser())
-                    .arg(&c.current()[id - 1].url())
+                    .arg(c.current()[id - 1].url())
                     .spawn()
                     .map_err(Error::BrowserLaunch)?
                     .wait()
@@ -604,10 +604,9 @@ impl Cli {
             err => {
                 self.display.err(&format!(
                     "\
-                Unexpected error: {}\n\
+                Unexpected error: {err}\n\
                 This is likely an error with peertube-viewer-rs.\n\
-                ",
-                    err
+                "
                 ));
                 self.display.report_error(err, self.instance.host());
             }

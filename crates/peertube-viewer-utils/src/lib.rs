@@ -16,9 +16,9 @@ pub fn to_https(mut s: &str) -> Cow<'_, str> {
     if s.starts_with("https://") {
         Cow::Borrowed(s)
     } else if let Some(stripped) = s.strip_prefix("http://") {
-        Cow::Owned(format!("https://{}", stripped))
+        Cow::Owned(format!("https://{stripped}"))
     } else {
-        Cow::Owned(format!("https://{}", s))
+        Cow::Owned(format!("https://{s}"))
     }
 }
 
@@ -26,7 +26,7 @@ pub fn host_from_handle(s: &str) -> Result<String, FromHandleError> {
     let mut it = s.split('@');
     it.next().ok_or(FromHandleError {})?;
     it.next()
-        .map(|i| format!("https://{}", i))
+        .map(|i| format!("https://{i}"))
         .ok_or(FromHandleError {})
 }
 

@@ -70,7 +70,7 @@ impl<T: color::Color> fmt::Display for MaybeColor<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             MaybeColor::No => write!(f, ""),
-            MaybeColor::Fg(c) => write!(f, "{}", c),
+            MaybeColor::Fg(c) => write!(f, "{c}"),
         }
     }
 }
@@ -234,7 +234,7 @@ impl Display {
             buffer.push('\n');
         }
 
-        print!("{}", buffer);
+        print!("{buffer}");
     }
 
     pub fn resolutions(&self, resolutions: Vec<Resolution>) {
@@ -276,7 +276,7 @@ impl Display {
 
     pub fn welcome(&self, instance: &str) {
         self.line('=');
-        self.print_centered(&format!("Connecting to: {}", instance));
+        self.print_centered(&format!("Connecting to: {instance}"));
         self.line('=');
     }
 
@@ -303,7 +303,7 @@ impl Display {
     }
 
     pub fn message(&self, msg: &str) {
-        println!("{}", msg);
+        println!("{msg}");
     }
 
     pub fn info(&self, msg: &str) {
@@ -409,19 +409,19 @@ impl Display {
     fn line(&self, c: char) {
         let cols = col_size();
         let line_str = c.to_string().repeat(cols);
-        println!("{}", line_str);
+        println!("{line_str}");
     }
 
     fn print_centered(&self, s: &str) {
         let cols = col_size();
         let len = s.chars().count();
         if len > cols {
-            println!("{}", s);
+            println!("{s}");
             return;
         }
 
         let before = ' '.to_string().repeat((cols - len) / 2);
-        println!("{}{}", before, s);
+        println!("{before}{s}");
     }
 
     pub fn help(&self) {
