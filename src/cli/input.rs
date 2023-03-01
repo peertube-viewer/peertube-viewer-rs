@@ -19,7 +19,10 @@ use std::thread::spawn;
 use std::io::{self, Write};
 use std::path::Path;
 
-use rustyline::config::{Builder, EditMode};
+use rustyline::{
+    config::{Builder, EditMode},
+    history::FileHistory,
+};
 
 use super::parser::{filter_high_ids, parse, parse_first, parse_id, ParsedQuery};
 use preloadable_list::{AsyncLoader, PreloadableList};
@@ -37,13 +40,16 @@ impl<'editor> HelpedHandle<'editor> {
 pub struct Editor {
     rx: Receiver<Message>,
     tx: Sender<Message>,
-    rl: Arc<Mutex<rustyline::Editor<Helper>>>,
+    rl: Arc<Mutex<rustyline::Editor<Helper, FileHistory>>>,
 }
 
 impl Editor {
     pub fn new(edit_mode: EditMode, use_color: bool) -> Result<Editor, error::Error> {
         let (rx, tx, h) = Helper::new(use_color);
-        let mut rl = rustyline::Editor::with_config(Builder::new().edit_mode(edit_mode).build())?;
+        let mut rl = rustyline::Editor::with_history(
+            Builder::new().edit_mode(edit_mode).build(),
+            FileHistory::new(),
+        )?;
         rl.set_helper(Some(h));
         Ok(Editor {
             rx,
@@ -213,8 +219,8 @@ impl Editor {
         ed.save_history(path)
     }
 
-    pub fn add_history_entry(&mut self, entry: &str) -> bool {
+    pub fn add_history_entry(&mut self, entry: &str) {
         let mut ed = self.rl.lock().unwrap();
-        ed.add_history_entry(entry)
+        ed.add_history_entry(entry).ok();
     }
 }
