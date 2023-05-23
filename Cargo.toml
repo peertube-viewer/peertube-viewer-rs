@@ -11,14 +11,14 @@ peertube-api = {version = "*", path = "crates/peertube-api"}
 preloadable-list = {version = "*", path = "crates/preloadable-list"}
 peertube-viewer-utils = {version = "*", path = "crates/peertube-viewer-utils"}
 termion = "2.0.1"
-time = { version = "0.3.20", features = ["local-offset", "formatting"] }
+time = { version = "0.3.21", features = ["local-offset", "formatting"] }
 rustyline = "11"
-clap = { version = "4.1.8", default-features = false, features = [ "wrap_help", "color", "std", "suggestions"] }
-toml = "0.7.2"
+clap = { version = "4.3.0", default-features = false, features = [ "wrap_help", "color", "std", "suggestions"] }
+toml = "0.7.4"
 unicode-width = "0.1.10"
-directories = "4.0.1"
+directories = "5.0.1"
 textwrap = "0.16.0"
-terminal_size = "0.2.5"
+terminal_size = "0.2.6"
 url = "2.3.1"
 ureq = "2.6.2"
 
@@ -29,9 +29,9 @@ pretty_assertions = "1.3.0"
 members = ["crates/peertube-api/", "crates/peertube-ser/", "crates/preloadable-list/", "crates/peertube-viewer-utils/"]
 
 [build-dependencies]
-clap = { version = "4.1.8", default-features = false, features = ["suggestions", "std"] }
-time = { version = "0.3.20", features = ["local-offset", "parsing", "formatting"] }
-clap_complete = "4.1.4"
+clap = { version = "4.3.0", default-features = false, features = ["suggestions", "std"] }
+time = { version = "0.3.21", features = ["local-offset", "parsing", "formatting"] }
+clap_complete = "4.3.0"
 
 [profile.release]
 lto="fat"
