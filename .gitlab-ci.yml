@@ -35,7 +35,7 @@ rust-minimal:
     key: latest
     paths:
       - target/
-  image: rust:1.58
+  image: rust:1.65
   script:
     - rustup component add rustfmt
     - rustup component add clippy
