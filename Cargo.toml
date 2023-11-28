@@ -14,11 +14,11 @@ termion = "2.0.1"
 time = { version = "0.3.21", features = ["local-offset", "formatting"] }
 rustyline = "12"
 clap = { version = "4.3.0", default-features = false, features = [ "wrap_help", "color", "std", "suggestions"] }
-toml = "0.7.4"
+toml = "0.8.8"
 unicode-width = "0.1.10"
 directories = "5.0.1"
 textwrap = "0.16.0"
-terminal_size = "0.2.6"
+terminal_size = "0.3.0"
 url = "2.3.1"
 ureq = "2.6.2"
 
