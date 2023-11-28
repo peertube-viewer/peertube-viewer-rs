@@ -1,12 +1,10 @@
 Changelog
 =========
 
-Not published yet
+1.8.5
 ---
 
-Upgrade dependencies
-
-
+- Upgrade dependencies, fixing [RUSTSEC-2022-0013](https://rustsec.org/advisories/RUSTSEC-2022-0013) and [RUSTSEC-2023-0052](https://rustsec.org/advisories/RUSTSEC-2023-0052)
 
 1.8.4
 -----
