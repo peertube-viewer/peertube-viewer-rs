@@ -4,7 +4,7 @@ version = "1.8.5"
 authors = ["Sosthène Guédon <dev@peertube-viewer.com>"]
 edition = "2021"
 build = "build.rs"
-rust-version = "1.70"
+rust-version = "1.74"
 
 [dependencies]
 peertube-api = {version = "*", path = "crates/peertube-api"}
