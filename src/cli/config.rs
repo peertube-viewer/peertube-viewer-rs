@@ -92,9 +92,9 @@ impl Display for ConfigLoadError {
                 f,
                 "The config was not parsable as TOML:\n{e}\nUsing default config"
             ),
-            ConfigLoadError::NonUtf8EnvironmentVariable{name,provided:_} => write!(
+            ConfigLoadError::NonUtf8EnvironmentVariable{name,provided} => write!(
                 f,
-                "Environnment variable {name} is not utf8." ,
+                "Environnment variable {name} is not utf8. Value is: {}" ,provided.to_string_lossy(),
             ),
             ConfigLoadError::IncorrectTag{name,provided,allowed} => write!(
                 f,
