@@ -419,7 +419,7 @@ impl Config {
             }
 
             if let Some(Value::String(s)) = t.get("browser") {
-                temp.browser = s.to_owned();
+                s.clone_into(&mut temp.browser);
             }
         }
 

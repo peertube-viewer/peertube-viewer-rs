@@ -130,7 +130,11 @@ impl Resolution {
 enum Description {
     None,
     FetchedNone,
-    FetchedError(Error),
+    FetchedError(
+        #[allow(unused)]
+        #[deprecated(note = "Remove deprecated when used")]
+        Error,
+    ),
     Fetched(String),
 }
 
