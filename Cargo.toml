@@ -10,7 +10,7 @@ rust-version = "1.74"
 peertube-api = {version = "*", path = "crates/peertube-api"}
 preloadable-list = {version = "*", path = "crates/preloadable-list"}
 peertube-viewer-utils = {version = "*", path = "crates/peertube-viewer-utils"}
-termion = "2.0.1"
+termion = "4.0.0"
 time = { version = "0.3.21", features = ["local-offset", "formatting"] }
 rustyline = "12"
 clap = { version = "4.3.0", default-features = false, features = [ "wrap_help", "color", "std", "suggestions"] }
