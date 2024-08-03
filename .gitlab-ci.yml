@@ -63,16 +63,8 @@ rust-nightly:
     key: nightly
     paths:
       - target/
-  only:
-    changes:
-      - src/**/*
-      - crates/**/*
-      - Cargo.toml
-      - Cargo.lock
-      - build.rs
-      - .gitlab-ci.yml
-  except:
-    - tags
+  rules:
+    - if: $CI_RUN_NIGHTLY_COMPILER == "True"
 
 release-linux:
   stage: build
