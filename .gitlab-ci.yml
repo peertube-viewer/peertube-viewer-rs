@@ -89,7 +89,7 @@ cargo-audit:
   image: alpine:latest
   script:
     - apk add cargo-audit
-    - cargo audit --deny warnings
+    - cargo-audit --deny warnings
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
 
@@ -109,7 +109,7 @@ pages:
     paths:
     - public/
   rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE != "schedule"
       changes:
         - docs/**/*
         - .gitlab-ci.yml
