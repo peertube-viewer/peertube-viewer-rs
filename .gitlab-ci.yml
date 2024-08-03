@@ -97,7 +97,7 @@ cargo-outdated:
   stage: test
   image: alpine:latest
   script:
-    - apk add rustc cargo-outdated
+    - apk add rust cargo-outdated
     - cargo-outdated outdated -R --exit-code 1
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
