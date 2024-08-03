@@ -108,7 +108,8 @@ pages:
   artifacts:
     paths:
     - public/
-  only:
-    changes:
-      - docs/**/*
-      - .gitlab-ci.yml
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      changes:
+        - docs/**/*
+        - .gitlab-ci.yml
