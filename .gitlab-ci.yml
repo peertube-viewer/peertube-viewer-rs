@@ -20,14 +20,15 @@ rust-latest:
     - cargo test --verbose --workspace
     - cargo fmt --all --verbose -- --check
     - cargo clippy --workspace --verbose -- -D clippy::all
-  only:
-    changes:
-      - src/**/*
-      - crates/**/*
-      - Cargo.toml
-      - Cargo.lock
-      - build.rs
-      - .gitlab-ci.yml
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "schedule"
+      changes:
+        - src/**/*
+        - crates/**/*
+        - Cargo.toml
+        - Cargo.lock
+        - build.rs
+        - .gitlab-ci.yml
 
 rust-minimal:
   stage: test
@@ -41,14 +42,15 @@ rust-minimal:
     - rustup component add clippy
     - cargo build --verbose --locked
     - cargo test --verbose --workspace
-  only:
-    changes:
-      - src/**/*
-      - crates/**/*
-      - Cargo.toml
-      - Cargo.lock
-      - build.rs
-      - .gitlab-ci.yml
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "schedule"
+      changes:
+        - src/**/*
+        - crates/**/*
+        - Cargo.toml
+        - Cargo.lock
+        - build.rs
+        - .gitlab-ci.yml
 
 rust-nightly:
   allow_failure: true
@@ -81,6 +83,15 @@ release-linux:
       - linux-build/
   only:
     - tags
+
+cargo-audit:
+  stage: test
+  image: alpine:latest
+  script:
+    - apk add cargo-audit
+    - cargo audit --deny warnings
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
 
 pages:
   stage: deploy
