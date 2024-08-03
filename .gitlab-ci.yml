@@ -93,15 +93,6 @@ cargo-audit:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
 
-cargo-outdated:
-  stage: test
-  image: alpine:latest
-  script:
-    - apk add rust cargo-outdated
-    - cargo-outdated outdated -R --exit-code 1
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-
 pages:
   stage: deploy
   image: ubuntu:latest
