@@ -89,7 +89,7 @@ cargo-audit:
   image: alpine:latest
   script:
     - apk add cargo-audit
-    - cargo-audit --deny warnings
+    - cargo-audit audit --deny warnings
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
 
