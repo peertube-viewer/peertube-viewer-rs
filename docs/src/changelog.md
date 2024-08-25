@@ -1,6 +1,12 @@
 Changelog
 =========
 
+
+1.8.6
+---
+
+- Update dependencies, fixing an incompatibility with rust 1.80
+
 1.8.5
 ---
 
