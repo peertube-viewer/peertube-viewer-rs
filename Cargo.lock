@@ -441,7 +441,7 @@ dependencies = [
 
 [[package]]
 name = "peertube-viewer-rs"
-version = "1.8.5"
+version = "1.8.6"
 dependencies = [
  "clap",
  "clap_complete",
