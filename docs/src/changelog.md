@@ -2,6 +2,12 @@ Changelog
 =========
 
 
+1.8.7
+---
+
+- Update dependencies fixing [RUSTSEC-2024-0421](https://rustsec.org/advisories/RUSTSEC-2024-0421)
+- Bump MSRV to version `1.81`
+
 1.8.6
 ---
 
@@ -27,7 +33,6 @@ Changelog
 
 1.8.2
 ---
-
 
 - Fix error when using a local channel url with the configuration being set to a search engine
 - Add support for short frontend urls
@@ -132,6 +137,7 @@ Add `--local` filtering flag to only browse videos from the instance you are con
 
 1.3.0
 ------
+
 Trending browsing.
 
 UI improvements:
@@ -145,10 +151,12 @@ You will be prompted to check if you are sure you want to play it before playing
 
 1.2.1
 ------
+
 Small bug fixes in the configuration.
 
 1.2.0
 ------
+
 UI improvements:
 
 - COLORS!
