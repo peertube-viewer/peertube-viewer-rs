@@ -9,6 +9,7 @@
 use crate::cli::display::fg_color;
 use crate::cli::parser::{filter_high_ids, parse, parse_first, parse_id, ParseError, ParsedQuery};
 
+use rustyline::highlight::CmdKind;
 use termion::{color, style};
 
 use std::borrow::Cow;
@@ -250,7 +251,7 @@ impl Highlighter for Helper {
         }
     }
 
-    fn highlight_char(&self, _: &str, _: usize, _: bool) -> bool {
+    fn highlight_char(&self, _: &str, _: usize, _: CmdKind) -> bool {
         true
     }
 }
