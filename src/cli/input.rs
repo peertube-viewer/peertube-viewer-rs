@@ -31,7 +31,7 @@ pub struct HelpedHandle<'editor> {
     rx: &'editor mut Receiver<Message>,
 }
 
-impl<'editor> HelpedHandle<'editor> {
+impl HelpedHandle<'_> {
     pub fn next(&mut self) -> Message {
         self.rx.recv().unwrap()
     }
