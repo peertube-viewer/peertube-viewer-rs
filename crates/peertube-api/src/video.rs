@@ -408,9 +408,8 @@ impl Video {
         match &*guard {
             Files::None => match self.fetch_files() {
                 Ok((files, streams)) => {
-                    let streams_cl = streams.clone();
-                    *guard = Files::Fetched(files, streams);
-                    Ok(streams_cl)
+                    *guard = Files::Fetched(files, streams.clone());
+                    Ok(streams)
                 }
                 Err(err) => {
                     *guard = Files::FetchedError(err.clone());
