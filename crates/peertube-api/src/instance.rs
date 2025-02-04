@@ -77,8 +77,8 @@ impl Instance {
         let mut req = self
             .add_user_agent(ureq::get(&url))
             .query("search", query)
-            .query("count", &nb.to_string())
-            .query("start", &offset.to_string())
+            .query("count", nb.to_string())
+            .query("start", offset.to_string())
             .query("nsfw", self.include_nsfw);
 
         if self.local {
@@ -112,8 +112,8 @@ impl Instance {
         let mut req = self
             .add_user_agent(ureq::get(&url))
             .query("nsfw", self.include_nsfw)
-            .query("count", &nb.to_string())
-            .query("start", &offset.to_string());
+            .query("count", nb.to_string())
+            .query("start", offset.to_string());
 
         if self.local {
             req = req.query("filter", "local");
@@ -143,8 +143,8 @@ impl Instance {
 
         let req = self
             .add_user_agent(ureq::get(&url))
-            .query("count", &nb.to_string())
-            .query("start", &offset.to_string());
+            .query("count", nb.to_string())
+            .query("start", offset.to_string());
 
         let comment_res: Comments = req.call()?.into_body().read_json()?;
         let mut res = Vec::new();
@@ -168,8 +168,8 @@ impl Instance {
         let mut req = self
             .add_user_agent(ureq::get(&url))
             .query("sort", "-trending")
-            .query("count", &nb.to_string())
-            .query("start", &offset.to_string())
+            .query("count", nb.to_string())
+            .query("start", offset.to_string())
             .query("nsfw", self.include_nsfw);
 
         if self.local {
@@ -198,8 +198,8 @@ impl Instance {
         let mut req = self
             .add_user_agent(ureq::get(&url))
             .query("search", query)
-            .query("count", &nb.to_string())
-            .query("start", &offset.to_string());
+            .query("count", nb.to_string())
+            .query("start", offset.to_string());
 
         if self.local {
             req = req.query("filter", "local");
