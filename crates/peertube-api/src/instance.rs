@@ -7,7 +7,7 @@
 // You should have received a copy of the GNU Affero General Public License along with peertube-viewer-rs. If not, see <https://www.gnu.org/licenses/>.
 
 use std::borrow::Cow;
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
 
 use peertube_ser::channels::Channels;
@@ -54,15 +54,18 @@ impl Instance {
     }
 
     /// Adds the user agent if there is one
-    fn add_user_agent(&self, req: ureq::Request) -> ureq::Request {
-        if let Some(user_agent) = &self.user_agent {
-            req.set("User-Agent", user_agent)
-        } else {
-            req
-        }
+    fn add_user_agent<T>(&self, mut req: ureq::RequestBuilder<T>) -> ureq::RequestBuilder<T> {
+        let Some(headers_mut) = req.headers_mut() else {
+            return req;
+        };
+        let user_agent = self.user_agent.as_deref().unwrap_or(env!("CARGO_PKG_NAME"));
+
+        // TODO: make into an headervalue earlier
+        headers_mut.insert("User-Agent", user_agent.try_into().unwrap());
+        req
     }
 
-    /// Perform a search for the given query
+    /// Perform a searh for the given query
     pub fn search_videos(
         self: &Arc<Instance>,
         query: &str,
@@ -74,15 +77,15 @@ impl Instance {
         let mut req = self
             .add_user_agent(ureq::get(&url))
             .query("search", query)
-            .query("count", &nb.to_string())
-            .query("start", &offset.to_string())
+            .query("count", nb.to_string())
+            .query("start", offset.to_string())
             .query("nsfw", self.include_nsfw);
 
         if self.local {
             req = req.query("filter", "local");
         }
 
-        let search_res: Videos = serde_json::from_str(&req.call()?.into_string()?)?;
+        let search_res: Videos = req.call()?.into_body().read_json()?;
         let mut res = Vec::new();
 
         for video in search_res.data {
@@ -109,15 +112,14 @@ impl Instance {
         let mut req = self
             .add_user_agent(ureq::get(&url))
             .query("nsfw", self.include_nsfw)
-            .query("count", &nb.to_string())
-            .query("start", &offset.to_string())
-            .set("User-Agent", concat!(env!("CARGO_PKG_NAME")));
+            .query("count", nb.to_string())
+            .query("start", offset.to_string());
 
         if self.local {
             req = req.query("filter", "local");
         }
 
-        let video_res: Videos = serde_json::from_str(&req.call()?.into_string()?)?;
+        let video_res: Videos = req.call()?.into_body().read_json()?;
         let mut res = Vec::new();
         for video in video_res.data {
             res.push(Video::from_search(self, video));
@@ -141,10 +143,10 @@ impl Instance {
 
         let req = self
             .add_user_agent(ureq::get(&url))
-            .query("count", &nb.to_string())
-            .query("start", &offset.to_string());
+            .query("count", nb.to_string())
+            .query("start", offset.to_string());
 
-        let comment_res: Comments = serde_json::from_str(&req.call()?.into_string()?)?;
+        let comment_res: Comments = req.call()?.into_body().read_json()?;
         let mut res = Vec::new();
         for comment in comment_res.data {
             if let Ok(c) = Comment::try_from(comment) {
@@ -166,15 +168,15 @@ impl Instance {
         let mut req = self
             .add_user_agent(ureq::get(&url))
             .query("sort", "-trending")
-            .query("count", &nb.to_string())
-            .query("start", &offset.to_string())
+            .query("count", nb.to_string())
+            .query("start", offset.to_string())
             .query("nsfw", self.include_nsfw);
 
         if self.local {
             req = req.query("filter", "local");
         }
 
-        let search_res: Videos = serde_json::from_str(&req.call()?.into_string()?)?;
+        let search_res: Videos = req.call()?.into_body().read_json()?;
         let mut res = Vec::new();
         for video in search_res.data {
             res.push(Video::from_search(self, video));
@@ -196,14 +198,14 @@ impl Instance {
         let mut req = self
             .add_user_agent(ureq::get(&url))
             .query("search", query)
-            .query("count", &nb.to_string())
-            .query("start", &offset.to_string());
+            .query("count", nb.to_string())
+            .query("start", offset.to_string());
 
         if self.local {
             req = req.query("filter", "local");
         }
 
-        let search_res: Channels = serde_json::from_str(&req.call()?.into_string()?)?;
+        let search_res: Channels = req.call()?.into_body().read_json()?;
         let mut res = Vec::new();
         for video in search_res.data {
             if let Some(v) = Channel::maybe_from(video, self.host.clone()) {
@@ -219,10 +221,7 @@ impl Instance {
         let url = format!("{}/api/v1/videos/{}", self.api_host(host), uuid);
 
         let req = self.add_user_agent(ureq::get(&url));
-        Ok(Video::from_full(
-            self,
-            serde_json::from_str(&req.call()?.into_string()?)?,
-        ))
+        Ok(Video::from_full(self, req.call()?.into_body().read_json()?))
     }
 
     /// Fetch a video description
@@ -234,7 +233,7 @@ impl Instance {
         let url = format!("{}/api/v1/videos/{}/description", self.api_host(host), uuid);
 
         let req = ureq::get(&url);
-        let desc: Description = serde_json::from_str(&req.call()?.into_string()?)?;
+        let desc: Description = req.call()?.into_body().read_json()?;
         Ok(desc.description)
     }
 
@@ -247,7 +246,7 @@ impl Instance {
         let url = format!("{}/api/v1/videos/{}", self.api_host(host), uuid);
 
         let req = self.add_user_agent(ureq::get(&url));
-        let video: FullVideo = serde_json::from_str(&req.call()?.into_string()?)?;
+        let video: FullVideo = req.call()?.into_body().read_json()?;
         Ok((video.files, video.streamingPlaylists))
     }
 
