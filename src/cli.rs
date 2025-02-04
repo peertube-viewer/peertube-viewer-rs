@@ -547,7 +547,7 @@ impl Cli {
     fn handle_err(&mut self, err: Error) -> Option<Error> {
         match &err {
             Error::Api(ApiError::Ureq(e)) => {
-                if let ureq::Error::Status(code, _) = &**e {
+                if let ureq::Error::StatusCode(code) = &**e {
                     if *code >= 400 && *code < 500 {
                         self.display.err(&format!(
                             "\
