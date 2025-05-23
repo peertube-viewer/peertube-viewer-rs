@@ -97,7 +97,7 @@ pages:
   stage: deploy
   image: ubuntu:latest
   variables:
-    MDBOOK_VERSION: "0.4.44"
+    MDBOOK_VERSION: "0.4.50"
   script:
   - apt update
   - apt install wget -y
