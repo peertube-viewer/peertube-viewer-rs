@@ -65,7 +65,6 @@ pub enum ConfigLoadError {
     UnreadableFile(io::Error, PathBuf),
     TomlError(TomlError),
     UseTorrentAndNoInfo,
-    NotATable,
     NotAString(String),
     NonUtf8EnvironmentVariable {
         name: &'static str,
@@ -104,10 +103,6 @@ impl Display for ConfigLoadError {
                 allowed,
                 allowed[0],
             ),
-            ConfigLoadError::NotATable => write!(
-                f,
-                "The config file is malformed, it should be a TOML table\nUsing default config"
-            ),
             ConfigLoadError::NotAString(s) => write!(
                 f,
                 "{s} needs to be Strings\n Ignoring bad arguments"
@@ -140,7 +135,6 @@ impl error::Error for ConfigLoadError {
             }
             | ConfigLoadError::ConflicingOptions(_, _)
             | ConfigLoadError::UseTorrentAndNoInfo
-            | ConfigLoadError::NotATable
             | ConfigLoadError::NotAString(_) => None,
         }
     }
@@ -310,12 +304,8 @@ impl Config {
             .unwrap_or_default();
 
         // Parse config as TOML with default to empty
-        let config = match config_str.parse() {
-            Ok(Value::Table(t)) => t,
-            Ok(_) => {
-                load_errors.push(ConfigLoadError::NotATable);
-                Table::new()
-            }
+        let config = match config_str.parse::<Table>() {
+            Ok(t) => t,
             Err(e) => {
                 load_errors.push(ConfigLoadError::TomlError(e));
                 Table::new()

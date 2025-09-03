@@ -12,9 +12,9 @@ preloadable-list = {version = "*", path = "crates/preloadable-list"}
 peertube-viewer-utils = {version = "*", path = "crates/peertube-viewer-utils"}
 termion = "4.0.0"
 time = { version = "0.3.21", features = ["local-offset", "formatting"] }
-rustyline = "15"
+rustyline = "17"
 clap = { version = "4.3.0", default-features = false, features = [ "wrap_help", "color", "std", "suggestions"] }
-toml = "0.8.8"
+toml = "0.9.5"
 unicode-width = "0.2"
 directories = "6.0.0"
 textwrap = "0.16.0"
