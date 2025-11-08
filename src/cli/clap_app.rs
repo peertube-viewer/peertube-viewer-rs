@@ -11,7 +11,7 @@ use clap::{Arg, ArgAction, Command};
 pub fn gen_app() -> Command {
     Command::new(env!("CARGO_PKG_NAME"))
     .version(env!("CARGO_PKG_VERSION"))
-    .author("Sosthène Guédon <dev@peertube-viewer.com>")
+    .author("Sosthène Guédon <sosthene@guedon.gdn>")
     .about("PeerTube CLI client")
     .args(
         &[

@@ -1,5 +1,5 @@
 [package]
 name = "preloadable-list"
 version = "0.1.0"
-authors = ["Sosthène Guédon <dev@peertube-viewer.com>"]
+authors = ["Sosthène Guédon <sosthene@guedon.gdn>"]
 edition = "2021"

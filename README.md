@@ -1,7 +1,7 @@
 peertube-viewer-rs
 ===
 
-https://peertube-viewer.com
+https://peertube-viewer.sgued.fr
 
 A command line program to view and browse [PeerTube](https://joinpeertube.org), inspired by the youtube-viewer utility
 
@@ -12,8 +12,8 @@ Documentation
 
 This readme provides a quick overview of peertube-viewer-rs. 
 
-To learn how to install peertube-viewer, see [the download page ](https://peertube-viewer.com/download).
-To learn how to use it, see [the documentation](https://docs.peertube-viewer.com).
+To learn how to install peertube-viewer, see [the download page ](https://peertube-viewer.sgued.fr/download).
+To learn how to use it, see [the documentation](https://docs.peertube-viewer.sgued.fr).
 
 Compiling
 ---
@@ -37,7 +37,7 @@ The user wants to use the PeerTube instance video.ploud.fr. They search for vide
 
 ![Screenshot of basic usage](docs/src/screenshots/screenshot.jpg)
 
-For a more detailed usage description, checkout [the documentation](https://docs.peertube-viewer.com)
+For a more detailed usage description, checkout [the documentation](https://docs.peertube-viewer.sgued.fr)
 
 To see all available options see:
 ```bash

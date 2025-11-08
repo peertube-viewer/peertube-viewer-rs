@@ -9,9 +9,9 @@ Installation
 Releases
 --------
 
-The download for the latest releases can be found on the download page of the project: [Download](https://peertube-viewer.com/download)
+The download for the latest releases can be found on the download page of the project: [Download](https://peertube-viewer.sgued.fr/download)
 
-Releases can be found in the release page of the project: [releases](https://peertube-viewer.com/releases)
+Releases can be found in the release page of the project: [releases](https://peertube-viewer.sgued.fr/releases)
 
 Building from source
 --------------------
