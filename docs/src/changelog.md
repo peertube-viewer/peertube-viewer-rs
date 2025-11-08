@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+---
+
+- Update dependencies
+- Bump MSRV to version `1.82`
 
 1.8.7
 ---
