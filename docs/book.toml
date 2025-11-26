@@ -1,14 +1,10 @@
-[peertube-viewer-rs]
+[book]
 title = "peertube-viewer-rs documentation"
 description = "peertube-viewer-rs documentation"
 authors = ["Sosthène Guédon"]
 
 [output.html]
 git-repository-url = "https://gitlab.com/peertube-viewer/peertube-viewer-rs"
-git-repository-icon = "fa-gitlab"
+git-repository-icon = "fab-gitlab"
 default-theme = "Rust"
 preferred-dark-theme = "Ayu"
-
-[[output.html.additional-resources]]
-output-dir="img"
-src="screenshots/*"
