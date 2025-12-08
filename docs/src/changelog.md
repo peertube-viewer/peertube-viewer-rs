@@ -5,7 +5,7 @@ Unreleased
 ---
 
 - Update dependencies
-- Bump MSRV to version `1.85`
+- Bump MSRV to version `1.88`
 
 1.8.7
 ---
