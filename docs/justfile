@@ -1,5 +1,5 @@
-export COMPRESS_REGEX := '.*\.\(htm\|html\|json\|txt\|text\|js\|css\|xml\|svg\|ttf\)$'
 build:
     mdbook build
-    find book -type f -regex "$COMPRESS_REGEX" -exec gzip -9 -n -f -k {} \;
-    find book -type f -regex "$COMPRESS_REGEX" -exec brotli -q 11 -f -k {} \;
+
+lychee: build
+    lychee --base-url https://docs.peertube-viewer.sgued.fr book

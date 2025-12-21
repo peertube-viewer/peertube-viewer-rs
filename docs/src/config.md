@@ -150,7 +150,7 @@ args = ["-a"]
 Instance settings
 
 #### search-engine
-The search engine to be used ([sepiasearch.org](https://sepiasearch.rg) is the default)
+The search engine to be used ([sepiasearch.org](https://sepiasearch.org) is the default)
 
 #### main
 The main instance to be connected to, it is expected to be a string.

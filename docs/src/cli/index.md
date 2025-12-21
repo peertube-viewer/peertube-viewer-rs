@@ -10,6 +10,6 @@ The interface features :
 
 To learn how to use it see :
 
-- [description of the cli interface](usage.html)
-- [description of the command line arguments](args.md)
+- [description of the cli interface](cli/usage.html)
+- [description of the command line arguments](cli/args.md)
 
