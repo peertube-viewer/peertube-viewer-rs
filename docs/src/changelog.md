@@ -4,8 +4,12 @@ Changelog
 Unreleased
 ---
 
+1.8.8
+---
+
 - Update dependencies
 - Bump MSRV to version `1.88`
+- Fix [RUSTSEC-2026-0009](https://rustsec.org/advisories/RUSTSEC-2026-0009)
 
 1.8.7
 ---
