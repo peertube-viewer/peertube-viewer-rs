@@ -4,6 +4,12 @@ Changelog
 Unreleased
 ---
 
+1.8.9
+---
+
+- Update dependencies
+- Fix [RUSTSEC-2026-0049](https://rustsec.org/advisories/RUSTSEC-2026-0049)
+
 1.8.8
 ---
 
