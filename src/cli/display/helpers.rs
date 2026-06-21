@@ -78,8 +78,10 @@ pub fn pretty_duration_or_live(d: u64, is_live: bool) -> String {
 }
 
 pub fn full_date(d: OffsetDateTime) -> String {
-    let format =
-        format_description::parse("[weekday] [day padding:none] [month repr:long] [year]").unwrap();
+    let format = format_description::parse_borrowed::<3>(
+        r#"[weekday] [day padding:none] [month repr:long] [year]"#,
+    )
+    .unwrap();
     d.format(&format).unwrap_or_default()
 }
 
