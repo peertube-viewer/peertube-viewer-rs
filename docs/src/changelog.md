@@ -4,6 +4,15 @@ Changelog
 Unreleased
 ---
 
+1.8.10
+---
+
+- Update dependencies
+- Fix [RUSTSEC-2026-0099](https://rustsec.org/advisories/RUSTSEC-2026-0099)
+- Fix [RUSTSEC-2026-0098](https://rustsec.org/advisories/RUSTSEC-2026-0098)
+- Fix [RUSTSEC-2026-0104](https://rustsec.org/advisories/RUSTSEC-2026-0104)
+- Bump MSRV to 1.89
+
 1.8.9
 ---
 
