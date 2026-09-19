@@ -4,6 +4,11 @@ Changelog
 Unreleased
 ---
 
+1.8.11
+---
+
+- Update dependencies
+
 1.8.10
 ---
 
