@@ -68,21 +68,16 @@ impl Editor {
             h.set_limit(limit)
         };
         loop {
-            let res = guard.readline(&prompt);
-            match res {
-                Ok(l) => {
-                    let parsed = if let Some(id) = limit {
-                        filter_high_ids(parse(&l), id)
-                    } else {
-                        parse(&l)
-                    };
-                    if let Ok(q) = parsed {
-                        return Ok(q);
-                    }
-                    continue;
-                }
-                Err(e) => return Err(e),
+            let l = guard.readline(&prompt)?;
+            let parsed = if let Some(id) = limit {
+                filter_high_ids(parse(&l), id)
+            } else {
+                parse(&l)
+            };
+            if let Ok(q) = parsed {
+                return Ok(q);
             }
+            continue;
         }
     }
 
@@ -97,19 +92,14 @@ impl Editor {
             h.set_stade(Stade::IdOnly);
         }
         loop {
-            let res = guard.readline(&prompt);
-            match res {
-                Ok(l) => {
-                    if let Ok(ParsedQuery::Id(id)) = parse_id(&l) {
-                        if limit.filter(|max| max > &id && id > 0).is_none() {
-                            continue;
-                        }
-                        return Ok(id);
-                    }
+            let l = guard.readline(&prompt)?;
+            if let Ok(ParsedQuery::Id(id)) = parse_id(&l) {
+                if limit.filter(|max| max > &id && id > 0).is_none() {
                     continue;
                 }
-                Err(e) => return Err(e),
+                return Ok(id);
             }
+            continue;
         }
     }
 
