@@ -4,6 +4,11 @@ Changelog
 Unreleased
 ---
 
+1.8.13
+---
+
+- Update dependencies, removing trust in the emSign certificate that was compromized. [more info](https://groups.google.com/a/mozilla.org/g/dev-security-policy/c/0R3XLJL6FuE/m/0XofdebrAAAJ)
+
 1.8.12
 ---
 
