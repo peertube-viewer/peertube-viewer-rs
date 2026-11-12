@@ -4,6 +4,12 @@ Changelog
 Unreleased
 ---
 
+1.8.14
+---
+
+- Update dependencies
+- Bump MSRV to 1.95
+
 1.8.13
 ---
 
