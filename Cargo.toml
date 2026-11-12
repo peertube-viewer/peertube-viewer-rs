@@ -1,10 +1,10 @@
 [package]
 name = "peertube-viewer-rs"
-version = "1.8.13"
+version = "1.8.14"
 authors = ["Sosthène Guédon <sosthene@guedon.gdn>"]
 edition = "2021"
 build = "build.rs"
-rust-version = "1.89"
+rust-version = "1.95"
 
 [dependencies]
 peertube-api = {version = "*", path = "crates/peertube-api"}
@@ -12,7 +12,7 @@ preloadable-list = {version = "*", path = "crates/preloadable-list"}
 peertube-viewer-utils = {version = "*", path = "crates/peertube-viewer-utils"}
 termion = "4.0.0"
 time = { version = "0.3.21", features = ["local-offset", "formatting", "large-dates"] }
-rustyline = "18"
+rustyline = "19"
 clap = { version = "4.3.0", default-features = false, features = [ "wrap_help", "color", "std", "suggestions"] }
 toml = "1.0.0"
 unicode-width = "0.2"
@@ -30,7 +30,6 @@ members = ["crates/peertube-api/", "crates/peertube-ser/", "crates/preloadable-l
 
 [build-dependencies]
 clap = { version = "4.3.0", default-features = false, features = ["suggestions", "std"] }
-time = { version = "0.3.21", features = ["local-offset", "parsing", "formatting"] }
 clap_complete = "4.3.0"
 
 [profile.release]
